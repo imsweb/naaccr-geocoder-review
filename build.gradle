@@ -1,0 +1,80 @@
+import org.gradle.internal.jvm.Jvm
+
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'findbugs'
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
+}
+
+group = 'com.imsweb'
+version = file('VERSION').text
+description = 'A simple interface to review Geocoder results and select best result among several.'
+
+println "Starting build using ${Jvm.current()}"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'au.com.bytecode:opencsv:2.4'
+    compile 'commons-io:commons-io:2.5'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.4.4'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.4'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.4'
+    testCompile 'junit:junit:4.12'
+}
+
+// enforce UTF-8 for all compilation tasks
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+// customize the manifest
+jar {
+    manifest {
+        attributes('Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Implementation-Vendor': 'Information Management Services Inc.',
+                'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')',
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Main-Class': 'com.imsweb.geocoder.Standalone')
+    }
+    from ('VERSION') {
+        rename 'VERSION', 'NAACCR-GEOCODER-REVIEW-VERSION'
+    }
+    from ('LICENSE') {
+        rename 'LICENSE', 'NAACCR-GEOCODER-REVIEW-LICENSE'
+    }
+}
+
+// this sucks, but they made the Javadoc way too stritct in Java 8 and it's not worth my time fixing it!
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+// rename some files in the fat jar
+shadowJar {
+    from ('LICENSE') {
+        rename 'LICENSE', 'NAACCR-GEOCODER-REVIEW-LICENSE'
+    }
+}
+
+// checkstyle plugin settings
+checkstyle {
+    ignoreFailures = true
+    configFile = file('config/checkstyle/checkstyle.xml')
+}
+
+// findbugs plugin settings
+findbugs {
+    ignoreFailures = true
+    effort = 'max'
+    excludeFilter = file('config/findbugs/findbugs-exclude.xml')
+}
+
+// Gradle wrapper, this allows to build the project without having to install Gradle...
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.5'
+}
