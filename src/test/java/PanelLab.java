@@ -5,7 +5,6 @@
 import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Point;
@@ -19,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 
@@ -38,8 +38,12 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
 
 import com.imsweb.geocoder.AboutDialog;
+import com.imsweb.geocoder.Utils;
+import com.imsweb.geocoder.component.GeocodeResultPanel;
+import com.imsweb.geocoder.entity.GeocodeResult;
 
 public class PanelLab extends JFrame implements ActionListener {
 
@@ -81,19 +85,15 @@ public class PanelLab extends JFrame implements ActionListener {
         JPanel contentPnl = new JPanel();
         contentPnl.setLayout(new BoxLayout(contentPnl, BoxLayout.X_AXIS));
 
-        for (int i = 1; i < 10; i++) {
-            JPanel resultPnl = new JPanel();
-            resultPnl.setLayout(new BoxLayout(resultPnl, BoxLayout.Y_AXIS));
-            JPanel pnl = new JPanel(new FlowLayout());
-            pnl.add(createBoldLabel("Result " + i));
-            resultPnl.add(pnl);
-            for (int j = 1; j < 50; j++) {
-                pnl = new JPanel(new FlowLayout());
-                pnl.add(createBoldLabel("Field " + j + ": "));
-                pnl.add(new JLabel("some very long value #" + j));
-                resultPnl.add(pnl);
+        try {
+            URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_csv.json");
+            Assert.assertNotNull(url);
+            for (GeocodeResult result : Utils.parseGeocodeResults(IOUtils.toString(url, StandardCharsets.US_ASCII))) {
+                contentPnl.add(new GeocodeResultPanel(result));
             }
-            contentPnl.add(resultPnl);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         JScrollPane pane = new JScrollPane(contentPnl);

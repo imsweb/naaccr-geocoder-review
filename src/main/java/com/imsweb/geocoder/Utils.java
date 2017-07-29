@@ -1,0 +1,144 @@
+/*
+ * Copyright (C) 2017 Information Management Services, Inc.
+ */
+package com.imsweb.geocoder;
+
+import java.awt.Font;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.swing.JLabel;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.imsweb.geocoder.entity.GeocodeResult;
+
+public class Utils {
+
+    private static final Pattern _KEY_PATTERN = Pattern.compile("(OutputGeocode|CensusValues|ReferenceFeature)(\\d+)");
+
+    public static List<GeocodeResult> parseGeocodeResults(String rawResults) throws IOException {
+        Map<Integer, GeocodeResult> results = new LinkedHashMap<>();
+
+        JsonNode root = new ObjectMapper().readTree(rawResults).get("OutputGeocodes").get(0);
+
+        Iterator<Map.Entry<String, JsonNode>> iter = root.fields();
+        while (iter.hasNext()) {
+            Map.Entry<String, JsonNode> entry = iter.next();
+
+            Matcher matcher = _KEY_PATTERN.matcher(entry.getKey());
+            if (matcher.matches()) {
+                Integer index = Integer.valueOf(matcher.group(2));
+                GeocodeResult result = results.computeIfAbsent(index, GeocodeResult::new);
+                switch (matcher.group(1)) {
+                    case "OutputGeocode":
+                        result.setOutputGeocode(simpleJsonToMap(entry.getValue()));
+                        break;
+                    case "CensusValues":
+                        result.setCensusValue(simpleJsonToMap(entry.getValue().get(0).get("CensusValue1")));
+                        break;
+                    case "ReferenceFeature":
+                        result.setReferenceFeature(simpleJsonToMap(entry.getValue()));
+                        break;
+                    default:
+                        // ignored
+                }
+            }
+
+        }
+
+        return new ArrayList<>(results.values());
+    }
+
+    private static Map<String, String> simpleJsonToMap(JsonNode node) {
+        Map<String, String> result = new LinkedHashMap<>();
+
+        Iterator<Map.Entry<String, JsonNode>> iter = node.fields();
+        while (iter.hasNext()) {
+            Map.Entry<String, JsonNode> entry = iter.next();
+            result.put(entry.getKey(), entry.getValue().asText());
+        }
+
+        return result;
+    }
+
+    public static JLabel createLabel(String text) {
+        return new JLabel(text);
+    }
+
+    public static JLabel createItalicLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(lbl.getFont().deriveFont(Font.ITALIC));
+        return lbl;
+    }
+
+    public static JLabel createBoldLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
+        return lbl;
+    }
+
+    public static String formatNumber(int num) {
+        DecimalFormat format = new DecimalFormat();
+        format.setDecimalSeparatorAlwaysShown(false);
+        return format.format(num);
+    }
+
+    public static String formatTime(long timeInMilli) {
+        long hourBasis = 60;
+
+        StringBuilder formattedTime = new StringBuilder();
+
+        long secTmp = timeInMilli / 1000;
+        long sec = secTmp % hourBasis;
+        long minTmp = secTmp / hourBasis;
+        long min = minTmp % hourBasis;
+        long hour = minTmp / hourBasis;
+
+        if (hour > 0) {
+            formattedTime.append(hour).append(" hour");
+            if (hour > 1)
+                formattedTime.append("s");
+        }
+
+        if (min > 0) {
+            if (formattedTime.length() > 0)
+                formattedTime.append(", ");
+            formattedTime.append(min).append(" minute");
+            if (min > 1)
+                formattedTime.append("s");
+        }
+
+        if (sec > 0) {
+            if (formattedTime.length() > 0)
+                formattedTime.append(", ");
+            formattedTime.append(sec).append(" second");
+            if (sec > 1)
+                formattedTime.append("s");
+        }
+
+        if (formattedTime.length() > 0)
+            return formattedTime.toString();
+
+        return "< 1 second";
+    }
+
+    public static String formatFileSize(long size) {
+        if (size < 1024)
+            return size + " B";
+        else if (size < 1024 * 1024)
+            return new DecimalFormat("#.# KB").format((double)size / 1024);
+        else if (size < 1024 * 1024 * 1024)
+            return new DecimalFormat("#.# MB").format((double)size / 1024 / 1024);
+
+        return new DecimalFormat("#.# GB").format((double)size / 1024 / 1024 / 1024);
+    }
+}

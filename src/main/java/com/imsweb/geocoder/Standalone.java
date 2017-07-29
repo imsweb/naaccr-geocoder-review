@@ -6,7 +6,6 @@ package com.imsweb.geocoder;
 import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Point;
@@ -21,11 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -70,7 +67,7 @@ public class Standalone extends JFrame implements ActionListener {
         this.setJMenuBar(bar);
 
         JPanel centerPnl = new JPanel(new GridBagLayout());
-        centerPnl.add(createBoldLabel("Coming soon..."));
+        centerPnl.add(Utils.createBoldLabel("Coming soon..."));
         this.getContentPane().add(centerPnl, BorderLayout.CENTER);
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
@@ -135,74 +132,6 @@ public class Standalone extends JFrame implements ActionListener {
             dlg.setLocation(center.x - dlg.getWidth() / 2, center.y - dlg.getHeight() / 2);
             SwingUtilities.invokeLater(() -> dlg.setVisible(true));
         }
-    }
-
-    public static JLabel createItalicLabel(String text) {
-        JLabel lbl = new JLabel(text);
-        lbl.setFont(lbl.getFont().deriveFont(Font.ITALIC));
-        return lbl;
-    }
-
-    public static JLabel createBoldLabel(String text) {
-        JLabel lbl = new JLabel(text);
-        lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
-        return lbl;
-    }
-
-    public static String formatNumber(int num) {
-        DecimalFormat format = new DecimalFormat();
-        format.setDecimalSeparatorAlwaysShown(false);
-        return format.format(num);
-    }
-
-    public static String formatTime(long timeInMilli) {
-        long hourBasis = 60;
-
-        StringBuilder formattedTime = new StringBuilder();
-
-        long secTmp = timeInMilli / 1000;
-        long sec = secTmp % hourBasis;
-        long minTmp = secTmp / hourBasis;
-        long min = minTmp % hourBasis;
-        long hour = minTmp / hourBasis;
-
-        if (hour > 0) {
-            formattedTime.append(hour).append(" hour");
-            if (hour > 1)
-                formattedTime.append("s");
-        }
-
-        if (min > 0) {
-            if (formattedTime.length() > 0)
-                formattedTime.append(", ");
-            formattedTime.append(min).append(" minute");
-            if (min > 1)
-                formattedTime.append("s");
-        }
-
-        if (sec > 0) {
-            if (formattedTime.length() > 0)
-                formattedTime.append(", ");
-            formattedTime.append(sec).append(" second");
-            if (sec > 1)
-                formattedTime.append("s");
-        }
-
-        if (formattedTime.length() > 0)
-            return formattedTime.toString();
-
-        return "< 1 second";
-    }
-
-    public static String formatFileSize(long size) {
-        if (size < 1024)
-            return size + " B";
-        else if (size < 1024 * 1024)
-            return new DecimalFormat("#.# KB").format((double)size / 1024);
-        else if (size < 1024 * 1024 * 1024)
-            return new DecimalFormat("#.# MB").format((double)size / 1024 / 1024);
-
-        return new DecimalFormat("#.# GB").format((double)size / 1024 / 1024 / 1024);
     }
 
     public static void main(String[] args) {
