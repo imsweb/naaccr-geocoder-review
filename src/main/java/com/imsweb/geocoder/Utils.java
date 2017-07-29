@@ -4,7 +4,13 @@
 package com.imsweb.geocoder;
 
 import java.awt.Font;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -13,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import javax.swing.JLabel;
 
@@ -24,6 +31,18 @@ import com.imsweb.geocoder.entity.GeocodeResult;
 public class Utils {
 
     private static final Pattern _KEY_PATTERN = Pattern.compile("(OutputGeocode|CensusValues|ReferenceFeature)(\\d+)");
+
+    public static List<String> parseHeaders(File file) throws IOException {
+        // TODO finish this
+    }
+
+    protected static Reader createReader(File file) throws IOException {
+        InputStream is = new FileInputStream(file);
+        if (file.getName().endsWith(".gz"))
+            is = new GZIPInputStream(is);
+
+        return new InputStreamReader(is, StandardCharsets.UTF_8);
+    }
 
     public static List<GeocodeResult> parseGeocodeResults(String rawResults) throws IOException {
         Map<Integer, GeocodeResult> results = new LinkedHashMap<>();
