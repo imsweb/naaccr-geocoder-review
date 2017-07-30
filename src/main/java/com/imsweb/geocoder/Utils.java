@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,34 +27,69 @@ import javax.swing.JLabel;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import au.com.bytecode.opencsv.CSVReader;
+
 import com.imsweb.geocoder.entity.GeocodeResult;
 
 public class Utils {
-
-    private static final Pattern _KEY_PATTERN = Pattern.compile("(OutputGeocode|CensusValues|ReferenceFeature)(\\d+)");
-
-    public static List<String> parseHeaders(File file) throws IOException {
-        // TODO finish this
-    }
 
     protected static Reader createReader(File file) throws IOException {
         InputStream is = new FileInputStream(file);
         if (file.getName().endsWith(".gz"))
             is = new GZIPInputStream(is);
-
         return new InputStreamReader(is, StandardCharsets.UTF_8);
+    }
+
+    public static List<String> parseHeaders(File file) throws IOException {
+        try (CSVReader reader = new CSVReader(createReader(file))) {
+            return Arrays.asList(reader.readNext());
+        }
+    }
+
+    public static List<String> parserJsonFields(File file) throws IOException {
+        List<String> fields = new ArrayList<>();
+        try (CSVReader reader = new CSVReader(createReader(file))) {
+            int jsonColumnIndex = Arrays.asList(reader.readNext()).indexOf("OutputGeocodes");
+            if (jsonColumnIndex == -1)
+                throw new IOException("Unable to locate geocoder output column");
+            GeocodeResult result = parseGeocodeResults(Arrays.asList(reader.readNext()).get(jsonColumnIndex)).get(0);
+            for (Map.Entry<String, String> entry : result.getOutputGeocode().entrySet())
+                fields.add("outputGeocode." + entry.getKey());
+            for (Map.Entry<String, String> entry : result.getCensusValue().entrySet())
+                fields.add("censusValue." + entry.getKey());
+            for (Map.Entry<String, String> entry : result.getReferenceFeature().entrySet())
+                fields.add("referenceFeature." + entry.getKey());
+        }
+        return fields;
+    }
+
+    public static Map<String, String> mapJsonFieldsToHeaders(List<String> jsonFields, List<String> headers) {
+        Map<String, String> mappings = new LinkedHashMap<>();
+
+        for (String jsonField : jsonFields) {
+            String fieldName = jsonField.substring(jsonField.indexOf('.') + 1);
+
+            String matchingHeader = null;
+            for (String header : headers)
+                if (fieldName.equals(header))
+                    matchingHeader = header;
+
+            mappings.put(jsonField, matchingHeader);
+        }
+
+        return mappings;
     }
 
     public static List<GeocodeResult> parseGeocodeResults(String rawResults) throws IOException {
         Map<Integer, GeocodeResult> results = new LinkedHashMap<>();
 
-        JsonNode root = new ObjectMapper().readTree(rawResults).get("OutputGeocodes").get(0);
+        Pattern keyPattern = Pattern.compile("(OutputGeocode|CensusValues|ReferenceFeature)(\\d+)");
 
-        Iterator<Map.Entry<String, JsonNode>> iter = root.fields();
+        Iterator<Map.Entry<String, JsonNode>> iter = new ObjectMapper().readTree(rawResults).get("OutputGeocodes").get(0).fields();
         while (iter.hasNext()) {
             Map.Entry<String, JsonNode> entry = iter.next();
 
-            Matcher matcher = _KEY_PATTERN.matcher(entry.getKey());
+            Matcher matcher = keyPattern.matcher(entry.getKey());
             if (matcher.matches()) {
                 Integer index = Integer.valueOf(matcher.group(2));
                 GeocodeResult result = results.computeIfAbsent(index, GeocodeResult::new);
