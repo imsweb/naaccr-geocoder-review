@@ -4,9 +4,9 @@
 package com.imsweb.geocoder;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -35,14 +35,29 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.IOUtils;
 
+import com.imsweb.geocoder.component.ProcessingPanel;
+import com.imsweb.geocoder.component.SourceSelectionPanel;
+import com.imsweb.geocoder.component.TargetSelectionPanel;
+import com.imsweb.geocoder.entity.Session;
+
 public class Standalone extends JFrame implements ActionListener {
 
     public static final String VERSION = getVersion();
+
+    public static final String PANEL_ID_SOURCE = "source";
+    public static final String PANEL_ID_TARGET = "target";
+    public static final String PANEL_ID_PROCESS = "process";
+
+    private Session _session;
+
+    private CardLayout _layout;
+    private JPanel _centerPnl;
 
     public Standalone() {
         this.setTitle("NAACCR Geocoder Review " + VERSION);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.getContentPane().setLayout(new BorderLayout());
+        this.setPreferredSize(new Dimension(1200, 800)); // TODO check against max screen size
 
         JMenuBar bar = new JMenuBar();
         JMenu fileMenu = new JMenu(" File ");
@@ -66,14 +81,27 @@ public class Standalone extends JFrame implements ActionListener {
         bar.add(helpMenu);
         this.setJMenuBar(bar);
 
-        JPanel centerPnl = new JPanel(new GridBagLayout());
-        centerPnl.add(Utils.createBoldLabel("Coming soon..."));
-        this.getContentPane().add(centerPnl, BorderLayout.CENTER);
+        _session = new Session();
+
+        _layout = new CardLayout();
+        _centerPnl = new JPanel(_layout);
+        _centerPnl.add(PANEL_ID_SOURCE, new SourceSelectionPanel(this));
+        _centerPnl.add(PANEL_ID_TARGET, new TargetSelectionPanel(this));
+        _centerPnl.add(PANEL_ID_PROCESS, new ProcessingPanel(this));
+        this.getContentPane().add(_centerPnl, BorderLayout.CENTER);
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
             String msg = "An unexpected error happened, it is recommended to close the application.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
             JOptionPane.showMessageDialog(Standalone.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }));
+    }
+
+    public Session getSession() {
+        return _session;
+    }
+
+    public void showPanel(String panelId) {
+        SwingUtilities.invokeLater(() -> _layout.show(_centerPnl, panelId));
     }
 
     private static String getVersion() {

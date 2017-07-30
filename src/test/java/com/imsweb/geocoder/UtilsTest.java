@@ -37,9 +37,9 @@ public class UtilsTest {
         URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_csv.csv");
         Assert.assertNotNull(url);
         Map<String, String> mappings = Utils.mapJsonFieldsToHeaders(Utils.parserJsonFields(new File(url.getFile())), Utils.parseHeaders(new File(url.getFile())));
-        for (Map.Entry<String, String> mapping : mappings.entrySet())
-            if (mapping.getValue() == null)
-                System.out.println(mapping.getKey());
+        //for (Map.Entry<String, String> mapping : mappings.entrySet())
+        //    System.out.println(mapping.getKey() + " -> " + mapping.getValue());
+        Assert.assertEquals("Latitude", mappings.get("outputGeocode.Latitude"));
     }
 
     @Test
