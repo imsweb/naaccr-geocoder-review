@@ -19,9 +19,11 @@ public class Session {
 
     private List<String> _sourceHeaders;
 
-    private File _targetFile;
+    private List<String> _sourceJsonFields;
 
-    private Map<String, String> _outputMappings;
+    private Map<String, String> _jsonFieldsToHeaders;
+
+    private File _targetFile;
 
     private Map<String, Integer> _processedLines;
 
@@ -49,20 +51,28 @@ public class Session {
         _sourceHeaders = sourceHeaders;
     }
 
+    public List<String> getSourceJsonFields() {
+        return _sourceJsonFields;
+    }
+
+    public void setSourceJsonFields(List<String> sourceJsonFields) {
+        _sourceJsonFields = sourceJsonFields;
+    }
+
+    public Map<String, String> getJsonFieldsToHeaders() {
+        return _jsonFieldsToHeaders;
+    }
+
+    public void setJsonFieldsToHeaders(Map<String, String> jsonFieldsToHeaders) {
+        _jsonFieldsToHeaders = jsonFieldsToHeaders;
+    }
+
     public File getTargetFile() {
         return _targetFile;
     }
 
     public void setTargetFile(File targetFile) {
         _targetFile = targetFile;
-    }
-
-    public Map<String, String> getOutputMappings() {
-        return _outputMappings;
-    }
-
-    public void setOutputMappings(Map<String, String> outputMappings) {
-        _outputMappings = outputMappings;
     }
 
     public Map<String, Integer> getProcessedLines() {

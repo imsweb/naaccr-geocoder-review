@@ -33,7 +33,7 @@ import com.imsweb.geocoder.entity.GeocodeResult;
 
 public class Utils {
 
-    protected static Reader createReader(File file) throws IOException {
+    public static Reader createReader(File file) throws IOException {
         InputStream is = new FileInputStream(file);
         if (file.getName().endsWith(".gz"))
             is = new GZIPInputStream(is);
