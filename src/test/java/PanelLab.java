@@ -42,7 +42,7 @@ import org.junit.Assert;
 
 import com.imsweb.geocoder.AboutDialog;
 import com.imsweb.geocoder.Utils;
-import com.imsweb.geocoder.component.GeocodeResultPanel;
+import com.imsweb.geocoder.component.GeocodeResultPanelDeprecated;
 import com.imsweb.geocoder.entity.GeocodeResult;
 
 public class PanelLab extends JFrame implements ActionListener {
@@ -89,7 +89,7 @@ public class PanelLab extends JFrame implements ActionListener {
             URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_csv.json");
             Assert.assertNotNull(url);
             for (GeocodeResult result : Utils.parseGeocodeResults(IOUtils.toString(url, StandardCharsets.US_ASCII))) {
-                contentPnl.add(new GeocodeResultPanel(result));
+                contentPnl.add(new GeocodeResultPanelDeprecated(result));
             }
         }
         catch (IOException e) {

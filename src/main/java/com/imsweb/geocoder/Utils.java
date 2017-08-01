@@ -6,12 +6,15 @@ package com.imsweb.geocoder;
 import java.awt.Font;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -21,6 +24,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.swing.JLabel;
 
@@ -38,6 +42,13 @@ public class Utils {
         if (file.getName().endsWith(".gz"))
             is = new GZIPInputStream(is);
         return new InputStreamReader(is, StandardCharsets.UTF_8);
+    }
+
+    public static Writer createWriter(File file) throws IOException {
+        OutputStream os = new FileOutputStream(file);
+        if (file.getName().endsWith(".gz"))
+            os = new GZIPOutputStream(os);
+        return new OutputStreamWriter(os, StandardCharsets.UTF_8);
     }
 
     public static List<String> parseHeaders(File file) throws IOException {
@@ -141,59 +152,60 @@ public class Utils {
         return lbl;
     }
 
-    public static String formatNumber(int num) {
-        DecimalFormat format = new DecimalFormat();
-        format.setDecimalSeparatorAlwaysShown(false);
-        return format.format(num);
-    }
-
-    public static String formatTime(long timeInMilli) {
-        long hourBasis = 60;
-
-        StringBuilder formattedTime = new StringBuilder();
-
-        long secTmp = timeInMilli / 1000;
-        long sec = secTmp % hourBasis;
-        long minTmp = secTmp / hourBasis;
-        long min = minTmp % hourBasis;
-        long hour = minTmp / hourBasis;
-
-        if (hour > 0) {
-            formattedTime.append(hour).append(" hour");
-            if (hour > 1)
-                formattedTime.append("s");
-        }
-
-        if (min > 0) {
-            if (formattedTime.length() > 0)
-                formattedTime.append(", ");
-            formattedTime.append(min).append(" minute");
-            if (min > 1)
-                formattedTime.append("s");
-        }
-
-        if (sec > 0) {
-            if (formattedTime.length() > 0)
-                formattedTime.append(", ");
-            formattedTime.append(sec).append(" second");
-            if (sec > 1)
-                formattedTime.append("s");
-        }
-
-        if (formattedTime.length() > 0)
-            return formattedTime.toString();
-
-        return "< 1 second";
-    }
-
-    public static String formatFileSize(long size) {
-        if (size < 1024)
-            return size + " B";
-        else if (size < 1024 * 1024)
-            return new DecimalFormat("#.# KB").format((double)size / 1024);
-        else if (size < 1024 * 1024 * 1024)
-            return new DecimalFormat("#.# MB").format((double)size / 1024 / 1024);
-
-        return new DecimalFormat("#.# GB").format((double)size / 1024 / 1024 / 1024);
-    }
+    // TODO I copied that from another project, we should remove them if we don't need them...
+    //    public static String formatNumber(int num) {
+    //        DecimalFormat format = new DecimalFormat();
+    //        format.setDecimalSeparatorAlwaysShown(false);
+    //        return format.format(num);
+    //    }
+    //
+    //    public static String formatTime(long timeInMilli) {
+    //        long hourBasis = 60;
+    //
+    //        StringBuilder formattedTime = new StringBuilder();
+    //
+    //        long secTmp = timeInMilli / 1000;
+    //        long sec = secTmp % hourBasis;
+    //        long minTmp = secTmp / hourBasis;
+    //        long min = minTmp % hourBasis;
+    //        long hour = minTmp / hourBasis;
+    //
+    //        if (hour > 0) {
+    //            formattedTime.append(hour).append(" hour");
+    //            if (hour > 1)
+    //                formattedTime.append("s");
+    //        }
+    //
+    //        if (min > 0) {
+    //            if (formattedTime.length() > 0)
+    //                formattedTime.append(", ");
+    //            formattedTime.append(min).append(" minute");
+    //            if (min > 1)
+    //                formattedTime.append("s");
+    //        }
+    //
+    //        if (sec > 0) {
+    //            if (formattedTime.length() > 0)
+    //                formattedTime.append(", ");
+    //            formattedTime.append(sec).append(" second");
+    //            if (sec > 1)
+    //                formattedTime.append("s");
+    //        }
+    //
+    //        if (formattedTime.length() > 0)
+    //            return formattedTime.toString();
+    //
+    //        return "< 1 second";
+    //    }
+    //
+    //    public static String formatFileSize(long size) {
+    //        if (size < 1024)
+    //            return size + " B";
+    //        else if (size < 1024 * 1024)
+    //            return new DecimalFormat("#.# KB").format((double)size / 1024);
+    //        else if (size < 1024 * 1024 * 1024)
+    //            return new DecimalFormat("#.# MB").format((double)size / 1024 / 1024);
+    //
+    //        return new DecimalFormat("#.# GB").format((double)size / 1024 / 1024 / 1024);
+    //    }
 }

@@ -17,9 +17,11 @@ import javax.swing.border.EmptyBorder;
 import com.imsweb.geocoder.Utils;
 import com.imsweb.geocoder.entity.GeocodeResult;
 
-public class GeocodeResultPanel extends JPanel {
+// TODO this class represents a single results, but since we decided to show them in a table, it's not needed anymore. We should remove it when we are sure we don't need anything from it...
 
-    public GeocodeResultPanel(GeocodeResult result) {
+public class GeocodeResultPanelDeprecated extends JPanel {
+
+    public GeocodeResultPanelDeprecated(GeocodeResult result) {
         this.setLayout(new BorderLayout());
         this.setBorder(new BevelBorder(BevelBorder.RAISED));
 

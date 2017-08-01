@@ -5,7 +5,6 @@ package com.imsweb.geocoder;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
@@ -15,10 +14,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 import javax.swing.JDialog;
@@ -69,11 +66,6 @@ public class Standalone extends JFrame implements ActionListener {
         fileMenu.add(exitItem);
         JMenu helpMenu = new JMenu(" Help ");
         helpMenu.setMnemonic(KeyEvent.VK_H);
-        JMenuItem helpItem = new JMenuItem("View Help       ");
-        helpItem.setActionCommand("menu-help");
-        helpItem.addActionListener(this);
-        helpMenu.add(helpItem);
-        helpMenu.addSeparator();
         JMenuItem aboutItem = new JMenuItem("About");
         aboutItem.setActionCommand("menu-about");
         aboutItem.addActionListener(this);
@@ -141,21 +133,6 @@ public class Standalone extends JFrame implements ActionListener {
         String cmd = e.getActionCommand();
         if ("menu-exit".equals(cmd))
             System.exit(0);
-        else if ("menu-help".equals(cmd)) {
-            try {
-                File targetFile = File.createTempFile("naaccr-geocoder-help", ".html");
-                targetFile.deleteOnExit();
-                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("help/help.html");
-                OutputStream os = new FileOutputStream(targetFile);
-                IOUtils.copy(is, os);
-                is.close();
-                os.close();
-                Desktop.getDesktop().open(targetFile);
-            }
-            catch (RuntimeException | IOException ex) {
-                JOptionPane.showMessageDialog(this, "Unable to display help.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
         else if ("menu-about".equals(cmd)) {
             final JDialog dlg = new AboutDialog(this);
             dlg.pack();

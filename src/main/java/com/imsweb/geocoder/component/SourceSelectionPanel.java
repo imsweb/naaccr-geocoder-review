@@ -29,9 +29,7 @@ public class SourceSelectionPanel extends JPanel {
         _sourceChooser.setApproveButtonToolTipText("Select file");
         _sourceChooser.setMultiSelectionEnabled(false);
 
-        // TODO remove this!
-        File f = new File(System.getProperty("user.dir") + "\\src\\test\\resources\\sample_input_csv.csv");
-        System.out.println(f.getPath());
+        // TODO remove this! (it's convenient to now always have to re-select the data file from the project!)
         _sourceChooser.setSelectedFile(new File(System.getProperty("user.dir") + "\\src\\test\\resources\\sample_input_csv.csv"));
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
