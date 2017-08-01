@@ -19,7 +19,7 @@ public class TargetSelectionPanel extends JPanel {
     private Standalone _parent;
 
     protected JFileChooser _targetChooser;
-    protected JTextField _sourceFld;
+    protected JTextField _sourceFld, _targetFld;
 
     public TargetSelectionPanel(Standalone parent) {
         _parent = parent;
@@ -32,23 +32,48 @@ public class TargetSelectionPanel extends JPanel {
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.LEADING));
-        selectPnl.add(Utils.createBoldLabel("Source File"));
+        // source panel
+        JPanel sourcePnl = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        sourcePnl.add(Utils.createBoldLabel("Source File"));
         _sourceFld = new JTextField(75);
         _sourceFld.setEditable(false);
-        selectPnl.add(_sourceFld);
-        this.add(selectPnl);
+        _sourceFld.setText(parent.getSession().getSourceFile().getPath());
+        sourcePnl.add(_sourceFld);
+        this.add(sourcePnl);
 
-        JButton selectBtn = new JButton("Select Input File");
+        // target selection panel
+        JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        selectPnl.add(Utils.createBoldLabel("Target File"));
+        _targetFld = new JTextField(75);
+        _targetFld.setText(createTargetFromSource(_sourceFld.getText()));
+        selectPnl.add(_targetFld);
+        // TODO the file selection should open in the parent folder of the current target file...
+        JButton selectBtn = new JButton("Browse...");
         selectBtn.addActionListener(e -> {
-            // TODO run some validation, present error popup if anything wrong
-            _parent.getSession().setTargetFile(_targetChooser.getSelectedFile());
-            _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+            if (_targetChooser.showDialog(TargetSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
+                // TODO run some validation, present error popup if anything wrong
+                _parent.getSession().setTargetFile(_targetChooser.getSelectedFile());
+                _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+            }
         });
         selectPnl.add(selectBtn);
+        this.add(selectPnl);
 
         // TODO display the output fields mappings (maybe) - but those are only known at runtime
+
+        JPanel controlsPnl = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        JButton startBtn = new JButton("Start Review");
+        startBtn.addActionListener(e -> {
+            // TODO
+        });
+        controlsPnl.add(startBtn);
+        this.add(controlsPnl);
     }
 
-
+    public static String createTargetFromSource(String sourceFilename) {
+        int idx = sourceFilename.indexOf('.');
+        if (idx == -1)
+            return sourceFilename + "-reviewed";
+        return sourceFilename.substring(0, idx) + "-reviewed" + sourceFilename.substring(idx);
+    }
 }

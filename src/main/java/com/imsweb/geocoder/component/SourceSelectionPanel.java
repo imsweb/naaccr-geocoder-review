@@ -30,7 +30,9 @@ public class SourceSelectionPanel extends JPanel {
         _sourceChooser.setMultiSelectionEnabled(false);
 
         // TODO remove this!
-        _sourceChooser.setSelectedFile(new File("D:\\Users\\depryf\\dev\\projects_github\\naaccr-geocoder-review\\src\\test\\resources\\sample_input_csv.csv"));
+        File f = new File(System.getProperty("user.dir") + "\\src\\test\\resources\\sample_input_csv.csv");
+        System.out.println(f.getPath());
+        _sourceChooser.setSelectedFile(new File(System.getProperty("user.dir") + "\\src\\test\\resources\\sample_input_csv.csv"));
 
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
@@ -39,9 +41,11 @@ public class SourceSelectionPanel extends JPanel {
         JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton selectBtn = new JButton("Select Input File");
         selectBtn.addActionListener(e -> {
-            // TODO run some validation, present error popup if anything wrong
-            _parent.getSession().setSourceFile(_sourceChooser.getSelectedFile());
-            _parent.showPanel(Standalone.PANEL_ID_TARGET);
+            if (_sourceChooser.showDialog(SourceSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
+                // TODO run some validation, present error popup if anything wrong
+                _parent.getSession().setSourceFile(_sourceChooser.getSelectedFile());
+                _parent.showPanel(Standalone.PANEL_ID_TARGET);
+            }
         });
         selectPnl.add(selectBtn);
         this.add(selectPnl);

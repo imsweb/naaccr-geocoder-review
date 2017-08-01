@@ -86,8 +86,6 @@ public class Standalone extends JFrame implements ActionListener {
         _layout = new CardLayout();
         _centerPnl = new JPanel(_layout);
         _centerPnl.add(PANEL_ID_SOURCE, new SourceSelectionPanel(this));
-        _centerPnl.add(PANEL_ID_TARGET, new TargetSelectionPanel(this));
-        _centerPnl.add(PANEL_ID_PROCESS, new ProcessingPanel(this));
         this.getContentPane().add(_centerPnl, BorderLayout.CENTER);
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
@@ -101,6 +99,12 @@ public class Standalone extends JFrame implements ActionListener {
     }
 
     public void showPanel(String panelId) {
+        // TODO I am not sure this is the most elegant way to do this; but basically the "next" panel needs information selected in the current one, so I create it only when
+        // TODO it needs to be displayed... Maybe using a card layout is not necessary in this case, maybe we should just replace the center panel and refresh...
+        if (PANEL_ID_TARGET.equals(panelId))
+            _centerPnl.add(PANEL_ID_TARGET, new TargetSelectionPanel(this));
+        else if (PANEL_ID_PROCESS.equals(panelId))
+            _centerPnl.add(PANEL_ID_PROCESS, new ProcessingPanel(this));
         SwingUtilities.invokeLater(() -> _layout.show(_centerPnl, panelId));
     }
 
