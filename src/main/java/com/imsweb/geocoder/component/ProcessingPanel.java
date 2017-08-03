@@ -66,6 +66,7 @@ public class ProcessingPanel extends JPanel {
     private JTextArea _commentArea;
     private JScrollPane _tableScrollPane;
 
+    // variables for the current line/selection information- needed for writing the line
     private Integer _jsonColumnIndex;
     private Integer _currentLineNumber = 0;
     private String[] _currentLine;
@@ -114,11 +115,12 @@ public class ProcessingPanel extends JPanel {
         JPanel selectPnl = new JPanel(new BorderLayout());
         selectPnl.add(buildNorthPanel(), BorderLayout.NORTH);
         selectPnl.add(buildTableScrollPane(), BorderLayout.CENTER);
-        populateTableNextLine();
+        populateTableFromNextLine();
 
         this.add(selectPnl, BorderLayout.CENTER);
     }
 
+    // Create the top panel with the buttons and text boxes
     private JPanel buildNorthPanel() {
         // the top of the page
         JPanel northPnl = new JPanel();
@@ -133,7 +135,7 @@ public class ProcessingPanel extends JPanel {
         infoPnl.add(Box.createHorizontalStrut(30));
         _skipBtn = Utils.createButton("Skip This Line", "skip", "Skip this line", e -> {
             writeCurrentLine(Session.STATUS_SKIPPED);
-            populateTableNextLine();
+            populateTableFromNextLine();
         });
         infoPnl.add(_skipBtn);
         infoPnl.add(Box.createHorizontalStrut(5));
@@ -142,7 +144,7 @@ public class ProcessingPanel extends JPanel {
                 writeCurrentLine(Session.STATUS_CONFIRMED);
             else
                 writeCurrentLine(Session.STATUS_UPDATED);
-            populateTableNextLine();
+            populateTableFromNextLine();
         });
         infoPnl.add(_nextBtn);
         northPnl.add(infoPnl);
@@ -167,6 +169,7 @@ public class ProcessingPanel extends JPanel {
         return northPnl;
     }
 
+    // Create the scroll pane with the table
     private JScrollPane buildTableScrollPane() {
         // the table is in the center
         _table = new JTable();
@@ -217,7 +220,7 @@ public class ProcessingPanel extends JPanel {
     }
 
     // Read the next line and populates the table
-    private void populateTableNextLine() {
+    private void populateTableFromNextLine() {
         //Set the line number
         _currentLineNumber++;
         _lineNumberLbl.setText(_currentLineNumber.toString());
