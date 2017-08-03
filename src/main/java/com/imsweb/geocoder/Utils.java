@@ -4,6 +4,7 @@
 package com.imsweb.geocoder;
 
 import java.awt.Font;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,6 +27,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,8 +36,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import au.com.bytecode.opencsv.CSVReader;
 
 import com.imsweb.geocoder.entity.GeocodeResult;
+import com.imsweb.geocoder.entity.Session;
 
 public class Utils {
+
+    public static final String JSON_COLUMN_HEADER = "OutputGeocodes";
 
     public static Reader createReader(File file) throws IOException {
         InputStream is = new FileInputStream(file);
@@ -60,7 +65,7 @@ public class Utils {
     public static List<String> parserJsonFields(File file) throws IOException {
         List<String> fields = new ArrayList<>();
         try (CSVReader reader = new CSVReader(createReader(file))) {
-            int jsonColumnIndex = Arrays.asList(reader.readNext()).indexOf("OutputGeocodes");
+            int jsonColumnIndex = Arrays.asList(reader.readNext()).indexOf(JSON_COLUMN_HEADER);
             if (jsonColumnIndex == -1)
                 throw new IOException("Unable to locate geocoder output column");
             GeocodeResult result = parseGeocodeResults(Arrays.asList(reader.readNext()).get(jsonColumnIndex)).get(0);
@@ -96,7 +101,7 @@ public class Utils {
 
         Pattern keyPattern = Pattern.compile("(OutputGeocode|CensusValues|ReferenceFeature)(\\d+)");
 
-        Iterator<Map.Entry<String, JsonNode>> iter = new ObjectMapper().readTree(rawResults).get("OutputGeocodes").get(0).fields();
+        Iterator<Map.Entry<String, JsonNode>> iter = new ObjectMapper().readTree(rawResults).get(JSON_COLUMN_HEADER).get(0).fields();
         while (iter.hasNext()) {
             Map.Entry<String, JsonNode> entry = iter.next();
 
@@ -150,6 +155,26 @@ public class Utils {
         JLabel lbl = new JLabel(text);
         lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
         return lbl;
+    }
+
+    public static JButton createButton(String text, String action, String tooltip, ActionListener listener) {
+        JButton btn = new JButton(text);
+        btn.setOpaque(false);
+        btn.setActionCommand(action);
+        btn.setName(action + "-btn");
+        btn.setToolTipText(tooltip);
+        btn.addActionListener(listener);
+        return btn;
+    }
+
+    public static String[] getResultCsvLine(Session session, String[] originalLine, GeocodeResult selectedResult, Integer status, String comment) {
+        //todo this method will create the result line from the original and the selection...
+        //1. replace the selectedResult values in the CSV line IF the status is UPDATED. otherwise it's not necessary
+        //   use session.getjsonfieldstoheaders and session.getheaders to get the indices
+        //2. set 3 new fields- comment, status, selectedResult.getindex
+        //   comment may need to have quotes escaped
+        //3. return the resulting CSV line
+        return originalLine;
     }
 
     // TODO I copied that from another project, we should remove them if we don't need them...

@@ -4,6 +4,9 @@
 package com.imsweb.geocoder.component;
 
 import java.awt.FlowLayout;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.io.File;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -52,8 +55,7 @@ public class TargetSelectionPanel extends JPanel {
         selectBtn.addActionListener(e -> {
             if (_targetChooser.showDialog(TargetSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
                 // TODO run some validation, present error popup if anything wrong
-                _parent.getSession().setTargetFile(_targetChooser.getSelectedFile());
-                _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                _targetFld.setText(_targetChooser.getSelectedFile().getAbsolutePath());
             }
         });
         selectPnl.add(selectBtn);
@@ -64,10 +66,19 @@ public class TargetSelectionPanel extends JPanel {
         JPanel controlsPnl = new JPanel(new FlowLayout(FlowLayout.LEADING));
         JButton startBtn = new JButton("Start Review");
         startBtn.addActionListener(e -> {
-            // TODO
+            // TODO run some validation, present error popup if anything wrong
+            _parent.getSession().setTargetFile(new File(_targetFld.getText()));
+            _parent.showPanel(Standalone.PANEL_ID_PROCESS);
         });
         controlsPnl.add(startBtn);
         this.add(controlsPnl);
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                startBtn.requestFocus();
+                TargetSelectionPanel.this.removeComponentListener(this);
+            }
+        });
     }
 
     public static String createTargetFromSource(String sourceFilename) {
