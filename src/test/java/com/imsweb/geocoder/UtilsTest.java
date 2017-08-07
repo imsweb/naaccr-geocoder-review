@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.imsweb.geocoder.entity.GeocodeResult;
+import com.imsweb.geocoder.entity.Session;
 
 public class UtilsTest {
 
@@ -44,15 +45,5 @@ public class UtilsTest {
         //for (Map.Entry<String, String> mapping : mappings.entrySet())
         //    System.out.println(mapping.getKey() + " -> " + mapping.getValue());
         Assert.assertEquals("Latitude", mappings.get("outputGeocode.Latitude"));
-    }
-
-    @Test
-    public void testParseGeocodeResults() throws IOException {
-        URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_csv.json");
-        Assert.assertNotNull(url);
-        List<GeocodeResult> results = Utils.parseGeocodeResults(IOUtils.toString(url, StandardCharsets.US_ASCII));
-        Assert.assertEquals(4, results.size());
-
-        // TODO assert a bit more stuff
     }
 }

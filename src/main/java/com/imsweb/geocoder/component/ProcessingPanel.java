@@ -44,8 +44,6 @@ import com.imsweb.geocoder.entity.Session;
 
 // TODO from the meeting: don't use panel on a X box layout, instead use a table. First column should be the JSON fields, next columns the results.
 
-// TODO hide a row if it's all blank
-
 // TODO highlight cells if they are different from first column (default result selected by geocoder)
 
 // TODO come up with a "controls" panel, need some GUI design, but it would allow to "skip" the current record. We also need to support a column selection mechanism; I was thinking
@@ -260,7 +258,21 @@ public class ProcessingPanel extends JPanel {
                     data.get(keyIdx).add(entry.getValue());
                 }
             }
-            //todo filter out the rows where no result has a value
+
+            //filter out the rows where no result has a value
+            for (int i = 0; i < data.size(); i++) {
+                boolean hide = true;
+                Vector<String> dataRow = data.get(i);
+                for (int j = 1; j < dataRow.size(); j++) {
+                    if (!dataRow.get(j).isEmpty())
+                        hide = false;
+                }
+                if (hide) {
+                    System.out.println(dataRow.get(0) + " should be hidden");
+                    data.remove(dataRow);
+                    i--;
+                }
+            }
         }
         catch (EOFException e) {
             closeFiles("You have reached the end of the file!");
