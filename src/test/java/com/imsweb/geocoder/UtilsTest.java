@@ -25,9 +25,7 @@ public class UtilsTest {
         URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
         Assert.assertNotNull(url);
         List<String> headers = Utils.parseHeaders(new File(url.getFile()));
-        // Assert.assertEquals(139, Utils.parseHeaders(new File(url.getFile())).size());
         Assert.assertEquals(139, headers.size());
-        // TODO check a few other headers, don't need to be too exhaustive...
         Assert.assertEquals("UNIQUEID", headers.get(0));
         Assert.assertEquals("FeatureMatchingResultCount", headers.get(25));
         Assert.assertEquals("FCounty", headers.get(123));
@@ -37,20 +35,24 @@ public class UtilsTest {
     public void testParserJsonFields() throws IOException {
         URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
         Assert.assertNotNull(url);
-        Assert.assertEquals(76, Utils.parserJsonFields(new File(url.getFile())).size());
-        // TODO assert a bit more stuff
+        List<String> jsonFields = Utils.parserJsonFields(new File(url.getFile()));
+        Assert.assertEquals(76, jsonFields.size());
+
+        Assert.assertEquals("outputGeocode.Latitude", jsonFields.get(0));
+        Assert.assertEquals("referenceFeature.Source", jsonFields.get(jsonFields.size() - 1));
     }
 
     @Test
     public void testMapJsonFieldsToHeaders() throws IOException {
-        // TODO I put this test quickly to make sure the method was working, but I don't think the test should use the file; it shouldn't call the other parse method.
-        // TODO so it should be changed to build fake list of data and use those instead of the file.
-        URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
-        Assert.assertNotNull(url);
-        Map<String, String> mappings = Utils.mapJsonFieldsToHeaders(Utils.parserJsonFields(new File(url.getFile())), Utils.parseHeaders(new File(url.getFile())));
-        //for (Map.Entry<String, String> mapping : mappings.entrySet())
-        //    System.out.println(mapping.getKey() + " -> " + mapping.getValue());
-        Assert.assertEquals("Latitude", mappings.get("outputGeocode.Latitude"));
+        List<String> jsonFields = new ArrayList<>(Arrays.asList("outputGeocode.Field1", "censusValue.Census1", "referenceFeature.Feature1"));
+        List<String> headers = new ArrayList<>(Arrays.asList("Field1", "Feature1", "Feature2"));
+        Map<String, String> mappings = Utils.mapJsonFieldsToHeaders(jsonFields, headers);
+
+        //Valid mapping
+        Assert.assertEquals("Field1", mappings.get("outputGeocode.Field1"));
+
+        //Header doesn't exist
+        Assert.assertNull(mappings.get("censusValue.Census1"));
     }
 
     @Test
@@ -82,11 +84,13 @@ public class UtilsTest {
         //make original line
         String[] originalLine = {"geo1", "geo2", "census1", "census2", "ref1", "ref2"};
 
-        //make up comment
-        String comment = "This is a comment";
+        //Confirmed result - no comment
+        String[] resultLine = {"geo1", "geo2", "census1", "census2", "ref1", "ref2", Integer.toString(Session.STATUS_CONFIRMED), Integer.toString(index), null};
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_CONFIRMED, null));
 
-        //Confirmed result
-        String[] resultLine = {"geo1", "geo2", "census1", "census2", "ref1", "ref2", Integer.toString(Session.STATUS_CONFIRMED), Integer.toString(index), comment};
+        //Confirmed result - with comment
+        String comment = "This is a comment";
+        resultLine[8] = comment;
         Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_CONFIRMED, comment));
 
         //Skipped Result
@@ -94,14 +98,21 @@ public class UtilsTest {
         Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_SKIPPED, comment));
 
         //Updated Result
+        resultLine[6] = Integer.toString(Session.STATUS_UPDATED);
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_UPDATED, comment));
+
+        //Updated Result - one null value
         referenceFeature.remove("ReferenceFeatureHeader1");
+        referenceFeature.put("ReferenceFeatureHeader1", null);
+        resultLine[4] = null;
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_UPDATED, comment));
+
+        //Updated Result - different non null value
         referenceFeature.put("ReferenceFeatureHeader1", "newRef1");
         geocodeResult.setReferenceFeature(referenceFeature);
         index = 5;
         geocodeResult.setIndex(index);
-
         resultLine[4] = "newRef1";
-        resultLine[6] = Integer.toString(Session.STATUS_UPDATED);
         resultLine[7] = "5";
         Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_UPDATED, comment));
 
