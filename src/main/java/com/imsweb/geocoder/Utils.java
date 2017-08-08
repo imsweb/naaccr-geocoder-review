@@ -172,11 +172,8 @@ public class Utils {
         String[] updatedLine = new String[originalLineLength + 3];
         System.arraycopy(originalLine, 0, updatedLine, 0, originalLine.length);
 
+        List<String> headers = session.getSourceHeaders();
         if (status.equals(Session.STATUS_UPDATED)) {
-
-            List<String> headers = session.getSourceHeaders();
-            //Map<String, String> jsonFields = session.getJsonFieldsToHeaders();
-
             for (Map.Entry<String, String> entry : selectedResult.getOutputGeocode().entrySet())
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
@@ -187,9 +184,11 @@ public class Utils {
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
         }
-        updatedLine[originalLineLength++] = Integer.toString(status);
-        updatedLine[originalLineLength++] = Integer.toString(selectedResult.getIndex());
-        updatedLine[originalLineLength] = comment;
+        if (!headers.get(headers.size() - 1).equals("Comment")) {
+            updatedLine[originalLineLength++] = Integer.toString(status);
+            updatedLine[originalLineLength++] = Integer.toString(selectedResult.getIndex());
+            updatedLine[originalLineLength] = comment;
+        }
         return updatedLine;
     }
 

@@ -99,8 +99,21 @@ public class ProcessingPanel extends JPanel {
         // setup writer
         try {
             _targetWriter = new CSVWriter(Utils.createWriter(parent.getSession().getTargetFile()));
-            //todo write the new header line (same as source + 3 new)
-            //todo if we are going to be reading/writing these files multiple times, check that the new headers don't already exist
+            List<String> sourceHeaders = _parent.getSession().getSourceHeaders();
+            int headerSize = sourceHeaders.size();
+            String[] headers;
+            if (sourceHeaders.get(sourceHeaders.size() - 1).equals("Comment")) {
+                headers = (String[])sourceHeaders.toArray();
+            }
+            else {
+                headers = new String[headerSize + 3];
+                for (int i = 0; i < headerSize; i++)
+                    headers[i] = sourceHeaders.get(i);
+                headers[headerSize++] = "Status";
+                headers[headerSize++] = "Result Index";
+                headers[headerSize] = "Comment";
+            }
+            _targetWriter.writeNext(headers);
         }
         catch (IOException e) {
             // TODO
@@ -206,7 +219,7 @@ public class ProcessingPanel extends JPanel {
 
                 // set the color of the selected column
                 if (column == _currentSelection)
-                    c.setBackground(Color.YELLOW);
+                    c.setBackground(Color.LIGHT_GRAY);
                 else
                     c.setBackground(Color.WHITE);
 
@@ -240,7 +253,7 @@ public class ProcessingPanel extends JPanel {
         //Result columns
         try {
             String[] csvLine = _sourceReader.readNext();
-            if (csvLine.length < _jsonColumnIndex)
+            if (csvLine == null || csvLine.length < _jsonColumnIndex)
                 throw new EOFException();
             String jsonText = csvLine[_jsonColumnIndex];
             _currentLine = csvLine;
