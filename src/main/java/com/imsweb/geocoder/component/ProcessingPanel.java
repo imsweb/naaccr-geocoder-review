@@ -134,6 +134,7 @@ public class ProcessingPanel extends JPanel {
         _skipBtn = Utils.createButton("Skip This Line", "skip", "Skip this line", e -> {
             writeCurrentLine(Session.STATUS_SKIPPED);
             populateTableFromNextLine();
+            _commentArea.setText("");
         });
         infoPnl.add(_skipBtn);
         infoPnl.add(Box.createHorizontalStrut(5));
@@ -143,6 +144,7 @@ public class ProcessingPanel extends JPanel {
             else
                 writeCurrentLine(Session.STATUS_UPDATED);
             populateTableFromNextLine();
+            _commentArea.setText("");
         });
         infoPnl.add(_nextBtn);
         northPnl.add(infoPnl);
@@ -268,7 +270,6 @@ public class ProcessingPanel extends JPanel {
                         hide = false;
                 }
                 if (hide) {
-                    System.out.println(dataRow.get(0) + " should be hidden");
                     data.remove(dataRow);
                     i--;
                 }
@@ -291,8 +292,7 @@ public class ProcessingPanel extends JPanel {
 
     // Write the current line (with any necessary updates) to the target file
     private void writeCurrentLine(Integer status) {
-        Utils.getResultCsvLine(_parent.getSession(), _currentLine, _currentGeocodeResults.get(_currentSelection - 1), status, _commentArea.getText());
-        _targetWriter.writeNext(_currentLine);
+        _targetWriter.writeNext(Utils.getResultCsvLine(_parent.getSession(), _currentLine, _currentGeocodeResults.get(_currentSelection - 1), status, _commentArea.getText()));
     }
 
     private void closeFiles(String message) {

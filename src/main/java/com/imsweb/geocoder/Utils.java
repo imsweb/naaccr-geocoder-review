@@ -168,13 +168,29 @@ public class Utils {
     }
 
     public static String[] getResultCsvLine(Session session, String[] originalLine, GeocodeResult selectedResult, Integer status, String comment) {
-        //todo this method will create the result line from the original and the selection...
-        //1. replace the selectedResult values in the CSV line IF the status is UPDATED. otherwise it's not necessary
-        //   use session.getjsonfieldstoheaders and session.getheaders to get the indices
-        //2. set 3 new fields- comment, status, selectedResult.getindex
-        //   comment may need to have quotes escaped
-        //3. return the resulting CSV line
-        return originalLine;
+        int originalLineLength = originalLine.length;
+        String[] updatedLine = new String[originalLineLength + 3];
+        System.arraycopy(originalLine, 0, updatedLine, 0, originalLine.length);
+
+        if (status.equals(Session.STATUS_UPDATED)) {
+
+            List<String> headers = session.getSourceHeaders();
+            //Map<String, String> jsonFields = session.getJsonFieldsToHeaders();
+
+            for (Map.Entry<String, String> entry : selectedResult.getOutputGeocode().entrySet())
+                if (headers.contains(entry.getKey()))
+                    updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
+            for (Map.Entry<String, String> entry : selectedResult.getCensusValue().entrySet())
+                if (headers.contains(entry.getKey()))
+                    updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
+            for (Map.Entry<String, String> entry : selectedResult.getReferenceFeature().entrySet())
+                if (headers.contains(entry.getKey()))
+                    updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
+        }
+        updatedLine[originalLineLength++] = Integer.toString(status);
+        updatedLine[originalLineLength++] = Integer.toString(selectedResult.getIndex());
+        updatedLine[originalLineLength] = comment;
+        return updatedLine;
     }
 
     // TODO I copied that from another project, we should remove them if we don't need them...
