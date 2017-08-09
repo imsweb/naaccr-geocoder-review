@@ -53,10 +53,6 @@ public class AboutDialog extends JDialog {
         centerPnl.add(buildTextPnl("Developed by", false));
         centerPnl.add(Box.createVerticalStrut(3));
         centerPnl.add(buildTextPnl("Information Management Services, Inc.", true));
-        centerPnl.add(Box.createVerticalStrut(6));
-        centerPnl.add(buildTextPnl("under contract to the", false));
-        centerPnl.add(Box.createVerticalStrut(3));
-        centerPnl.add(buildTextPnl("National Cancer Institute", true));
 
     }
 

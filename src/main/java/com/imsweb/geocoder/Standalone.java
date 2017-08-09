@@ -81,6 +81,7 @@ public class Standalone extends JFrame implements ActionListener {
         this.getContentPane().add(_centerPnl, BorderLayout.CENTER);
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
+            e.printStackTrace(); // TODO REMOVE THIS!
             String msg = "An unexpected error happened, it is recommended to close the application.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
             JOptionPane.showMessageDialog(Standalone.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }));

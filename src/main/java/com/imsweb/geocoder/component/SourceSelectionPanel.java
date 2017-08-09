@@ -42,6 +42,9 @@ public class SourceSelectionPanel extends JPanel {
             if (_sourceChooser.showDialog(SourceSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
                 // TODO run some validation, present error popup if anything wrong
                 _parent.getSession().setSourceFile(_sourceChooser.getSelectedFile());
+
+                // TODO calculate total number of lines (-1) - for now no background
+
                 _parent.showPanel(Standalone.PANEL_ID_TARGET);
             }
         });

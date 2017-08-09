@@ -36,11 +36,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import au.com.bytecode.opencsv.CSVReader;
 
 import com.imsweb.geocoder.entity.GeocodeResult;
+import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
 
 public class Utils {
 
-    public static final String JSON_COLUMN_HEADER = "OutputGeocodes";
+    public static final String CSV_COLUMN_JSON = "OutputGeocodes";
+
+    public static final String JSON_FIELD_INPUT_ADDRESS = "InputAddress";
+    public static final String JSON_FIELD_PARSED_ADDRESS = "ParsedAddress";
+    public static final String JSON_FIELD_OUTPUT_GEOCODES = "OutputGeocodes";
+
+    public static final List<String> JSON_IGNORED = Arrays.asList("Exception", "ExceptionOccured", "ErrorMessage");
 
     public static Reader createReader(File file) throws IOException {
         InputStream is = new FileInputStream(file);
@@ -65,16 +72,19 @@ public class Utils {
     public static List<String> parserJsonFields(File file) throws IOException {
         List<String> fields = new ArrayList<>();
         try (CSVReader reader = new CSVReader(createReader(file))) {
-            int jsonColumnIndex = Arrays.asList(reader.readNext()).indexOf(JSON_COLUMN_HEADER);
+            int jsonColumnIndex = Arrays.asList(reader.readNext()).indexOf(CSV_COLUMN_JSON);
             if (jsonColumnIndex == -1)
                 throw new IOException("Unable to locate geocoder output column");
-            GeocodeResult result = parseGeocodeResults(Arrays.asList(reader.readNext()).get(jsonColumnIndex)).get(0);
+            GeocodeResult result = parseGeocodeResults(Arrays.asList(reader.readNext()).get(jsonColumnIndex)).getResults().get(0);
             for (Map.Entry<String, String> entry : result.getOutputGeocode().entrySet())
-                fields.add("outputGeocode." + entry.getKey());
+                if (!JSON_IGNORED.contains(entry.getKey()))
+                    fields.add("outputGeocode." + entry.getKey());
             for (Map.Entry<String, String> entry : result.getCensusValue().entrySet())
-                fields.add("censusValue." + entry.getKey());
+                if (!JSON_IGNORED.contains(entry.getKey()))
+                    fields.add("censusValue." + entry.getKey());
             for (Map.Entry<String, String> entry : result.getReferenceFeature().entrySet())
-                fields.add("referenceFeature." + entry.getKey());
+                if (!JSON_IGNORED.contains(entry.getKey()))
+                    fields.add("referenceFeature." + entry.getKey());
         }
         return fields;
     }
@@ -96,19 +106,28 @@ public class Utils {
         return mappings;
     }
 
-    public static List<GeocodeResult> parseGeocodeResults(String rawResults) throws IOException {
-        Map<Integer, GeocodeResult> results = new LinkedHashMap<>();
+    public static GeocodeResults parseGeocodeResults(String rawResults) throws IOException {
+        GeocodeResults results = new GeocodeResults();
 
+        JsonNode rootNode = new ObjectMapper().readTree(rawResults);
+
+        // iterate over the input address
+        // TODO
+
+        // iterate over the parsed address
+        // TODO
+
+        // iterate over the output geocodes
+        Map<Integer, GeocodeResult> tmpMap = new LinkedHashMap<>();
         Pattern keyPattern = Pattern.compile("(OutputGeocode|CensusValues|ReferenceFeature)(\\d+)");
-
-        Iterator<Map.Entry<String, JsonNode>> iter = new ObjectMapper().readTree(rawResults).get(JSON_COLUMN_HEADER).get(0).fields();
+        Iterator<Map.Entry<String, JsonNode>> iter = rootNode.get(JSON_FIELD_OUTPUT_GEOCODES).get(0).fields();
         while (iter.hasNext()) {
             Map.Entry<String, JsonNode> entry = iter.next();
 
             Matcher matcher = keyPattern.matcher(entry.getKey());
             if (matcher.matches()) {
                 Integer index = Integer.valueOf(matcher.group(2));
-                GeocodeResult result = results.computeIfAbsent(index, GeocodeResult::new);
+                GeocodeResult result = tmpMap.computeIfAbsent(index, GeocodeResult::new);
                 switch (matcher.group(1)) {
                     case "OutputGeocode":
                         result.setOutputGeocode(simpleJsonToMap(entry.getValue()));
@@ -123,10 +142,11 @@ public class Utils {
                         // ignored
                 }
             }
-
         }
 
-        return new ArrayList<>(results.values());
+        results.setResults(new ArrayList<>(tmpMap.values()));
+
+        return results;
     }
 
     private static Map<String, String> simpleJsonToMap(JsonNode node) {
@@ -135,7 +155,8 @@ public class Utils {
         Iterator<Map.Entry<String, JsonNode>> iter = node.fields();
         while (iter.hasNext()) {
             Map.Entry<String, JsonNode> entry = iter.next();
-            result.put(entry.getKey(), entry.getValue().asText());
+            if (!JSON_IGNORED.contains(entry.getKey()))
+                result.put(entry.getKey(), entry.getValue().asText());
         }
 
         return result;

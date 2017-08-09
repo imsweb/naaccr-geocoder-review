@@ -50,4 +50,8 @@ public class GeocodeResult {
     public void setReferenceFeature(Map<String, String> referenceFeature) {
         _referenceFeature = referenceFeature;
     }
+
+    public String toString() {
+        return "Geocode Result #" + _index;
+    }
 }
