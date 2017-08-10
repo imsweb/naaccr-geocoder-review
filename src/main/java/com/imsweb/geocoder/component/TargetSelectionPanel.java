@@ -85,7 +85,7 @@ public class TargetSelectionPanel extends JPanel {
         northPnl.add(disclaimer1Pnl);
 
         // NORTH/4 - controls
-        northPnl.add(Box.createVerticalStrut(10));
+        northPnl.add(Box.createVerticalStrut(15));
         JPanel controlsPnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton startBtn = new JButton("  Start Review  ");
         startBtn.addActionListener(e -> {
@@ -148,6 +148,7 @@ public class TargetSelectionPanel extends JPanel {
         table.setBorder(null);
         table.setRowSelectionAllowed(false);
         table.setColumnSelectionAllowed(false);
+        table.setAutoCreateRowSorter(true);
         table.setModel(new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int col) {

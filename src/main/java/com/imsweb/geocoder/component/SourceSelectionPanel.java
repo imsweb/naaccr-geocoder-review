@@ -13,6 +13,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -41,45 +42,66 @@ public class SourceSelectionPanel extends JPanel {
 
         this.setLayout(new BorderLayout());
 
-        // NORTH - file info
+        // NORTH - pretty much everything
+        JPanel northPnl = new JPanel();
+        northPnl.setLayout(new BoxLayout(northPnl, BoxLayout.Y_AXIS));
+        this.add(northPnl, BorderLayout.NORTH);
+
+        // NORTH/1 - file info
         JPanel fileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         fileInfoPnl.setBackground(new Color(133, 180, 205));
         fileInfoPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
         fileInfoPnl.add(Utils.createLabel("No input file has been selected yet."));
-        this.add(fileInfoPnl, BorderLayout.NORTH);
+        northPnl.add(fileInfoPnl);
 
-        // CENTER - controls and disclaimer
-        JPanel centerPnl = new JPanel();
-        centerPnl.setLayout(new BoxLayout(centerPnl, BoxLayout.Y_AXIS));
-        centerPnl.add(Box.createVerticalStrut(50));
+        // NORTH/2 - disclaimers
+        northPnl.add(Box.createVerticalStrut(20));
+        JPanel disc1Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc1Pnl.add(Box.createHorizontalStrut(15));
+        disc1Pnl.add(Utils.createLabel("This application allows a manual review of a file of addresses processed by the "));
+        disc1Pnl.add(Utils.createBoldLabel("NAACCR Geocoder"));
+        disc1Pnl.add(Utils.createLabel(" online application."));
+        northPnl.add(disc1Pnl);
+        northPnl.add(Box.createVerticalStrut(15));
+        JPanel disc2Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc2Pnl.add(Box.createHorizontalStrut(15));
+        disc2Pnl.add(Utils.createLabel("The file format can only be  "));
+        disc2Pnl.add(Utils.createBoldLabel("Comma Separated Values (CSV)"));
+        disc2Pnl.add(Utils.createLabel(" or "));
+        disc2Pnl.add(Utils.createBoldLabel("Tab Separated Values (TSV)"));
+        disc2Pnl.add(Utils.createLabel("; the NAACCR Geocoder also supports processing databases but those are not supported by this application."));
+        northPnl.add(disc2Pnl);
+        northPnl.add(Box.createVerticalStrut(15));
+        JPanel disc3Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc3Pnl.add(Box.createHorizontalStrut(15));
+        disc3Pnl.add(Utils.createLabel("Click the "));
+        disc3Pnl.add(Utils.createBoldLabel("Select Input File"));
+        disc3Pnl.add(Utils.createLabel(" button to select the file you wish to review."));
+        northPnl.add(disc3Pnl);
 
+        // NORTH/3 - controls
+        northPnl.add(Box.createVerticalStrut(50));
         JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton selectBtn = new JButton("Select Input File");
         selectBtn.addActionListener(e -> {
             if (_inputChooser.showDialog(SourceSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
-                File sourceFile = _inputChooser.getSelectedFile();
-                // TODO run some validation, present error popup if anything wrong
+                File inputFile = _inputChooser.getSelectedFile();
 
                 try {
-                    _parent.getSession().setSourceFile(sourceFile);
-                    _parent.getSession().setSourceHeaders(Utils.parseHeaders(sourceFile));
-                    _parent.getSession().setSourceJsonFields(Utils.parserJsonFields(sourceFile));
+                    _parent.getSession().setSourceFile(inputFile);
+                    _parent.getSession().setSourceNumLines(Utils.getNumLines(inputFile));
+                    _parent.getSession().setSourceHeaders(Utils.parseHeaders(inputFile));
+                    _parent.getSession().setSourceJsonFields(Utils.parserJsonFields(inputFile));
                     _parent.getSession().setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(_parent.getSession().getSourceJsonFields(), _parent.getSession().getSourceHeaders()));
+
+                    _parent.showPanel(Standalone.PANEL_ID_TARGET);
                 }
                 catch (IOException ex) {
-                    // TODO
+                    JOptionPane.showMessageDialog(SourceSelectionPanel.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
-
-                // TODO calculate total number of lines (-1) - for now no background
-
-                _parent.showPanel(Standalone.PANEL_ID_TARGET);
             }
         });
         selectPnl.add(selectBtn);
-        centerPnl.add(selectPnl);
-
-        this.add(centerPnl, BorderLayout.CENTER);
-
-        // TODO add some disclaimer on the page
+        northPnl.add(selectPnl);
     }
 }

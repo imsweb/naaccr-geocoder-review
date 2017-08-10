@@ -8,7 +8,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridBagLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
@@ -121,7 +120,7 @@ public class ProcessingPanel extends JPanel {
             // TODO
         }
 
-        _currentLineNumber = 0;
+        _currentLineNumber = 1;
 
         this.setLayout(new BorderLayout());
         this.add(buildNorthPanel(parent.getSession()), BorderLayout.NORTH);
@@ -141,7 +140,7 @@ public class ProcessingPanel extends JPanel {
         JPanel fileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         fileInfoPnl.setBackground(new Color(133, 180, 205));
         fileInfoPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
-        fileInfoPnl.add(Utils.createLabel("Line   "));
+        fileInfoPnl.add(Utils.createLabel("Line  "));
         _lineNumberLbl = Utils.createBoldLabel("1");
         fileInfoPnl.add(_lineNumberLbl);
         fileInfoPnl.add(Utils.createLabel("  of  "));
@@ -466,7 +465,7 @@ public class ProcessingPanel extends JPanel {
 
             this.setSelected(_selectedGeocodeResult.getIndex() == _resultIdx);
 
-            JPanel pnl = new JPanel(new GridBagLayout());
+            JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 10, 0));
             pnl.add(_rendererComponent);
             pnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 0, 1, Color.GRAY), new EmptyBorder(2, 0, 2, 0)));
 

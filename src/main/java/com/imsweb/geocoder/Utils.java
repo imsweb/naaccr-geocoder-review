@@ -63,6 +63,18 @@ public class Utils {
         return new OutputStreamWriter(os, StandardCharsets.UTF_8);
     }
 
+    public static int getNumLines(File file) throws IOException {
+        int numLines = 0;
+        try (CSVReader reader = new CSVReader(createReader(file))) {
+            String[] line = reader.readNext();
+            while (line != null) {
+                numLines++;
+                line = reader.readNext();
+            }
+        }
+        return numLines;
+    }
+
     public static List<String> parseHeaders(File file) throws IOException {
         try (CSVReader reader = new CSVReader(createReader(file))) {
             return Arrays.asList(reader.readNext());
