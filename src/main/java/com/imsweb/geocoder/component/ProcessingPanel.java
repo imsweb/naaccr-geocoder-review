@@ -14,7 +14,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -87,16 +86,7 @@ public class ProcessingPanel extends JPanel {
     public ProcessingPanel(Standalone parent) {
         _parent = parent;
 
-        try {
-            File sourceFile = _parent.getSession().getSourceFile();
-            _parent.getSession().setSourceHeaders(Utils.parseHeaders(sourceFile));
-            _parent.getSession().setSourceJsonFields(Utils.parserJsonFields(sourceFile));
-            _parent.getSession().setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(_parent.getSession().getSourceJsonFields(), _parent.getSession().getSourceHeaders()));
-        }
-        catch (IOException e) {
-            //todo
-        }
-
+        // TODO looks like this should be in the session...
         _jsonColumnIndex = _parent.getSession().getSourceHeaders().indexOf(Utils.CSV_COLUMN_JSON);
 
         // setup reader
@@ -151,7 +141,7 @@ public class ProcessingPanel extends JPanel {
         JPanel fileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         fileInfoPnl.setBackground(new Color(133, 180, 205));
         fileInfoPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
-        fileInfoPnl.add(Utils.createLabel("Line number  "));
+        fileInfoPnl.add(Utils.createLabel("Line   "));
         _lineNumberLbl = Utils.createBoldLabel("1");
         fileInfoPnl.add(_lineNumberLbl);
         fileInfoPnl.add(Utils.createLabel("  of  "));
