@@ -17,6 +17,8 @@ public class Session {
 
     private Integer _sourceNumLines;
 
+    private Integer _numSkippedLines;
+
     private List<String> _sourceHeaders;
 
     private List<String> _sourceJsonFields;
@@ -41,6 +43,14 @@ public class Session {
 
     public void setSourceNumLines(Integer sourceNumLines) {
         _sourceNumLines = sourceNumLines;
+    }
+
+    public Integer getNumSkippedLines() {
+        return _numSkippedLines;
+    }
+
+    public void setNumSkippedLines(Integer numSkippedLines) {
+        _numSkippedLines = numSkippedLines;
     }
 
     public List<String> getSourceHeaders() {

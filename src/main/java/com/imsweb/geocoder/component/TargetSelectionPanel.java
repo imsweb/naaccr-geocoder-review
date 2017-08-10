@@ -17,6 +17,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -90,8 +91,30 @@ public class TargetSelectionPanel extends JPanel {
         JButton startBtn = new JButton("  Start Review  ");
         startBtn.addActionListener(e -> {
             // TODO run some validation, present error popup if anything wrong
-            _parent.getSession().setTargetFile(new File(_outputFld.getText()));
-            _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+            //TODO validation doesn't catch if user manually types name in text field
+            if (_outputChooser.getSelectedFile().exists()) {
+                System.out.println("Yes");
+                File targetFile = _outputChooser.getSelectedFile();
+
+                if (targetFile.getAbsolutePath().equals(_parent.getSession().getSourceFile().getAbsolutePath()))
+                    JOptionPane.showMessageDialog(this, "The target file must be different than the input file", "Error", JOptionPane.ERROR_MESSAGE);
+                else {
+                    int option = JOptionPane.showConfirmDialog(this, "The target file already exists, would you like to override it?", "Confirmation", JOptionPane.YES_NO_OPTION);
+                    if (option == JOptionPane.YES_OPTION) {
+                        if (!targetFile.delete()) {
+                            JOptionPane.showMessageDialog(this, "The file cannot be deleted, please remove it by hand.", "Cannot Delete File", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                        _parent.getSession().setTargetFile(new File(_outputFld.getText()));
+                        _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                    }
+                }
+            }
+            else {
+                System.out.println("NO");
+                _parent.getSession().setTargetFile(new File(_outputFld.getText()));
+                _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+            }
         });
         controlsPnl.add(startBtn);
         northPnl.add(controlsPnl);

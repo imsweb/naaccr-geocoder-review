@@ -121,6 +121,7 @@ public class ProcessingPanel extends JPanel {
         }
 
         _currentLineNumber = 1;
+        parent.getSession().setNumSkippedLines(0);
 
         this.setLayout(new BorderLayout());
         this.add(buildNorthPanel(parent.getSession()), BorderLayout.NORTH);
@@ -224,6 +225,7 @@ public class ProcessingPanel extends JPanel {
         controlsPnl.add(Box.createVerticalStrut(10));
         _skipBtn = Utils.createButton("Skip Line", "skip", "Skip this line", e -> {
             writeCurrentLine(Session.STATUS_SKIPPED);
+            _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
             populateTableFromNextLine();
             _commentArea.setText("");
         });
@@ -428,6 +430,37 @@ public class ProcessingPanel extends JPanel {
 
     private void closeFiles(String message) {
         //todo we could also just close the application after showing the message and closing the writer/reader
+        //SETUP FOR RETURN TO SKIP IMPLEMENTATION
+        //        int skippedLines = _parent.getSession().getNumSkippedLines();
+        //        int jOption = 1;
+        //
+        //        if (!message.contains("Exception") && skippedLines > 0) {
+        //            JPanel exitPnl = new JPanel();
+        //            exitPnl.setLayout(new BoxLayout(exitPnl, BoxLayout.Y_AXIS));
+        //            exitPnl.add(new JLabel(message));
+        //            exitPnl.add(new JLabel("You have skipped " + _parent.getSession().getNumSkippedLines() + " lines. Would you like to review them?"));
+        //            jOption = JOptionPane.showConfirmDialog(this, exitPnl, "End of File", JOptionPane.YES_NO_OPTION);
+        //        }
+        //
+        //        if (jOption == 1) {
+        //            JOptionPane.showMessageDialog(this, message);
+        //            _skipBtn.setEnabled(false);
+        //            _nextBtn.setEnabled(false);
+        //            _tableScrollPane.getViewport().remove(_resultsTbl);
+        //            _lineNumberLbl.setText("?");
+        //            _commentArea.setText("");
+        //            try {
+        //                _targetWriter.close();
+        //                _sourceReader.close();
+        //            }
+        //            catch (IOException e) {
+        //                // same as catch below
+        //            }
+        //        }
+        //        else {
+        //            //go back and review skipped lines - a possible to do later
+        //        }
+
         JOptionPane.showMessageDialog(this, message);
         _skipBtn.setEnabled(false);
         _nextBtn.setEnabled(false);
