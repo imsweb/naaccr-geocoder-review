@@ -54,7 +54,13 @@ public class Standalone extends JFrame implements ActionListener {
         this.setTitle("NAACCR Geocoder Review " + VERSION);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.getContentPane().setLayout(new BorderLayout());
-        this.setPreferredSize(new Dimension(1200, 800)); // TODO check against max screen size
+        int prefWidth = 1020;
+        if (Toolkit.getDefaultToolkit().getScreenSize().width > 1200)
+            prefWidth = 1200;
+        int prefHeight = 700;
+        if (Toolkit.getDefaultToolkit().getScreenSize().width > 800)
+            prefHeight = 800;
+        this.setPreferredSize(new Dimension(prefWidth, prefHeight));
 
         JMenuBar bar = new JMenuBar();
         JMenu fileMenu = new JMenu(" File ");

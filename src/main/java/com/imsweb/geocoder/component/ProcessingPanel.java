@@ -297,8 +297,6 @@ public class ProcessingPanel extends JPanel {
 
         _lineNumberLbl.setText(_currentLineNumber.toString());
 
-        //_inputAddressLbl.setText("TODO");  // TODO read this from the JSON
-
         List<String> jsonFields = _parent.getSession().getSourceJsonFields();
 
         try {
@@ -308,6 +306,20 @@ public class ProcessingPanel extends JPanel {
             _currentLine = csvLine;
 
             _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_jsonColumnIndex]);
+
+            StringBuilder addressText = new StringBuilder();
+            if (_currentGeocodeResults.getInputStreet() != null)
+                addressText.append(_currentGeocodeResults.getInputStreet()).append(", ");
+            if (_currentGeocodeResults.getInputCity() != null)
+                addressText.append(_currentGeocodeResults.getInputCity()).append(", ");
+            if (_currentGeocodeResults.getInputState() != null)
+                addressText.append(_currentGeocodeResults.getInputState()).append(" ");
+            if (_currentGeocodeResults.getInputZip() != null)
+                addressText.append(_currentGeocodeResults.getInputZip());
+            if (addressText.charAt(addressText.length() - 2) == ',')
+                addressText.setLength(addressText.length() - 2);
+
+            _inputAddressLbl.setText(addressText.toString());
 
             // create headers
             Vector<String> headers = new Vector<>();

@@ -123,11 +123,14 @@ public class Utils {
 
         JsonNode rootNode = new ObjectMapper().readTree(rawResults);
 
-        // iterate over the input address
-        // TODO
-
-        // iterate over the parsed address
-        // TODO
+        Map<String, String> inputAddress = simpleJsonToMap(rootNode.get(JSON_FIELD_INPUT_ADDRESS));
+        if (inputAddress != null && !inputAddress.isEmpty()) {
+            results.setInputStreet(inputAddress.get("Street"));
+            results.setInputCity(inputAddress.get("City"));
+            results.setInputState(inputAddress.get("State"));
+            results.setInputZip(inputAddress.get("Zip"));
+        }
+        results.setParsedInputFields(simpleJsonToMap(rootNode.get(JSON_FIELD_PARSED_ADDRESS)));
 
         // iterate over the output geocodes
         Map<Integer, GeocodeResult> tmpMap = new LinkedHashMap<>();
@@ -155,9 +158,7 @@ public class Utils {
                 }
             }
         }
-
         results.setResults(new ArrayList<>(tmpMap.values()));
-
         return results;
     }
 
