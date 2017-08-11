@@ -69,7 +69,7 @@ public class ProcessingPanel extends JPanel {
 
     //GUI components
     private JButton _skipBtn, _nextBtn;
-    private JLabel _lineNumberLbl, _inputAddressLbl;
+    private JLabel _lineNumberLbl, _numModifiedLbl, _numConfirmedLbl, _numSkippedLbl, _inputAddressLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
     private JTextArea _commentArea;
@@ -138,16 +138,44 @@ public class ProcessingPanel extends JPanel {
         pnl.add(northPnl, BorderLayout.NORTH);
 
         // NORTH/NORTH - file info
-        JPanel fileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
-        fileInfoPnl.setBackground(new Color(133, 180, 205));
+        JPanel fileInfoPnl = new JPanel(new BorderLayout());
         fileInfoPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
-        fileInfoPnl.add(Utils.createLabel("Line  "));
+        fileInfoPnl.setBackground(new Color(133, 180, 205));
+        JPanel leftFileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        leftFileInfoPnl.setOpaque(false);
+        leftFileInfoPnl.add(Utils.createBoldLabel("Input file: "));
+        leftFileInfoPnl.add(Utils.createLabel(session.getSourceFile().getPath()));
+        fileInfoPnl.add(leftFileInfoPnl, BorderLayout.WEST);
+        JPanel rightFileInfoPnl = new JPanel(new FlowLayout(FlowLayout.TRAILING, 0, 0));
+        rightFileInfoPnl.setOpaque(false);
+        rightFileInfoPnl.add(Utils.createLabel("Line: "));
         _lineNumberLbl = Utils.createBoldLabel("1");
-        fileInfoPnl.add(_lineNumberLbl);
-        fileInfoPnl.add(Utils.createLabel("  of  "));
-        fileInfoPnl.add(Utils.createBoldLabel(Objects.toString(session.getSourceNumLines(), "?")));
-        fileInfoPnl.add(Utils.createLabel("  in  " + session.getSourceFile().getPath()));
+        rightFileInfoPnl.add(_lineNumberLbl);
+        rightFileInfoPnl.add(Utils.createLabel(" of "));
+        rightFileInfoPnl.add(Utils.createBoldLabel(Objects.toString(session.getSourceNumLines(), "?")));
+        rightFileInfoPnl.add(Utils.createLabel(" ; confirmed: "));
+        _numConfirmedLbl = Utils.createBoldLabel("0");
+        rightFileInfoPnl.add(_numConfirmedLbl);
+        rightFileInfoPnl.add(Utils.createLabel(" ; modified: "));
+        _numModifiedLbl = Utils.createBoldLabel("0");
+        rightFileInfoPnl.add(_numModifiedLbl);
+        rightFileInfoPnl.add(Utils.createLabel(" ; skipped: "));
+        _numSkippedLbl = Utils.createBoldLabel("0");
+        rightFileInfoPnl.add(_numSkippedLbl);
+        //rightFileInfoPnl.add(Utils.createLabel(")"));
+        fileInfoPnl.add(rightFileInfoPnl, BorderLayout.EAST);
         northPnl.add(fileInfoPnl, BorderLayout.NORTH);
+
+        //        JPanel fileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        //        fileInfoPnl.setBackground(new Color(133, 180, 205));
+        //        fileInfoPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
+        //        fileInfoPnl.add(Utils.createLabel("Line  "));
+        //        _lineNumberLbl = Utils.createBoldLabel("1");
+        //        fileInfoPnl.add(_lineNumberLbl);
+        //        fileInfoPnl.add(Utils.createLabel("  of  "));
+        //        fileInfoPnl.add(Utils.createBoldLabel(Objects.toString(session.getSourceNumLines(), "?")));
+        //        fileInfoPnl.add(Utils.createLabel("  in  " + session.getSourceFile().getPath()));
+        //        northPnl.add(fileInfoPnl, BorderLayout.NORTH);
 
         // NORTH/SOUTH - input address
         JPanel inputAddressPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
@@ -225,7 +253,6 @@ public class ProcessingPanel extends JPanel {
         controlsPnl.add(Box.createVerticalStrut(10));
         _skipBtn = Utils.createButton("Skip Line", "skip", "Skip this line", e -> {
             writeCurrentLine(Session.STATUS_SKIPPED);
-            _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
             populateTableFromNextLine();
             _commentArea.setText("");
         });
@@ -298,6 +325,9 @@ public class ProcessingPanel extends JPanel {
         _currentLineNumber++;
 
         _lineNumberLbl.setText(_currentLineNumber.toString());
+        _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
+        _numModifiedLbl.setText(_parent.getSession().getNumModifiedLines().toString());
+        _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
 
         List<String> jsonFields = _parent.getSession().getSourceJsonFields();
 
@@ -425,7 +455,22 @@ public class ProcessingPanel extends JPanel {
     }
 
     private void writeCurrentLine(Integer status) {
+
+        // flush the new line
         _targetWriter.writeNext(Utils.getResultCsvLine(_parent.getSession(), _currentLine, _selectedGeocodeResult, status, _commentArea.getText()));
+
+        // update the quick access count
+        if (Session.STATUS_CONFIRMED.equals(status))
+            _parent.getSession().setNumConfirmedLines(_parent.getSession().getNumConfirmedLines() + 1);
+        else if (Session.STATUS_UPDATED.equals(status))
+            _parent.getSession().setNumModifiedLines(_parent.getSession().getNumModifiedLines() + 1);
+        else if (Session.STATUS_SKIPPED.equals(status))
+            _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
+        else
+            throw new RuntimeException("Unknown status: " + status);
+
+        // update the map of statuses
+        _parent.getSession().getProcessedLines().put(_currentLineNumber, status);
     }
 
     private void closeFiles(String message) {
@@ -505,8 +550,6 @@ public class ProcessingPanel extends JPanel {
             columnIdx = column;
 
             _rendererComponent.setText("  " + Objects.toString(value));
-            if (_selectedGeocodeResult.getIndex() == _resultIdx)
-                _rendererComponent.setText(_rendererComponent.getText() + " [SELECTED]");
 
             this.setSelected(_selectedGeocodeResult.getIndex() == _resultIdx);
 

@@ -56,6 +56,9 @@ tasks.withType(Javadoc) {
 
 // rename some files in the fat jar
 shadowJar {
+    from ('VERSION') {
+        rename 'VERSION', 'NAACCR-GEOCODER-REVIEW-VERSION'
+    }
     from ('LICENSE') {
         rename 'LICENSE', 'NAACCR-GEOCODER-REVIEW-LICENSE'
     }

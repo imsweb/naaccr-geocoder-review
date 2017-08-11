@@ -51,7 +51,8 @@ public class SourceSelectionPanel extends JPanel {
         JPanel fileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         fileInfoPnl.setBackground(new Color(133, 180, 205));
         fileInfoPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
-        fileInfoPnl.add(Utils.createLabel("No input file has been selected yet."));
+        fileInfoPnl.add(Utils.createBoldLabel("Input file: "));
+        fileInfoPnl.add(Utils.createLabel("< no input file has been selected yet >"));
         northPnl.add(fileInfoPnl);
 
         // NORTH/2 - disclaimers
