@@ -46,27 +46,28 @@ public class UtilsTest {
         List<String> jsonFields = Utils.parserJsonFields(new File(url.getFile()));
         Assert.assertEquals(70, jsonFields.size());
 
-        Assert.assertEquals("outputGeocode.Latitude", jsonFields.get(0));
-        Assert.assertEquals("referenceFeature.Source", jsonFields.get(jsonFields.size() - 1));
+        Assert.assertEquals(Utils.FIELD_TYPE_OUTPUT_GEOCODES + "Latitude", jsonFields.get(0));
+        Assert.assertEquals(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".Source", jsonFields.get(jsonFields.size() - 1));
     }
 
     @Test
     public void testMapJsonFieldsToHeaders() throws IOException {
-        List<String> jsonFields = new ArrayList<>(Arrays.asList("outputGeocode.Field1", "censusValue.Census1", "referenceFeature.Feature1"));
+        List<String> jsonFields = new ArrayList<>(
+                Arrays.asList(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".Field1", Utils.FIELD_TYPE_CENSUS_VALUE + ".Census1", Utils.FIELD_TYPE_REFERENCE_FEATURE + ".Feature1"));
         List<String> headers = new ArrayList<>(Arrays.asList("Field1", "Feature1", "Feature2"));
         Map<String, String> mappings = Utils.mapJsonFieldsToHeaders(jsonFields, headers);
 
         Assert.assertTrue(mappings.size() == 3);
 
         //Header doesn't exist
-        Assert.assertNull(mappings.get("censusValue.Census1"));
+        Assert.assertNull(mappings.get(Utils.FIELD_TYPE_CENSUS_VALUE + ".Census1"));
 
         //No affiliated json Field
         Assert.assertFalse(mappings.containsValue("Feature2"));
 
         //Valid mapping
-        Assert.assertEquals("Field1", mappings.get("outputGeocode.Field1"));
-        Assert.assertEquals("Feature1", mappings.get("referenceFeature.Feature1"));
+        Assert.assertEquals("Field1", mappings.get(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".Field1"));
+        Assert.assertEquals("Feature1", mappings.get(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".Feature1"));
     }
 
     @Test

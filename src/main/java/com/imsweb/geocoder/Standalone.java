@@ -34,6 +34,7 @@ import org.apache.commons.io.IOUtils;
 
 import com.imsweb.geocoder.component.ProcessingPanel;
 import com.imsweb.geocoder.component.SourceSelectionPanel;
+import com.imsweb.geocoder.component.SummaryPanel;
 import com.imsweb.geocoder.component.TargetSelectionPanel;
 import com.imsweb.geocoder.entity.Session;
 
@@ -44,6 +45,7 @@ public class Standalone extends JFrame implements ActionListener {
     public static final String PANEL_ID_SOURCE = "source";
     public static final String PANEL_ID_TARGET = "target";
     public static final String PANEL_ID_PROCESS = "process";
+    public static final String PANEL_ID_SUMMARY = "summary";
 
     private Session _session;
 
@@ -104,6 +106,8 @@ public class Standalone extends JFrame implements ActionListener {
             _centerPnl.add(PANEL_ID_TARGET, new TargetSelectionPanel(this));
         else if (PANEL_ID_PROCESS.equals(panelId))
             _centerPnl.add(PANEL_ID_PROCESS, new ProcessingPanel(this));
+        else if (PANEL_ID_SUMMARY.equals(panelId))
+            _centerPnl.add(PANEL_ID_SUMMARY, new SummaryPanel(this));
         SwingUtilities.invokeLater(() -> _layout.show(_centerPnl, panelId));
     }
 

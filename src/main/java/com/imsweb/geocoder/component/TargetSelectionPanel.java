@@ -72,10 +72,8 @@ public class TargetSelectionPanel extends JPanel {
         // TODO the file selection should open in the parent folder of the current target file...
         JButton selectBtn = new JButton("Browse...");
         selectBtn.addActionListener(e -> {
-            if (_outputChooser.showDialog(TargetSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
-                // TODO run some validation, present error popup if anything wrong
+            if (_outputChooser.showDialog(TargetSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION)
                 _outputFld.setText(_outputChooser.getSelectedFile().getAbsolutePath());
-            }
         });
         selectPnl.add(selectBtn);
         northPnl.add(selectPnl);
@@ -90,12 +88,9 @@ public class TargetSelectionPanel extends JPanel {
         JPanel controlsPnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton startBtn = new JButton("  Start Review  ");
         startBtn.addActionListener(e -> {
-            // TODO run some validation, present error popup if anything wrong
-            //TODO validation doesn't catch if user manually types name in text field
-            if (_outputChooser.getSelectedFile().exists()) {
-                System.out.println("Yes");
-                File targetFile = _outputChooser.getSelectedFile();
+            File targetFile = new File(_outputFld.getText());
 
+            if (targetFile.exists()) {
                 if (targetFile.getAbsolutePath().equals(_parent.getSession().getSourceFile().getAbsolutePath()))
                     JOptionPane.showMessageDialog(this, "The target file must be different than the input file", "Error", JOptionPane.ERROR_MESSAGE);
                 else {
@@ -111,9 +106,12 @@ public class TargetSelectionPanel extends JPanel {
                 }
             }
             else {
-                System.out.println("NO");
-                _parent.getSession().setTargetFile(new File(_outputFld.getText()));
-                _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                if (!targetFile.getParentFile().exists())
+                    JOptionPane.showMessageDialog(this, "The specified directory does not exist!", "Error", JOptionPane.ERROR_MESSAGE);
+                else {
+                    _parent.getSession().setTargetFile(new File(_outputFld.getText()));
+                    _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                }
             }
         });
         controlsPnl.add(startBtn);

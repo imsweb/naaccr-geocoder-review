@@ -164,7 +164,7 @@ public class ProcessingPanel extends JPanel {
         inputAddressPnl.setBackground(new Color(167, 191, 205));
         inputAddressPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
         inputAddressPnl.add(Utils.createLabel("Address sent to the Geocoder: "));
-        _inputAddressLbl = Utils.createBoldLabel("some input address [TODO]");
+        _inputAddressLbl = Utils.createBoldLabel("");
         inputAddressPnl.add(_inputAddressLbl); // this needs to come from the session
         northPnl.add(inputAddressPnl, BorderLayout.SOUTH);
 
@@ -296,8 +296,6 @@ public class ProcessingPanel extends JPanel {
     @SuppressWarnings("unchecked")
     private void populateTableFromNextLine() {
 
-        _currentLineNumber++;
-
         _commentArea.setText("");
         _skipBox.setSelected(false);
 
@@ -338,8 +336,8 @@ public class ProcessingPanel extends JPanel {
             // create data
             Vector<Vector<String>> data = new Vector<>();
             data.add(createSeparationRow("Output Geocode", _currentGeocodeResults.getResults().size()));
-            jsonFields.stream().filter(f -> f.startsWith("outputGeocode.")).forEach(f -> {
-                        String fieldName = f.replace("outputGeocode.", "");
+            jsonFields.stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_OUTPUT_GEOCODES)).forEach(f -> {
+                        String fieldName = f.replace(Utils.FIELD_TYPE_OUTPUT_GEOCODES, "");
                         Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
                         row.add("    " + fieldName);
                         _currentGeocodeResults.getResults().forEach(r -> row.add(r.getOutputGeocode().get(fieldName)));
@@ -348,8 +346,8 @@ public class ProcessingPanel extends JPanel {
                     }
             );
             data.add(createSeparationRow("Census Value", _currentGeocodeResults.getResults().size()));
-            jsonFields.stream().filter(f -> f.startsWith("censusValue.")).forEach(f -> {
-                        String fieldName = f.replace("censusValue.", "");
+            jsonFields.stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE)).forEach(f -> {
+                        String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE, "");
                         Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
                         row.add("    " + fieldName);
                         _currentGeocodeResults.getResults().forEach(r -> row.add(r.getCensusValue().get(fieldName)));
@@ -358,8 +356,8 @@ public class ProcessingPanel extends JPanel {
                     }
             );
             data.add(createSeparationRow("Reference Feature", _currentGeocodeResults.getResults().size()));
-            jsonFields.stream().filter(f -> f.startsWith("referenceFeature.")).forEach(f -> {
-                        String fieldName = f.replace("referenceFeature.", "");
+            jsonFields.stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_REFERENCE_FEATURE)).forEach(f -> {
+                        String fieldName = f.replace(Utils.FIELD_TYPE_REFERENCE_FEATURE, "");
                         Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
                         row.add("    " + fieldName);
                         _currentGeocodeResults.getResults().forEach(r -> row.add(r.getReferenceFeature().get(fieldName)));
@@ -402,9 +400,11 @@ public class ProcessingPanel extends JPanel {
                 _selectionBox.setSelectedIndex(0);
                 _resultsTbl.repaint();
             });
+            _currentLineNumber++;
         }
         catch (EOFException e) {
             closeFiles("You have reached the end of the file!");
+            _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
         }
         catch (IOException e) {
             closeFiles("Exception reading next line! " + e.getMessage());
