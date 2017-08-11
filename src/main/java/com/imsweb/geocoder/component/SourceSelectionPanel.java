@@ -90,6 +90,8 @@ public class SourceSelectionPanel extends JPanel {
             if (_inputChooser.showDialog(SourceSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
                 File inputFile = _inputChooser.getSelectedFile();
 
+                // note that we don't need to validate anything because it's all handled in catching the IOException hereunder...
+
                 Session session = _parent.getSession();
                 try {
                     List<String> csvHeaders = Utils.parseHeaders(inputFile);

@@ -81,6 +81,7 @@ public class Utils {
         }
     }
 
+    // TODO please add constants for the three sub-sections
     public static List<String> parserJsonFields(File file) throws IOException {
         List<String> fields = new ArrayList<>();
         try (CSVReader reader = new CSVReader(createReader(file))) {
@@ -101,6 +102,7 @@ public class Utils {
         return fields;
     }
 
+    // TODO this should only consider fields with prefix JSON_FIELD_OUTPUT_GEOCODES
     public static Map<String, String> mapJsonFieldsToHeaders(List<String> jsonFields, List<String> headers) {
         Map<String, String> mappings = new LinkedHashMap<>();
 
@@ -118,6 +120,7 @@ public class Utils {
         return mappings;
     }
 
+    // TODO constants
     public static GeocodeResults parseGeocodeResults(String rawResults) throws IOException {
         GeocodeResults results = new GeocodeResults();
 
