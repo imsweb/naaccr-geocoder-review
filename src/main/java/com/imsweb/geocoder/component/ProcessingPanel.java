@@ -23,6 +23,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -53,22 +54,18 @@ import com.imsweb.geocoder.entity.GeocodeResult;
 import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
 
-// TODO from the meeting: don't use panel on a X box layout, instead use a table. First column should be the JSON fields, next columns the results.
-
-// TODO highlight cells if they are different from first column (default result selected by geocoder)
-
-// TODO come up with a "controls" panel, need some GUI design, but it would allow to "skip" the current record. We also need to support a column selection mechanism; I was thinking
-// TODO maybe double-clicking a column header. But I am wondering if we need keyboard shortcut for that. We will discuss.
 public class ProcessingPanel extends JPanel {
 
+    // main frame parent
     private Standalone _parent;
 
+    // reader/writer
     private CSVReader _sourceReader;
-
     private CSVWriter _targetWriter;
 
     //GUI components
-    private JButton _skipBtn, _nextBtn;
+    private JButton _nextBtn;
+    private JCheckBox _skipBox;
     private JLabel _lineNumberLbl, _numModifiedLbl, _numConfirmedLbl, _numSkippedLbl, _inputAddressLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
@@ -76,7 +73,6 @@ public class ProcessingPanel extends JPanel {
     private JScrollPane _tableScrollPane;
 
     // variables for the current line/selection information- needed for writing the line
-    private Integer _jsonColumnIndex;
     private Integer _currentLineNumber;
     private String[] _currentLine;
     private GeocodeResult _selectedGeocodeResult;
@@ -84,9 +80,6 @@ public class ProcessingPanel extends JPanel {
 
     public ProcessingPanel(Standalone parent) {
         _parent = parent;
-
-        // TODO looks like this should be in the session...
-        _jsonColumnIndex = _parent.getSession().getSourceHeaders().indexOf(Utils.CSV_COLUMN_JSON);
 
         // setup reader
         try {
@@ -166,17 +159,6 @@ public class ProcessingPanel extends JPanel {
         fileInfoPnl.add(rightFileInfoPnl, BorderLayout.EAST);
         northPnl.add(fileInfoPnl, BorderLayout.NORTH);
 
-        //        JPanel fileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
-        //        fileInfoPnl.setBackground(new Color(133, 180, 205));
-        //        fileInfoPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
-        //        fileInfoPnl.add(Utils.createLabel("Line  "));
-        //        _lineNumberLbl = Utils.createBoldLabel("1");
-        //        fileInfoPnl.add(_lineNumberLbl);
-        //        fileInfoPnl.add(Utils.createLabel("  of  "));
-        //        fileInfoPnl.add(Utils.createBoldLabel(Objects.toString(session.getSourceNumLines(), "?")));
-        //        fileInfoPnl.add(Utils.createLabel("  in  " + session.getSourceFile().getPath()));
-        //        northPnl.add(fileInfoPnl, BorderLayout.NORTH);
-
         // NORTH/SOUTH - input address
         JPanel inputAddressPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         inputAddressPnl.setBackground(new Color(167, 191, 205));
@@ -221,7 +203,7 @@ public class ProcessingPanel extends JPanel {
         selectionPnl.add(currentSelectionPnl);
         JPanel selectionDisclaimer1Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         selectionDisclaimer1Pnl.setBorder(new EmptyBorder(0, 5, 0, 0));
-        selectionDisclaimer1Pnl.add(Utils.createItalicLabel("Select from the dropdown or click on a column header."));
+        selectionDisclaimer1Pnl.add(Utils.createItalicLabel("Select from the drop-down or click on a column header."));
         selectionPnl.add(selectionDisclaimer1Pnl);
         selectionPnl.add(Box.createVerticalGlue());
         centerPnl.add(selectionPnl, BorderLayout.WEST);
@@ -239,27 +221,19 @@ public class ProcessingPanel extends JPanel {
         centerPnl.add(commentPnl, BorderLayout.CENTER);
 
         // CENTER/EAST - controls
-        JPanel controlsPnl = new JPanel();
-        controlsPnl.setLayout(new BoxLayout(controlsPnl, BoxLayout.Y_AXIS));
+        JPanel controlsPnl = new JPanel(new BorderLayout());
+        _skipBox = new JCheckBox("Flag this line as skipped");
+        controlsPnl.add(_skipBox, BorderLayout.NORTH);
         _nextBtn = Utils.createButton("Next Line", "next", "Confirm this line and go to the next line", e -> {
-            if (_selectedGeocodeResult.equals(_selectionBox.getItemAt(0)))
+            if (_skipBox.isSelected())
+                writeCurrentLine(Session.STATUS_SKIPPED);
+            else if (_selectedGeocodeResult.equals(_selectionBox.getItemAt(0)))
                 writeCurrentLine(Session.STATUS_CONFIRMED);
             else
                 writeCurrentLine(Session.STATUS_UPDATED);
             populateTableFromNextLine();
-            _commentArea.setText("");
         });
-        controlsPnl.add(_nextBtn);
-        controlsPnl.add(Box.createVerticalStrut(10));
-        _skipBtn = Utils.createButton("Skip Line", "skip", "Skip this line", e -> {
-            writeCurrentLine(Session.STATUS_SKIPPED);
-            populateTableFromNextLine();
-            _commentArea.setText("");
-        });
-        _skipBtn.setMinimumSize(_nextBtn.getPreferredSize());
-        _skipBtn.setPreferredSize(_nextBtn.getPreferredSize());
-        _skipBtn.setMaximumSize(_nextBtn.getPreferredSize());
-        controlsPnl.add(_skipBtn);
+        controlsPnl.add(_nextBtn, BorderLayout.SOUTH);
         centerPnl.add(controlsPnl, BorderLayout.EAST);
 
         return pnl;
@@ -321,8 +295,11 @@ public class ProcessingPanel extends JPanel {
     // Read the next line and populates the table
     @SuppressWarnings("unchecked")
     private void populateTableFromNextLine() {
-        //Set the line number
+
         _currentLineNumber++;
+
+        _commentArea.setText("");
+        _skipBox.setSelected(false);
 
         _lineNumberLbl.setText(_currentLineNumber.toString());
         _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
@@ -333,11 +310,11 @@ public class ProcessingPanel extends JPanel {
 
         try {
             String[] csvLine = _sourceReader.readNext();
-            if (csvLine == null || csvLine.length < _jsonColumnIndex)
+            if (csvLine == null || csvLine.length < _parent.getSession().getJsonColumnIndex())
                 throw new EOFException();
             _currentLine = csvLine;
 
-            _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_jsonColumnIndex]);
+            _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()]);
 
             StringBuilder addressText = new StringBuilder();
             if (_currentGeocodeResults.getInputStreet() != null)
@@ -507,7 +484,8 @@ public class ProcessingPanel extends JPanel {
         //        }
 
         JOptionPane.showMessageDialog(this, message);
-        _skipBtn.setEnabled(false);
+        _skipBox.setSelected(false);
+        _skipBox.setEnabled(false);
         _nextBtn.setEnabled(false);
         _tableScrollPane.getViewport().remove(_resultsTbl);
         _lineNumberLbl.setText("?");

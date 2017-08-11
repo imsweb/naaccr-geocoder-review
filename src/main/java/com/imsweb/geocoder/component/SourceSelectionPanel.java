@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -21,6 +22,7 @@ import javax.swing.border.MatteBorder;
 
 import com.imsweb.geocoder.Standalone;
 import com.imsweb.geocoder.Utils;
+import com.imsweb.geocoder.entity.Session;
 
 public class SourceSelectionPanel extends JPanel {
 
@@ -88,12 +90,18 @@ public class SourceSelectionPanel extends JPanel {
             if (_inputChooser.showDialog(SourceSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
                 File inputFile = _inputChooser.getSelectedFile();
 
+                Session session = _parent.getSession();
                 try {
-                    _parent.getSession().setSourceFile(inputFile);
-                    _parent.getSession().setSourceNumLines(Utils.getNumLines(inputFile));
-                    _parent.getSession().setSourceHeaders(Utils.parseHeaders(inputFile));
-                    _parent.getSession().setSourceJsonFields(Utils.parserJsonFields(inputFile));
-                    _parent.getSession().setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(_parent.getSession().getSourceJsonFields(), _parent.getSession().getSourceHeaders()));
+                    List<String> csvHeaders = Utils.parseHeaders(inputFile);
+                    List<String> jsonFields = Utils.parserJsonFields(inputFile);
+
+                    session.setSourceFile(inputFile);
+                    session.setSourceNumLines(Utils.getNumLines(inputFile));
+                    session.setSourceHeaders(csvHeaders);
+                    session.setSourceJsonFields(jsonFields);
+                    session.setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(jsonFields, csvHeaders));
+                    session.setJsonColumnName(Utils.CSV_COLUMN_JSON);
+                    session.setJsonColumnIndex(csvHeaders.indexOf(Utils.CSV_COLUMN_JSON));
 
                     _parent.showPanel(Standalone.PANEL_ID_TARGET);
                 }

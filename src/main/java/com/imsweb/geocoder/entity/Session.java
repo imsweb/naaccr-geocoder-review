@@ -25,6 +25,10 @@ public class Session {
 
     private Map<String, String> _jsonFieldsToHeaders;
 
+    private String _jsonColumnName;
+
+    private Integer _jsonColumnIndex;
+
     private File _targetFile;
 
     private Integer _numSkippedLines;
@@ -104,6 +108,22 @@ public class Session {
 
     public void setJsonFieldsToHeaders(Map<String, String> jsonFieldsToHeaders) {
         _jsonFieldsToHeaders = jsonFieldsToHeaders;
+    }
+
+    public String getJsonColumnName() {
+        return _jsonColumnName;
+    }
+
+    public void setJsonColumnName(String jsonColumnName) {
+        _jsonColumnName = jsonColumnName;
+    }
+
+    public Integer getJsonColumnIndex() {
+        return _jsonColumnIndex;
+    }
+
+    public void setJsonColumnIndex(Integer jsonColumnIndex) {
+        _jsonColumnIndex = jsonColumnIndex;
     }
 
     public File getTargetFile() {
