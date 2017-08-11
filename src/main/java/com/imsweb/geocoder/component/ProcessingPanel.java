@@ -452,7 +452,7 @@ public class ProcessingPanel extends JPanel {
 
     private void closeFiles(String message) {
         //todo we could also just close the application after showing the message and closing the writer/reader
-        //SETUP FOR RETURN TO SKIP IMPLEMENTATION
+        //SETUP FOR RETURN TO SKIP IMPLEMENTATION - to use instead of current code
         //        int skippedLines = _parent.getSession().getNumSkippedLines();
         //        int jOption = 1;
         //

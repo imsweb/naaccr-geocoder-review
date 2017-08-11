@@ -122,10 +122,13 @@ public class Utils {
 
         for (String jsonField : jsonFields) {
             String fieldName = jsonField.substring(jsonField.indexOf('.') + 1);
+            //REPLACES ABOVE LINE IF "REFERENCE FEATURE" MAPS TO "F" FIELDS
+            //String fieldName = jsonField.startsWith(FIELD_TYPE_REFERENCE_FEATURE) ? "F" + jsonField.substring(jsonField.indexOf('.') + 1) : jsonField.substring(jsonField.indexOf('.') + 1);
 
             String matchingHeader = null;
             for (String header : headers)
-                if (fieldName.equals(header))
+                //ignore case to match SecondaryId json field to SecondaryID header
+                if (fieldName.equalsIgnoreCase(header))
                     matchingHeader = header;
 
             mappings.put(jsonField, matchingHeader);
