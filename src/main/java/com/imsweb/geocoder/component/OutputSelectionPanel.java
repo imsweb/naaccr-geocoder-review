@@ -35,7 +35,7 @@ import com.imsweb.geocoder.Standalone;
 import com.imsweb.geocoder.Utils;
 import com.imsweb.geocoder.entity.Session;
 
-public class TargetSelectionPanel extends JPanel {
+public class OutputSelectionPanel extends JPanel {
 
     private static final String _NOT_MAPPED_TEXT = "< Not mapped, CSV field copied as-is >";
 
@@ -44,7 +44,7 @@ public class TargetSelectionPanel extends JPanel {
     protected JFileChooser _outputChooser;
     protected JTextField _outputFld;
 
-    public TargetSelectionPanel(Standalone parent) {
+    public OutputSelectionPanel(Standalone parent) {
         _parent = parent;
 
         _outputChooser = new JFileChooser();
@@ -78,7 +78,7 @@ public class TargetSelectionPanel extends JPanel {
         // TODO the file selection should open in the parent folder of the current target file...
         JButton selectBtn = new JButton("Browse...");
         selectBtn.addActionListener(e -> {
-            if (_outputChooser.showDialog(TargetSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION)
+            if (_outputChooser.showDialog(OutputSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION)
                 _outputFld.setText(_outputChooser.getSelectedFile().getAbsolutePath());
         });
         selectPnl.add(selectBtn);
@@ -144,7 +144,7 @@ public class TargetSelectionPanel extends JPanel {
             @Override
             public void componentShown(ComponentEvent e) {
                 startBtn.requestFocus();
-                TargetSelectionPanel.this.removeComponentListener(this);
+                OutputSelectionPanel.this.removeComponentListener(this);
             }
         });
     }

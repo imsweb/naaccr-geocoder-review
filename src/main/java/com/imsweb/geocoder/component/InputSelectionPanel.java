@@ -24,13 +24,13 @@ import com.imsweb.geocoder.Standalone;
 import com.imsweb.geocoder.Utils;
 import com.imsweb.geocoder.entity.Session;
 
-public class SourceSelectionPanel extends JPanel {
+public class InputSelectionPanel extends JPanel {
 
     private Standalone _parent;
 
     protected JFileChooser _inputChooser;
 
-    public SourceSelectionPanel(Standalone parent) {
+    public InputSelectionPanel(Standalone parent) {
         _parent = parent;
 
         _inputChooser = new JFileChooser();
@@ -87,7 +87,7 @@ public class SourceSelectionPanel extends JPanel {
         JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton selectBtn = new JButton("Select Input File");
         selectBtn.addActionListener(e -> {
-            if (_inputChooser.showDialog(SourceSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
+            if (_inputChooser.showDialog(InputSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
                 File inputFile = _inputChooser.getSelectedFile();
 
                 // note that we don't need to validate anything because it's all handled in catching the IOException hereunder...

@@ -32,10 +32,10 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.IOUtils;
 
+import com.imsweb.geocoder.component.InputSelectionPanel;
+import com.imsweb.geocoder.component.OutputSelectionPanel;
 import com.imsweb.geocoder.component.ProcessingPanel;
-import com.imsweb.geocoder.component.SourceSelectionPanel;
 import com.imsweb.geocoder.component.SummaryPanel;
-import com.imsweb.geocoder.component.TargetSelectionPanel;
 import com.imsweb.geocoder.entity.Session;
 
 public class Standalone extends JFrame implements ActionListener {
@@ -86,7 +86,7 @@ public class Standalone extends JFrame implements ActionListener {
 
         _layout = new CardLayout();
         _centerPnl = new JPanel(_layout);
-        _centerPnl.add(PANEL_ID_SOURCE, new SourceSelectionPanel(this));
+        _centerPnl.add(PANEL_ID_SOURCE, new InputSelectionPanel(this));
         this.getContentPane().add(_centerPnl, BorderLayout.CENTER);
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
@@ -102,7 +102,7 @@ public class Standalone extends JFrame implements ActionListener {
 
     public void showPanel(String panelId) {
         if (PANEL_ID_TARGET.equals(panelId))
-            _centerPnl.add(PANEL_ID_TARGET, new TargetSelectionPanel(this));
+            _centerPnl.add(PANEL_ID_TARGET, new OutputSelectionPanel(this));
         else if (PANEL_ID_PROCESS.equals(panelId)) {
             _processingPanel = new ProcessingPanel(this);
             _centerPnl.add(PANEL_ID_PROCESS, _processingPanel);
