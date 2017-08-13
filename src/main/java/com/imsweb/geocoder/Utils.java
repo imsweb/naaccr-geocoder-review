@@ -217,7 +217,7 @@ public class Utils {
         String[] updatedLine = new String[originalLineLength + 3];
         System.arraycopy(originalLine, 0, updatedLine, 0, originalLine.length);
 
-        List<String> headers = session.getSourceHeaders();
+        List<String> headers = session.getInputCsvHeaders();
         if (status.equals(Session.STATUS_UPDATED)) {
             for (Map.Entry<String, String> entry : selectedResult.getOutputGeocode().entrySet())
                 if (headers.contains(entry.getKey()))

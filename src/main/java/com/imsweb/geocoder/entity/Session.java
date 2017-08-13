@@ -15,13 +15,13 @@ public class Session {
     public static final Integer STATUS_UPDATED = 1;
     public static final Integer STATUS_SKIPPED = 2;
 
-    private File _sourceFile;
+    private File _inputFile;
 
-    private Integer _sourceNumResultsToProcess;
+    private Integer _numResultsToProcess;
 
-    private List<String> _sourceHeaders;
+    private List<String> _inputCsvHeaders;
 
-    private List<String> _sourceJsonFields;
+    private List<String> _inputJsonFields;
 
     private Map<String, String> _jsonFieldsToHeaders;
 
@@ -29,7 +29,9 @@ public class Session {
 
     private Integer _jsonColumnIndex;
 
-    private File _targetFile;
+    private File _outputFile;
+
+    private Boolean _skippedMode;
 
     private Integer _numSkippedLines;
 
@@ -40,26 +42,27 @@ public class Session {
     private Map<Integer, Integer> _processedLines;
 
     public Session() {
+        _skippedMode = false;
         _numSkippedLines = 0;
         _numConfirmedLines = 0;
         _numModifiedLines = 0;
         _processedLines = new HashMap<>();
     }
 
-    public File getSourceFile() {
-        return _sourceFile;
+    public File getInputFile() {
+        return _inputFile;
     }
 
-    public void setSourceFile(File sourceFile) {
-        _sourceFile = sourceFile;
+    public void setInputFile(File inputFile) {
+        _inputFile = inputFile;
     }
 
-    public Integer getSourceNumResultsToProcess() {
-        return _sourceNumResultsToProcess;
+    public Integer getNumResultsToProcess() {
+        return _numResultsToProcess;
     }
 
-    public void setSourceNumResultsToProcess(Integer sourceNumResultsToProcess) {
-        _sourceNumResultsToProcess = sourceNumResultsToProcess;
+    public void setNumResultsToProcess(Integer numResultsToProcess) {
+        _numResultsToProcess = numResultsToProcess;
     }
 
     public Integer getNumSkippedLines() {
@@ -86,20 +89,20 @@ public class Session {
         _numModifiedLines = numModifiedLines;
     }
 
-    public List<String> getSourceHeaders() {
-        return _sourceHeaders;
+    public List<String> getInputCsvHeaders() {
+        return _inputCsvHeaders;
     }
 
-    public void setSourceHeaders(List<String> sourceHeaders) {
-        _sourceHeaders = sourceHeaders;
+    public void setInputCsvHeaders(List<String> inputCsvHeaders) {
+        _inputCsvHeaders = inputCsvHeaders;
     }
 
-    public List<String> getSourceJsonFields() {
-        return _sourceJsonFields;
+    public List<String> getInputJsonFields() {
+        return _inputJsonFields;
     }
 
-    public void setSourceJsonFields(List<String> sourceJsonFields) {
-        _sourceJsonFields = sourceJsonFields;
+    public void setInputJsonFields(List<String> inputJsonFields) {
+        _inputJsonFields = inputJsonFields;
     }
 
     public Map<String, String> getJsonFieldsToHeaders() {
@@ -126,12 +129,12 @@ public class Session {
         _jsonColumnIndex = jsonColumnIndex;
     }
 
-    public File getTargetFile() {
-        return _targetFile;
+    public File getOutputFile() {
+        return _outputFile;
     }
 
-    public void setTargetFile(File targetFile) {
-        _targetFile = targetFile;
+    public void setOutputFile(File outputFile) {
+        _outputFile = outputFile;
     }
 
     public Map<Integer, Integer> getProcessedLines() {
@@ -140,5 +143,13 @@ public class Session {
 
     public void setProcessedLines(Map<Integer, Integer> processedLines) {
         _processedLines = processedLines;
+    }
+
+    public Boolean getSkippedMode() {
+        return _skippedMode;
+    }
+
+    public void setSkippedMode(Boolean skippedMode) {
+        _skippedMode = skippedMode;
     }
 }

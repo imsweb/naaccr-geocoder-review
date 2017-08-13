@@ -81,7 +81,7 @@ public class ProcessingPanel extends JPanel {
 
         // setup reader
         try {
-            _sourceReader = new CSVReader(Utils.createReader(parent.getSession().getSourceFile()));
+            _sourceReader = new CSVReader(Utils.createReader(parent.getSession().getInputFile()));
             _sourceReader.readNext(); // ignore headers
         }
         catch (IOException e) {
@@ -91,8 +91,8 @@ public class ProcessingPanel extends JPanel {
 
         // setup writer
         try {
-            _targetWriter = new CSVWriter(Utils.createWriter(parent.getSession().getTargetFile()));
-            List<String> sourceHeaders = _parent.getSession().getSourceHeaders();
+            _targetWriter = new CSVWriter(Utils.createWriter(parent.getSession().getOutputFile()));
+            List<String> sourceHeaders = _parent.getSession().getInputCsvHeaders();
             int headerSize = sourceHeaders.size();
             String[] headers;
             if (sourceHeaders.get(sourceHeaders.size() - 1).equals("Comment")) {
@@ -136,7 +136,7 @@ public class ProcessingPanel extends JPanel {
         JPanel leftFileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         leftFileInfoPnl.setOpaque(false);
         leftFileInfoPnl.add(Utils.createBoldLabel("Input file: "));
-        leftFileInfoPnl.add(Utils.createLabel(session.getSourceFile().getPath()));
+        leftFileInfoPnl.add(Utils.createLabel(session.getInputFile().getPath()));
         fileInfoPnl.add(leftFileInfoPnl, BorderLayout.WEST);
         JPanel rightFileInfoPnl = new JPanel(new FlowLayout(FlowLayout.TRAILING, 0, 0));
         rightFileInfoPnl.setOpaque(false);
@@ -144,7 +144,7 @@ public class ProcessingPanel extends JPanel {
         _currentResultIdxLbl = Utils.createBoldLabel("1");
         rightFileInfoPnl.add(_currentResultIdxLbl);
         rightFileInfoPnl.add(Utils.createLabel(" of "));
-        rightFileInfoPnl.add(Utils.createBoldLabel(Objects.toString(session.getSourceNumResultsToProcess(), "?")));
+        rightFileInfoPnl.add(Utils.createBoldLabel(Objects.toString(session.getNumResultsToProcess(), "?")));
         rightFileInfoPnl.add(Utils.createLabel(" ; confirmed: "));
         _numConfirmedLbl = Utils.createBoldLabel("0");
         rightFileInfoPnl.add(_numConfirmedLbl);
@@ -296,7 +296,7 @@ public class ProcessingPanel extends JPanel {
             String[] csvLine = Utils.readNextCsvLine(_sourceReader);
             if (csvLine == null)
                 handleEndOfFile();
-            else if (csvLine.length != _parent.getSession().getSourceHeaders().size())
+            else if (csvLine.length != _parent.getSession().getInputCsvHeaders().size())
                 handleBadCsvLine();
             else {
                 _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()]);
@@ -333,7 +333,7 @@ public class ProcessingPanel extends JPanel {
                 // create data
                 Vector<Vector<String>> data = new Vector<>();
                 data.add(createSeparationRow("Output Geocode", _currentGeocodeResults.getResults().size()));
-                _parent.getSession().getSourceJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".")).forEach(f -> {
+                _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".")).forEach(f -> {
                             String fieldName = f.replace(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".", "");
                             Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
                             row.add("    " + fieldName);
@@ -343,7 +343,7 @@ public class ProcessingPanel extends JPanel {
                         }
                 );
                 data.add(createSeparationRow("Census Value", _currentGeocodeResults.getResults().size()));
-                _parent.getSession().getSourceJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
+                _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
                             String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
                             Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
                             row.add("    " + fieldName);
@@ -353,7 +353,7 @@ public class ProcessingPanel extends JPanel {
                         }
                 );
                 data.add(createSeparationRow("Reference Feature", _currentGeocodeResults.getResults().size()));
-                _parent.getSession().getSourceJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".")).forEach(f -> {
+                _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".")).forEach(f -> {
                             String fieldName = f.replace(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".", "");
                             Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
                             row.add("    " + fieldName);

@@ -97,10 +97,10 @@ public class InputSelectionPanel extends JPanel {
                     List<String> csvHeaders = Utils.parseHeaders(inputFile);
                     List<String> jsonFields = Utils.parserJsonFields(inputFile);
 
-                    session.setSourceFile(inputFile);
-                    session.setSourceNumResultsToProcess(Utils.getNumResultsToProcess(inputFile)); // NOT including the headers
-                    session.setSourceHeaders(csvHeaders);
-                    session.setSourceJsonFields(jsonFields);
+                    session.setInputFile(inputFile);
+                    session.setNumResultsToProcess(Utils.getNumResultsToProcess(inputFile)); // NOT including the headers
+                    session.setInputCsvHeaders(csvHeaders);
+                    session.setInputJsonFields(jsonFields);
                     session.setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(jsonFields, csvHeaders));
                     session.setJsonColumnName(Utils.CSV_COLUMN_JSON);
                     session.setJsonColumnIndex(csvHeaders.indexOf(Utils.CSV_COLUMN_JSON));

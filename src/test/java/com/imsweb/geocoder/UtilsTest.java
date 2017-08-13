@@ -136,7 +136,7 @@ public class UtilsTest {
         List<String> sourceHeaders = new ArrayList<>(
                 Arrays.asList("GeocodeHeader1", "GeocodeHeader2", "CensusValueHeader1", "CensusValueHeader2", "ReferenceFeatureHeader1", "ReferenceFeatureHeader2"));
         Session session = new Session();
-        session.setSourceHeaders(sourceHeaders);
+        session.setInputCsvHeaders(sourceHeaders);
 
         //build geocoderresult
         GeocodeResult geocodeResult = new GeocodeResult(1);

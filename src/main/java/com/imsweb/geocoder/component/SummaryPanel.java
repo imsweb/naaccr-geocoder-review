@@ -59,14 +59,14 @@ public class SummaryPanel extends JPanel {
         JPanel leftFileInfoPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         leftFileInfoPnl.setOpaque(false);
         leftFileInfoPnl.add(Utils.createBoldLabel("Input file: "));
-        leftFileInfoPnl.add(Utils.createLabel(session.getSourceFile().getPath()));
+        leftFileInfoPnl.add(Utils.createLabel(session.getInputFile().getPath()));
         fileInfoPnl.add(leftFileInfoPnl, BorderLayout.WEST);
 
         return fileInfoPnl;
     }
 
     private JPanel buildSummaryPanel(Session session) {
-        int numResultLines = session.getSourceNumResultsToProcess();
+        int numResultLines = session.getNumResultsToProcess();
 
         JPanel summaryPnl = new JPanel(new GridBagLayout());
 

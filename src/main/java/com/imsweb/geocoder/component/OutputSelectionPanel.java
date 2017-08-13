@@ -52,7 +52,7 @@ public class OutputSelectionPanel extends JPanel {
         _outputChooser.setDialogTitle("Select Output File");
         _outputChooser.setApproveButtonToolTipText("Select file");
         _outputChooser.setMultiSelectionEnabled(false);
-        _outputChooser.setSelectedFile(new File(createTargetFromSource(parent.getSession().getSourceFile().getPath())));
+        _outputChooser.setSelectedFile(new File(createTargetFromSource(parent.getSession().getInputFile().getPath())));
 
         this.setLayout(new BorderLayout());
 
@@ -66,14 +66,14 @@ public class OutputSelectionPanel extends JPanel {
         fileInfoPnl.setBackground(new Color(133, 180, 205));
         fileInfoPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
         fileInfoPnl.add(Utils.createBoldLabel("Input file: "));
-        fileInfoPnl.add(Utils.createLabel(parent.getSession().getSourceFile().getPath()));
+        fileInfoPnl.add(Utils.createLabel(parent.getSession().getInputFile().getPath()));
         northPnl.add(fileInfoPnl);
 
         // NORTH/2 - target selection
         JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 5));
         selectPnl.add(Utils.createBoldLabel("Output file: "));
         _outputFld = new JTextField(90);
-        _outputFld.setText(createTargetFromSource(parent.getSession().getSourceFile().getPath()));
+        _outputFld.setText(createTargetFromSource(parent.getSession().getInputFile().getPath()));
         selectPnl.add(_outputFld);
         // TODO the file selection should open in the parent folder of the current target file...
         JButton selectBtn = new JButton("Browse...");
@@ -94,28 +94,39 @@ public class OutputSelectionPanel extends JPanel {
         JPanel controlsPnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton startBtn = new JButton("    Start Review    ");
         startBtn.addActionListener(e -> {
-            File targetFile = new File(_outputFld.getText());
+            File outputFile = new File(_outputFld.getText());
 
-            if (targetFile.exists()) {
-                if (targetFile.getAbsolutePath().equals(_parent.getSession().getSourceFile().getAbsolutePath()))
-                    JOptionPane.showMessageDialog(this, "The target file must be different than the input file", "Error", JOptionPane.ERROR_MESSAGE);
+            if (outputFile.exists()) {
+                if (outputFile.getAbsolutePath().equals(_parent.getSession().getInputFile().getAbsolutePath()))
+                    JOptionPane.showMessageDialog(this, "The output file must be different than the input file.", "Error", JOptionPane.ERROR_MESSAGE);
                 else {
-                    int option = JOptionPane.showConfirmDialog(this, "The target file already exists, would you like to override it?", "Confirmation", JOptionPane.YES_NO_OPTION);
+                    String msg = "The output file already exists, would you like to process the skipped results?\n\nClick 'Yes' to process the skipped results.\nClick 'No' to start a new review of the input file.";
+                    int option = JOptionPane.showConfirmDialog(this, msg, "Message", JOptionPane.YES_NO_OPTION);
                     if (option == JOptionPane.YES_OPTION) {
-                        if (!targetFile.delete()) {
-                            JOptionPane.showMessageDialog(this, "The file cannot be deleted, please remove it by hand.", "Cannot Delete File", JOptionPane.ERROR_MESSAGE);
-                            return;
-                        }
-                        _parent.getSession().setTargetFile(new File(_outputFld.getText()));
+                        _parent.getSession().setOutputFile(new File(_outputFld.getText()));
+                        _parent.getSession().setSkippedMode(true);
+                        // TODO re-create the session stats by parsing the existing output file. Create "_skipLinesToProcess" in session (remove the maps of results) and compute it
                         _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                    }
+                    else if (option == JOptionPane.NO_OPTION) {
+                        msg = "The existing output file will be deleted and any review it contains will be list. Are you sure?";
+                        option = JOptionPane.showConfirmDialog(this, msg, "Confirmation", JOptionPane.YES_NO_CANCEL_OPTION);
+                        if (option == JOptionPane.YES_OPTION) {
+                            if (!outputFile.delete())
+                                JOptionPane.showMessageDialog(this, "The file cannot be deleted, please remove it by hand.", "Cannot Delete File", JOptionPane.ERROR_MESSAGE);
+                            else {
+                                _parent.getSession().setOutputFile(new File(_outputFld.getText()));
+                                _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                            }
+                        }
                     }
                 }
             }
             else {
-                if (!targetFile.getParentFile().exists())
-                    JOptionPane.showMessageDialog(this, "The specified directory does not exist!", "Error", JOptionPane.ERROR_MESSAGE);
+                if (!outputFile.getParentFile().exists())
+                    JOptionPane.showMessageDialog(this, "The parent folder does not exist, please create it first.", "Error", JOptionPane.ERROR_MESSAGE);
                 else {
-                    _parent.getSession().setTargetFile(new File(_outputFld.getText()));
+                    _parent.getSession().setOutputFile(new File(_outputFld.getText()));
                     _parent.showPanel(Standalone.PANEL_ID_PROCESS);
                 }
             }
@@ -131,7 +142,7 @@ public class OutputSelectionPanel extends JPanel {
         // CENTER/NORTH - title
         JPanel titlePnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
         titlePnl.add(Utils.createBoldLabel("Fields Mapping"));
-        titlePnl.add(Utils.createLabel("(bold CSV headers are not mapped to any Geocoder output and will be copied as-is in the re-created CSV file)"));
+        titlePnl.add(Utils.createLabel("(bold CSV headers are the ones mapped to a Geocoder output; the ones not in bold will be copied as-is in the re-created CSV file)"));
         centerPnl.add(titlePnl, BorderLayout.NORTH);
 
         // CENTER/CENTER - mappings
@@ -163,8 +174,8 @@ public class OutputSelectionPanel extends JPanel {
         session.getJsonFieldsToHeaders().forEach((key, value) -> csvToJson.put(value, key));
 
         Vector<Vector<Object>> data = new Vector<>();
-        for (int i = 0; i < session.getSourceHeaders().size(); i++) {
-            String csvHeader = session.getSourceHeaders().get(i);
+        for (int i = 0; i < session.getInputCsvHeaders().size(); i++) {
+            String csvHeader = session.getInputCsvHeaders().get(i);
 
             Vector<Object> row = new Vector<>();
             row.add(i + 1); // show 1-based index instead of 0...
