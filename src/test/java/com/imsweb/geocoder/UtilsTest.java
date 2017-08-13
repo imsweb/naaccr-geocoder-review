@@ -22,16 +22,17 @@ import com.imsweb.geocoder.entity.Session;
 public class UtilsTest {
 
     @Test
-    public void testGetNumLines() throws IOException {
+    public void testGetNumResultsToProcess() throws IOException {
         URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
         Assert.assertNotNull(url);
-        Assert.assertEquals(7, Utils.getNumLines(new File(url.getFile())));
+        Assert.assertEquals(7, Utils.getNumResultsToProcess(new File(url.getFile())));
     }
 
     @Test
     public void testParseHeaders() throws IOException {
         URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
         Assert.assertNotNull(url);
+
         List<String> headers = Utils.parseHeaders(new File(url.getFile()));
         Assert.assertEquals(139, headers.size());
         Assert.assertEquals("UNIQUEID", headers.get(0));
@@ -43,31 +44,41 @@ public class UtilsTest {
     public void testParserJsonFields() throws IOException {
         URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
         Assert.assertNotNull(url);
+
         List<String> jsonFields = Utils.parserJsonFields(new File(url.getFile()));
         Assert.assertEquals(70, jsonFields.size());
-
         Assert.assertEquals(Utils.FIELD_TYPE_OUTPUT_GEOCODES + "Latitude", jsonFields.get(0));
         Assert.assertEquals(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".Source", jsonFields.get(jsonFields.size() - 1));
     }
 
     @Test
     public void testMapJsonFieldsToHeaders() throws IOException {
-        List<String> jsonFields = new ArrayList<>(
-                Arrays.asList(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".Field1", Utils.FIELD_TYPE_CENSUS_VALUE + ".Census1", Utils.FIELD_TYPE_REFERENCE_FEATURE + ".Feature1"));
-        List<String> headers = new ArrayList<>(Arrays.asList("Field1", "Feature1", "Feature2"));
+
+        // I know I said earlier this test would be better if it wasn't using real samples, but I changed my mind on that...
+        URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
+        Assert.assertNotNull(url);
+
+        List<String> headers = Utils.parseHeaders(new File(url.getFile()));
+        List<String> jsonFields = Utils.parserJsonFields(new File(url.getFile()));
         Map<String, String> mappings = Utils.mapJsonFieldsToHeaders(jsonFields, headers);
 
-        Assert.assertTrue(mappings.size() == 3);
+        // input fields shouldn't be mapped
+        Assert.assertTrue(headers.contains("StreetAddress"));
+        Assert.assertFalse(mappings.containsValue("StreetAddress"));
 
-        //Header doesn't exist
-        Assert.assertNull(mappings.get(Utils.FIELD_TYPE_CENSUS_VALUE + ".Census1"));
+        // special output fields shouldn't be mapped
+        Assert.assertTrue(headers.contains("Version"));
+        Assert.assertFalse(mappings.containsValue("version"));
 
-        //No affiliated json Field
-        Assert.assertFalse(mappings.containsValue("Feature2"));
+        // all JSON fields should be mapped (not sure why the CensusTimeTaken isn't...)
+        for (String jsonField : jsonFields)
+            if (!"censusValue.CensusTimeTaken".equals(jsonField))
+                Assert.assertNotNull(jsonField, mappings.get(jsonField));
 
-        //Valid mapping
-        Assert.assertEquals("Field1", mappings.get(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".Field1"));
-        Assert.assertEquals("Feature1", mappings.get(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".Feature1"));
+        // test a specific example for each section
+        Assert.assertEquals("Latitude", mappings.get("outputGeocode.Latitude"));
+        Assert.assertEquals("CensusYear", mappings.get("censusValue.CensusYear"));
+        Assert.assertEquals("FName", mappings.get("referenceFeature.Name"));
     }
 
     @Test

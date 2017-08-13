@@ -51,6 +51,7 @@ public class Standalone extends JFrame implements ActionListener {
 
     private CardLayout _layout;
     private JPanel _centerPnl;
+    private ProcessingPanel _processingPanel;
 
     public Standalone() {
         this.setTitle("NAACCR Geocoder Review " + VERSION);
@@ -89,7 +90,7 @@ public class Standalone extends JFrame implements ActionListener {
         this.getContentPane().add(_centerPnl, BorderLayout.CENTER);
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
-            e.printStackTrace(); // TODO REMOVE THIS!
+            e.printStackTrace(); // TODO remove this
             String msg = "An unexpected error happened, it is recommended to close the application.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
             JOptionPane.showMessageDialog(Standalone.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }));
@@ -100,12 +101,12 @@ public class Standalone extends JFrame implements ActionListener {
     }
 
     public void showPanel(String panelId) {
-        // TODO I am not sure this is the most elegant way to do this; but basically the "next" panel needs information selected in the current one, so I create it only when
-        // TODO it needs to be displayed... Maybe using a card layout is not necessary in this case, maybe we should just replace the center panel and refresh...
         if (PANEL_ID_TARGET.equals(panelId))
             _centerPnl.add(PANEL_ID_TARGET, new TargetSelectionPanel(this));
-        else if (PANEL_ID_PROCESS.equals(panelId))
-            _centerPnl.add(PANEL_ID_PROCESS, new ProcessingPanel(this));
+        else if (PANEL_ID_PROCESS.equals(panelId)) {
+            _processingPanel = new ProcessingPanel(this);
+            _centerPnl.add(PANEL_ID_PROCESS, _processingPanel);
+        }
         else if (PANEL_ID_SUMMARY.equals(panelId))
             _centerPnl.add(PANEL_ID_SUMMARY, new SummaryPanel(this));
         SwingUtilities.invokeLater(() -> _layout.show(_centerPnl, panelId));
@@ -139,11 +140,17 @@ public class Standalone extends JFrame implements ActionListener {
         return "v" + version;
     }
 
+    public void performExit() {
+        if (_processingPanel != null)
+            _processingPanel.closeStreams();
+        System.exit(0);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if ("menu-exit".equals(cmd))
-            System.exit(0);
+            performExit();
         else if ("menu-about".equals(cmd)) {
             final JDialog dlg = new AboutDialog(this);
             dlg.pack();

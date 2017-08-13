@@ -17,7 +17,7 @@ public class Session {
 
     private File _sourceFile;
 
-    private Integer _sourceNumLines;
+    private Integer _sourceNumResultsToProcess;
 
     private List<String> _sourceHeaders;
 
@@ -54,12 +54,12 @@ public class Session {
         _sourceFile = sourceFile;
     }
 
-    public Integer getSourceNumLines() {
-        return _sourceNumLines;
+    public Integer getSourceNumResultsToProcess() {
+        return _sourceNumResultsToProcess;
     }
 
-    public void setSourceNumLines(Integer sourceNumLines) {
-        _sourceNumLines = sourceNumLines;
+    public void setSourceNumResultsToProcess(Integer sourceNumResultsToProcess) {
+        _sourceNumResultsToProcess = sourceNumResultsToProcess;
     }
 
     public Integer getNumSkippedLines() {

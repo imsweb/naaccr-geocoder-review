@@ -12,7 +12,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -66,14 +65,13 @@ public class ProcessingPanel extends JPanel {
     //GUI components
     private JButton _nextBtn;
     private JCheckBox _skipBox;
-    private JLabel _lineNumberLbl, _numModifiedLbl, _numConfirmedLbl, _numSkippedLbl, _inputAddressLbl;
+    private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numSkippedLbl, _inputAddressLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
     private JTextArea _commentArea;
-    private JScrollPane _tableScrollPane;
 
     // variables for the current line/selection information- needed for writing the line
-    private Integer _currentLineNumber;
+    private Integer _currentResultIdx;
     private String[] _currentLine;
     private GeocodeResult _selectedGeocodeResult;
     private GeocodeResults _currentGeocodeResults;
@@ -87,7 +85,8 @@ public class ProcessingPanel extends JPanel {
             _sourceReader.readNext(); // ignore headers
         }
         catch (IOException e) {
-            // TODO
+            String msg = "Unable to start reading from input file.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
+            JOptionPane.showMessageDialog(ProcessingPanel.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }
 
         // setup writer
@@ -110,11 +109,11 @@ public class ProcessingPanel extends JPanel {
             _targetWriter.writeNext(headers);
         }
         catch (IOException e) {
-            // TODO
+            String msg = "Unable to start writing to output file.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
+            JOptionPane.showMessageDialog(ProcessingPanel.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        _currentLineNumber = 1;
-        parent.getSession().setNumSkippedLines(0);
+        _currentResultIdx = 0;
 
         this.setLayout(new BorderLayout());
         this.add(buildNorthPanel(parent.getSession()), BorderLayout.NORTH);
@@ -141,11 +140,11 @@ public class ProcessingPanel extends JPanel {
         fileInfoPnl.add(leftFileInfoPnl, BorderLayout.WEST);
         JPanel rightFileInfoPnl = new JPanel(new FlowLayout(FlowLayout.TRAILING, 0, 0));
         rightFileInfoPnl.setOpaque(false);
-        rightFileInfoPnl.add(Utils.createLabel("Line: "));
-        _lineNumberLbl = Utils.createBoldLabel("1");
-        rightFileInfoPnl.add(_lineNumberLbl);
+        rightFileInfoPnl.add(Utils.createLabel("Result: "));
+        _currentResultIdxLbl = Utils.createBoldLabel("1");
+        rightFileInfoPnl.add(_currentResultIdxLbl);
         rightFileInfoPnl.add(Utils.createLabel(" of "));
-        rightFileInfoPnl.add(Utils.createBoldLabel(Objects.toString(session.getSourceNumLines(), "?")));
+        rightFileInfoPnl.add(Utils.createBoldLabel(Objects.toString(session.getSourceNumResultsToProcess(), "?")));
         rightFileInfoPnl.add(Utils.createLabel(" ; confirmed: "));
         _numConfirmedLbl = Utils.createBoldLabel("0");
         rightFileInfoPnl.add(_numConfirmedLbl);
@@ -170,7 +169,6 @@ public class ProcessingPanel extends JPanel {
 
         // CENTER - user selection and such
         JPanel centerPnl = new JPanel(new BorderLayout());
-        //centerPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(10, 5, 5, 5)));
         centerPnl.setBorder(new EmptyBorder(5, 5, 5, 5));
         pnl.add(centerPnl, BorderLayout.CENTER);
 
@@ -285,133 +283,128 @@ public class ProcessingPanel extends JPanel {
             }
         });
 
-        _tableScrollPane = new JScrollPane(_resultsTbl);
-        _tableScrollPane.setBorder(null);
-        pnl.add(_tableScrollPane);
+        JScrollPane tableScrollPane = new JScrollPane(_resultsTbl);
+        tableScrollPane.setBorder(null);
+        pnl.add(tableScrollPane);
 
         return pnl;
     }
 
-    // Read the next line and populates the table
     @SuppressWarnings("unchecked")
     private void populateTableFromNextLine() {
-
-        _commentArea.setText("");
-        _skipBox.setSelected(false);
-
-        _lineNumberLbl.setText(_currentLineNumber.toString());
-        _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
-        _numModifiedLbl.setText(_parent.getSession().getNumModifiedLines().toString());
-        _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
-
-        List<String> jsonFields = _parent.getSession().getSourceJsonFields();
-
         try {
-            String[] csvLine = _sourceReader.readNext();
-            if (csvLine == null || csvLine.length < _parent.getSession().getJsonColumnIndex())
-                throw new EOFException();
-            _currentLine = csvLine;
+            String[] csvLine = Utils.readNextCsvLine(_sourceReader);
+            if (csvLine == null)
+                handleEndOfFile();
+            else if (csvLine.length != _parent.getSession().getSourceHeaders().size())
+                handleBadCsvLine();
+            else {
+                _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()]);
 
-            _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()]);
+                _currentLine = csvLine;
+                _currentResultIdx++;
 
-            StringBuilder addressText = new StringBuilder();
-            if (_currentGeocodeResults.getInputStreet() != null)
-                addressText.append(_currentGeocodeResults.getInputStreet()).append(", ");
-            if (_currentGeocodeResults.getInputCity() != null)
-                addressText.append(_currentGeocodeResults.getInputCity()).append(", ");
-            if (_currentGeocodeResults.getInputState() != null)
-                addressText.append(_currentGeocodeResults.getInputState()).append(" ");
-            if (_currentGeocodeResults.getInputZip() != null)
-                addressText.append(_currentGeocodeResults.getInputZip());
-            if (addressText.charAt(addressText.length() - 2) == ',')
-                addressText.setLength(addressText.length() - 2);
+                _commentArea.setText("");
+                _skipBox.setSelected(false);
+                _currentResultIdxLbl.setText(_currentResultIdx.toString());
+                _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
+                _numModifiedLbl.setText(_parent.getSession().getNumModifiedLines().toString());
+                _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
 
-            _inputAddressLbl.setText(addressText.toString());
+                StringBuilder addressText = new StringBuilder();
+                if (_currentGeocodeResults.getInputStreet() != null)
+                    addressText.append(_currentGeocodeResults.getInputStreet()).append(", ");
+                if (_currentGeocodeResults.getInputCity() != null)
+                    addressText.append(_currentGeocodeResults.getInputCity()).append(", ");
+                if (_currentGeocodeResults.getInputState() != null)
+                    addressText.append(_currentGeocodeResults.getInputState()).append(" ");
+                if (_currentGeocodeResults.getInputZip() != null)
+                    addressText.append(_currentGeocodeResults.getInputZip());
+                if (addressText.charAt(addressText.length() - 2) == ',')
+                    addressText.setLength(addressText.length() - 2);
 
-            // create headers
-            Vector<String> headers = new Vector<>();
-            headers.add("");
-            _currentGeocodeResults.getResults().forEach(r -> headers.add(r.toString()));
+                _inputAddressLbl.setText(addressText.toString());
 
-            // create data
-            Vector<Vector<String>> data = new Vector<>();
-            data.add(createSeparationRow("Output Geocode", _currentGeocodeResults.getResults().size()));
-            jsonFields.stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_OUTPUT_GEOCODES)).forEach(f -> {
-                        String fieldName = f.replace(Utils.FIELD_TYPE_OUTPUT_GEOCODES, "");
-                        Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
-                        row.add("    " + fieldName);
-                        _currentGeocodeResults.getResults().forEach(r -> row.add(r.getOutputGeocode().get(fieldName)));
-                        if (!isEmptyRow(row))
-                            data.add(row);
-                    }
-            );
-            data.add(createSeparationRow("Census Value", _currentGeocodeResults.getResults().size()));
-            jsonFields.stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE)).forEach(f -> {
-                        String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE, "");
-                        Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
-                        row.add("    " + fieldName);
-                        _currentGeocodeResults.getResults().forEach(r -> row.add(r.getCensusValue().get(fieldName)));
-                        if (!isEmptyRow(row))
-                            data.add(row);
-                    }
-            );
-            data.add(createSeparationRow("Reference Feature", _currentGeocodeResults.getResults().size()));
-            jsonFields.stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_REFERENCE_FEATURE)).forEach(f -> {
-                        String fieldName = f.replace(Utils.FIELD_TYPE_REFERENCE_FEATURE, "");
-                        Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
-                        row.add("    " + fieldName);
-                        _currentGeocodeResults.getResults().forEach(r -> row.add(r.getReferenceFeature().get(fieldName)));
-                        if (!isEmptyRow(row))
-                            data.add(row);
-                    }
-            );
+                // create headers
+                Vector<String> headers = new Vector<>();
+                headers.add(""); // first column contains JSON labels
+                _currentGeocodeResults.getResults().forEach(r -> headers.add(r.toString()));
 
-            // refresh the table model
-            ((DefaultTableModel)_resultsTbl.getModel()).setDataVector(data, headers);
+                // create data
+                Vector<Vector<String>> data = new Vector<>();
+                data.add(createSeparationRow("Output Geocode", _currentGeocodeResults.getResults().size()));
+                _parent.getSession().getSourceJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".")).forEach(f -> {
+                            String fieldName = f.replace(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".", "");
+                            Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
+                            row.add("    " + fieldName);
+                            _currentGeocodeResults.getResults().forEach(r -> row.add(r.getOutputGeocode().get(fieldName)));
+                            if (!isEmptyRow(row))
+                                data.add(row);
+                        }
+                );
+                data.add(createSeparationRow("Census Value", _currentGeocodeResults.getResults().size()));
+                _parent.getSession().getSourceJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
+                            String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
+                            Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
+                            row.add("    " + fieldName);
+                            _currentGeocodeResults.getResults().forEach(r -> row.add(r.getCensusValue().get(fieldName)));
+                            if (!isEmptyRow(row))
+                                data.add(row);
+                        }
+                );
+                data.add(createSeparationRow("Reference Feature", _currentGeocodeResults.getResults().size()));
+                _parent.getSession().getSourceJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".")).forEach(f -> {
+                            String fieldName = f.replace(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".", "");
+                            Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
+                            row.add("    " + fieldName);
+                            _currentGeocodeResults.getResults().forEach(r -> row.add(r.getReferenceFeature().get(fieldName)));
+                            if (!isEmptyRow(row))
+                                data.add(row);
+                        }
+                );
 
-            // register new renderer for each column header (putting them in a group to ensure exactly one is selected at any given time)
-            ButtonGroup group = new ButtonGroup();
-            for (int i = 1; i < _resultsTbl.getColumnModel().getColumnCount(); i++) {
-                RadioButtonHeaderRenderer headerRenderer = new RadioButtonHeaderRenderer(_currentGeocodeResults.getResults().get(i - 1).getIndex());
-                group.add(headerRenderer);
-                _resultsTbl.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+                // refresh the table model
+                ((DefaultTableModel)_resultsTbl.getModel()).setDataVector(data, headers);
+
+                // register new renderer for each column header (putting them in a group to ensure exactly one is selected at any given time)
+                ButtonGroup group = new ButtonGroup();
+                for (int i = 1; i < _resultsTbl.getColumnModel().getColumnCount(); i++) {
+                    RadioButtonHeaderRenderer headerRenderer = new RadioButtonHeaderRenderer(_currentGeocodeResults.getResults().get(i - 1).getIndex());
+                    group.add(headerRenderer);
+                    _resultsTbl.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+                }
+
+                // remove the different style for the very first cell (since it doesn't use our special radio-button header)
+                _resultsTbl.getColumnModel().getColumn(0).setHeaderRenderer((table, value, isSelected, hasFocus, row, column) -> {
+                    JPanel pnl = new JPanel();
+                    pnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 0, 1, Color.GRAY), new EmptyBorder(2, 0, 2, 0)));
+                    return pnl;
+                });
+
+                // make sure columns don't take too much or too little width
+                for (int i = 0; i < _resultsTbl.getColumnModel().getColumnCount(); i++) {
+                    _resultsTbl.getColumnModel().getColumn(i).setMaxWidth(300);
+                    _resultsTbl.getColumnModel().getColumn(i).setMinWidth(150);
+                }
+
+                // refresh the combo box model
+                ((DefaultComboBoxModel)_selectionBox.getModel()).removeAllElements();
+                _currentGeocodeResults.getResults().forEach(((DefaultComboBoxModel)_selectionBox.getModel())::addElement);
+
+                // by default we select the first result (the best one from the geocoder)
+                _selectedGeocodeResult = _currentGeocodeResults.getResults().get(0);
+                SwingUtilities.invokeLater(() -> {
+                    _selectionBox.setSelectedIndex(0);
+                    _resultsTbl.repaint();
+                });
+
+                // set the focus on the next button so the user can just click Enter without doing anything else in the interface...
+                SwingUtilities.invokeLater(() -> _nextBtn.requestFocus());
             }
-
-            // remove the different style for the very first cell (since it doesn't use our special radio-button header)
-            _resultsTbl.getColumnModel().getColumn(0).setHeaderRenderer((table, value, isSelected, hasFocus, row, column) -> {
-                JPanel pnl = new JPanel();
-                pnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 0, 1, Color.GRAY), new EmptyBorder(2, 0, 2, 0)));
-                return pnl;
-            });
-
-            // make sure columns don't take too much or too little width
-            for (int i = 0; i < _resultsTbl.getColumnModel().getColumnCount(); i++) {
-                _resultsTbl.getColumnModel().getColumn(i).setMaxWidth(300);
-                _resultsTbl.getColumnModel().getColumn(i).setMinWidth(150);
-            }
-
-            // refresh the combo box model
-            ((DefaultComboBoxModel)_selectionBox.getModel()).removeAllElements();
-            _currentGeocodeResults.getResults().forEach(((DefaultComboBoxModel)_selectionBox.getModel())::addElement);
-
-            // by default we select the first result (the best one from the geocoder)
-            _selectedGeocodeResult = _currentGeocodeResults.getResults().get(0);
-            SwingUtilities.invokeLater(() -> {
-                _selectionBox.setSelectedIndex(0);
-                _resultsTbl.repaint();
-            });
-            _currentLineNumber++;
-        }
-        catch (EOFException e) {
-            closeFiles("You have reached the end of the file!");
-            _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
         }
         catch (IOException e) {
-            closeFiles("Exception reading next line! " + e.getMessage());
+            handleBadCsvLine();
         }
-
-        // set the focus on the next button so the user can just click Enter without doing anything else in the interface...
-        SwingUtilities.invokeLater(() -> _nextBtn.requestFocus());
     }
 
     // helper for creating an empty row for section titles
@@ -447,55 +440,35 @@ public class ProcessingPanel extends JPanel {
             throw new RuntimeException("Unknown status: " + status);
 
         // update the map of statuses
-        _parent.getSession().getProcessedLines().put(_currentLineNumber, status);
+        _parent.getSession().getProcessedLines().put(_currentResultIdx, status);
     }
 
-    private void closeFiles(String message) {
-        //todo we could also just close the application after showing the message and closing the writer/reader
-        //SETUP FOR RETURN TO SKIP IMPLEMENTATION - to use instead of current code
-        //        int skippedLines = _parent.getSession().getNumSkippedLines();
-        //        int jOption = 1;
-        //
-        //        if (!message.contains("Exception") && skippedLines > 0) {
-        //            JPanel exitPnl = new JPanel();
-        //            exitPnl.setLayout(new BoxLayout(exitPnl, BoxLayout.Y_AXIS));
-        //            exitPnl.add(new JLabel(message));
-        //            exitPnl.add(new JLabel("You have skipped " + _parent.getSession().getNumSkippedLines() + " lines. Would you like to review them?"));
-        //            jOption = JOptionPane.showConfirmDialog(this, exitPnl, "End of File", JOptionPane.YES_NO_OPTION);
-        //        }
-        //
-        //        if (jOption == 1) {
-        //            JOptionPane.showMessageDialog(this, message);
-        //            _skipBtn.setEnabled(false);
-        //            _nextBtn.setEnabled(false);
-        //            _tableScrollPane.getViewport().remove(_resultsTbl);
-        //            _lineNumberLbl.setText("?");
-        //            _commentArea.setText("");
-        //            try {
-        //                _targetWriter.close();
-        //                _sourceReader.close();
-        //            }
-        //            catch (IOException e) {
-        //                // same as catch below
-        //            }
-        //        }
-        //        else {
-        //            //go back and review skipped lines - a possible to do later
-        //        }
+    private void handleEndOfFile() {
+        closeStreams();
+        _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
+    }
 
-        JOptionPane.showMessageDialog(this, message);
-        _skipBox.setSelected(false);
-        _skipBox.setEnabled(false);
-        _nextBtn.setEnabled(false);
-        _tableScrollPane.getViewport().remove(_resultsTbl);
-        _lineNumberLbl.setText("?");
-        _commentArea.setText("");
+    private void handleBadCsvLine() {
+        String msg = "Line is not properly formatted. Would you like to keep processing this file?\n\nSelecting 'No' will close the application.";
+        int option = JOptionPane.showConfirmDialog(this, msg, "Confirmation", JOptionPane.YES_NO_OPTION);
+        if (option == JOptionPane.YES_OPTION)
+            populateTableFromNextLine();
+        else
+            _parent.performExit();
+    }
+
+    public void closeStreams() {
         try {
-            _targetWriter.close();
             _sourceReader.close();
         }
         catch (IOException e) {
-            // TODO
+            // we close the streams when we are done or we exit, so whatever...
+        }
+        try {
+            _targetWriter.close();
+        }
+        catch (IOException e) {
+            // we close the streams when we are done or we exit, so whatever...
         }
     }
 

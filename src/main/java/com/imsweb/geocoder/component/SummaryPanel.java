@@ -36,14 +36,14 @@ public class SummaryPanel extends JPanel {
     public SummaryPanel(Standalone parent) {
         _parent = parent;
         _session = _parent.getSession();
-        _numLines = _session.getSourceNumLines();
+        _numLines = _session.getSourceNumResultsToProcess();
         _numConfirmedResults = _session.getNumConfirmedLines();
         _numSkippedResults = _session.getNumSkippedLines();
         _numModifiedResults = _session.getNumModifiedLines();
 
         this.setLayout(new BorderLayout());
         this.add(buildFileInfoPanel(), BorderLayout.NORTH);
-        int numResultLines = _session.getSourceNumLines() - 1;
+        int numResultLines = _session.getSourceNumResultsToProcess() - 1;
 
         JPanel centerPnlWrap = new JPanel();
         centerPnlWrap.setLayout(new GridLayout(4, 1));
@@ -133,7 +133,7 @@ public class SummaryPanel extends JPanel {
 
         JPanel rightFileInfoPnl = new JPanel(new FlowLayout(FlowLayout.TRAILING, 0, 0));
         rightFileInfoPnl.setOpaque(false);
-        rightFileInfoPnl.add(Utils.createLabel("Line: "));
+        rightFileInfoPnl.add(Utils.createLabel("Result: "));
         JLabel _lineNumberLbl = Utils.createBoldLabel(Integer.toString(_numLines));
         rightFileInfoPnl.add(_lineNumberLbl);
         rightFileInfoPnl.add(Utils.createLabel(" of "));

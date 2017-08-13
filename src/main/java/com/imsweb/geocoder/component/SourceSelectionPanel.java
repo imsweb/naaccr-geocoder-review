@@ -98,7 +98,7 @@ public class SourceSelectionPanel extends JPanel {
                     List<String> jsonFields = Utils.parserJsonFields(inputFile);
 
                     session.setSourceFile(inputFile);
-                    session.setSourceNumLines(Utils.getNumLines(inputFile));
+                    session.setSourceNumResultsToProcess(Utils.getNumResultsToProcess(inputFile)); // NOT including the headers
                     session.setSourceHeaders(csvHeaders);
                     session.setSourceJsonFields(jsonFields);
                     session.setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(jsonFields, csvHeaders));
@@ -108,7 +108,8 @@ public class SourceSelectionPanel extends JPanel {
                     _parent.showPanel(Standalone.PANEL_ID_TARGET);
                 }
                 catch (IOException ex) {
-                    JOptionPane.showMessageDialog(SourceSelectionPanel.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    String msg = "Unable to recognize file format.\n\n   Error: " + (ex.getMessage() == null ? "null access" : ex.getMessage());
+                    JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

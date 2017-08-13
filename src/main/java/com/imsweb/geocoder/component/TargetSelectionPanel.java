@@ -5,7 +5,10 @@ package com.imsweb.geocoder.component;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
@@ -25,6 +28,7 @@ import javax.swing.JTextField;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.imsweb.geocoder.Standalone;
@@ -32,6 +36,8 @@ import com.imsweb.geocoder.Utils;
 import com.imsweb.geocoder.entity.Session;
 
 public class TargetSelectionPanel extends JPanel {
+
+    private static final String _NOT_MAPPED_TEXT = "< Not mapped, CSV field copied as-is >";
 
     private Standalone _parent;
 
@@ -86,7 +92,7 @@ public class TargetSelectionPanel extends JPanel {
         // NORTH/4 - controls
         northPnl.add(Box.createVerticalStrut(15));
         JPanel controlsPnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton startBtn = new JButton("  Start Review  ");
+        JButton startBtn = new JButton("    Start Review    ");
         startBtn.addActionListener(e -> {
             File targetFile = new File(_outputFld.getText());
 
@@ -116,6 +122,7 @@ public class TargetSelectionPanel extends JPanel {
         });
         controlsPnl.add(startBtn);
         northPnl.add(controlsPnl);
+        northPnl.add(Box.createVerticalStrut(20));
 
         // CENTER - input file information
         JPanel centerPnl = new JPanel(new BorderLayout());
@@ -124,6 +131,7 @@ public class TargetSelectionPanel extends JPanel {
         // CENTER/NORTH - title
         JPanel titlePnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
         titlePnl.add(Utils.createBoldLabel("Fields Mapping"));
+        titlePnl.add(Utils.createLabel("(bold CSV headers are not mapped to any Geocoder output and will be copied as-is in the re-created CSV file)"));
         centerPnl.add(titlePnl, BorderLayout.NORTH);
 
         // CENTER/CENTER - mappings
@@ -154,14 +162,14 @@ public class TargetSelectionPanel extends JPanel {
         Map<String, String> csvToJson = new HashMap<>();
         session.getJsonFieldsToHeaders().forEach((key, value) -> csvToJson.put(value, key));
 
-        Vector<Vector<String>> data = new Vector<>();
+        Vector<Vector<Object>> data = new Vector<>();
         for (int i = 0; i < session.getSourceHeaders().size(); i++) {
             String csvHeader = session.getSourceHeaders().get(i);
 
-            Vector<String> row = new Vector<>();
-            row.add(String.valueOf(i + 1));
+            Vector<Object> row = new Vector<>();
+            row.add(i + 1); // show 1-based index instead of 0...
             row.add(csvHeader);
-            row.add(csvToJson.getOrDefault(csvHeader, "< Not mapped, CSV field copied as-is >"));
+            row.add(csvToJson.getOrDefault(csvHeader, _NOT_MAPPED_TEXT));
             data.add(row);
         }
 
@@ -178,15 +186,48 @@ public class TargetSelectionPanel extends JPanel {
         });
         ((DefaultTableModel)table.getModel()).setDataVector(data, headers);
 
+        table.setIntercellSpacing(new Dimension(2, 2));
+
         // properly size the columns
         for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setMaxWidth(i == 0 ? 75 : 500);
             table.getColumnModel().getColumn(i).setMinWidth(i == 0 ? 75 : 500);
         }
 
-        // TODO bold headers?
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-        // TODO create cell renderer and add border, show <> text in gray
+                if (row % 2 == 0)
+                    c.setBackground(new Color(240, 240, 240));
+                else
+                    c.setBackground(Color.WHITE);
+
+                if (column == 1) {
+                    if (_NOT_MAPPED_TEXT.equals(table.getValueAt(row, 2)))
+                        c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                    else
+                        c.setFont(c.getFont().deriveFont(Font.BOLD));
+                }
+                else if (column == 2) {
+                    if (_NOT_MAPPED_TEXT.equals(value)) {
+                        c.setForeground(Color.GRAY);
+                        c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                    }
+                    else {
+                        c.setForeground(Color.BLACK);
+                        c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                    }
+                }
+                else {
+                    c.setForeground(Color.BLACK);
+                    c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                }
+
+                return c;
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(null);
