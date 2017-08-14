@@ -4,7 +4,7 @@
 package com.imsweb.geocoder.entity;
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +17,7 @@ public class Session {
 
     private File _inputFile;
 
-    private Integer _numResultsToProcess;
+    private Integer _numResultsToProcess; // so number of lines NOT including CSV
 
     private List<String> _inputCsvHeaders;
 
@@ -39,14 +39,15 @@ public class Session {
 
     private Integer _numModifiedLines;
 
-    private Map<Integer, Integer> _processedLines;
+    // this one is only set when reading an existing output file and re-creating the session for a "skipped-only" processing...
+    private List<Integer> _skippedLinesToProcess;
 
     public Session() {
         _skippedMode = false;
         _numSkippedLines = 0;
         _numConfirmedLines = 0;
         _numModifiedLines = 0;
-        _processedLines = new HashMap<>();
+        _skippedLinesToProcess = new ArrayList<>();
     }
 
     public File getInputFile() {
@@ -137,12 +138,12 @@ public class Session {
         _outputFile = outputFile;
     }
 
-    public Map<Integer, Integer> getProcessedLines() {
-        return _processedLines;
+    public List<Integer> getSkippedLinesToProcess() {
+        return _skippedLinesToProcess;
     }
 
-    public void setProcessedLines(Map<Integer, Integer> processedLines) {
-        _processedLines = processedLines;
+    public void setSkippedLinesToProcess(List<Integer> skippedLinesToProcess) {
+        _skippedLinesToProcess = skippedLinesToProcess;
     }
 
     public Boolean getSkippedMode() {

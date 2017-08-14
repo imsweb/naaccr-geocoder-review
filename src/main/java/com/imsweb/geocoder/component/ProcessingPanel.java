@@ -434,13 +434,11 @@ public class ProcessingPanel extends JPanel {
             _parent.getSession().setNumConfirmedLines(_parent.getSession().getNumConfirmedLines() + 1);
         else if (Session.STATUS_UPDATED.equals(status))
             _parent.getSession().setNumModifiedLines(_parent.getSession().getNumModifiedLines() + 1);
-        else if (Session.STATUS_SKIPPED.equals(status))
+        else if (Session.STATUS_SKIPPED.equals(status)) {
             _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
+        }
         else
             throw new RuntimeException("Unknown status: " + status);
-
-        // update the map of statuses
-        _parent.getSession().getProcessedLines().put(_currentResultIdx, status);
     }
 
     private void handleEndOfFile() {

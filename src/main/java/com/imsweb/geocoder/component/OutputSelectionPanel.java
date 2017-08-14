@@ -100,17 +100,21 @@ public class OutputSelectionPanel extends JPanel {
                 if (outputFile.getAbsolutePath().equals(_parent.getSession().getInputFile().getAbsolutePath()))
                     JOptionPane.showMessageDialog(this, "The output file must be different than the input file.", "Error", JOptionPane.ERROR_MESSAGE);
                 else {
-                    String msg = "The output file already exists, would you like to process the skipped results?\n\nClick 'Yes' to process the skipped results.\nClick 'No' to start a new review of the input file.";
-                    int option = JOptionPane.showConfirmDialog(this, msg, "Message", JOptionPane.YES_NO_OPTION);
+                    String msg =
+                            "The output file already exists, would you like to process the skipped results?\n\nClick 'Yes' to process the skipped results.\nClick 'No' to start a new review of the input file.";
+                    int option = JOptionPane.showConfirmDialog(this, msg, "Message", JOptionPane.YES_NO_CANCEL_OPTION);
                     if (option == JOptionPane.YES_OPTION) {
+
+                        // TODO re-creating the session from the results in the output file might be slow for large file, I think we need a spinner or something like that...
+
                         _parent.getSession().setOutputFile(new File(_outputFld.getText()));
                         _parent.getSession().setSkippedMode(true);
-                        // TODO re-create the session stats by parsing the existing output file. Create "_skipLinesToProcess" in session (remove the maps of results) and compute it
+                        Utils.updateSessionFromOutputFile(_parent.getSession(), outputFile);
                         _parent.showPanel(Standalone.PANEL_ID_PROCESS);
                     }
                     else if (option == JOptionPane.NO_OPTION) {
                         msg = "The existing output file will be deleted and any review it contains will be list. Are you sure?";
-                        option = JOptionPane.showConfirmDialog(this, msg, "Confirmation", JOptionPane.YES_NO_CANCEL_OPTION);
+                        option = JOptionPane.showConfirmDialog(this, msg, "Confirmation", JOptionPane.YES_NO_OPTION);
                         if (option == JOptionPane.YES_OPTION) {
                             if (!outputFile.delete())
                                 JOptionPane.showMessageDialog(this, "The file cannot be deleted, please remove it by hand.", "Cannot Delete File", JOptionPane.ERROR_MESSAGE);

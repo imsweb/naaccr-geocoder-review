@@ -97,6 +97,8 @@ public class InputSelectionPanel extends JPanel {
                     List<String> csvHeaders = Utils.parseHeaders(inputFile);
                     List<String> jsonFields = Utils.parserJsonFields(inputFile);
 
+                    // TODO computing the number of lines (and validating them) might be slow for large file, I think we need a spinner or something like that...
+
                     session.setInputFile(inputFile);
                     session.setNumResultsToProcess(Utils.getNumResultsToProcess(inputFile)); // NOT including the headers
                     session.setInputCsvHeaders(csvHeaders);

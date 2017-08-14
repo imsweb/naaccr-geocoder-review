@@ -135,12 +135,7 @@ public class Utils {
 
         for (String jsonField : jsonFields) {
             int idx = jsonField.indexOf('.');
-
-            // only consider the fields from the geocoder section; the other ones shouldn't be mapped
             String fieldSection = jsonField.substring(0, idx);
-            //if (!JSON_FIELD_OUTPUT_GEOCODES.equals(fieldSection))
-            //    continue;
-
             String fieldName = jsonField.substring(idx + 1);
 
             String matchingHeader = null;
@@ -170,8 +165,8 @@ public class Utils {
 
         // iterate over the output geocodes
         Map<Integer, GeocodeResult> tmpMap = new LinkedHashMap<>();
-        Pattern keyPattern = Pattern.compile(
-                "(" + SUBHEADER_OUTPUT_GEOCODES + "|" + SUBHEADER_CENSUS_VALUES + "|" + SUBHEADER_REFERENCE_FEATURE + ")(\\d+)");
+        Pattern keyPattern = Pattern.compile("(" + SUBHEADER_OUTPUT_GEOCODES + "|" + SUBHEADER_CENSUS_VALUES + "|" + SUBHEADER_REFERENCE_FEATURE + ")(\\d+)");
+
         Iterator<Map.Entry<String, JsonNode>> iter = rootNode.get(JSON_FIELD_OUTPUT_GEOCODES).get(0).fields();
         while (iter.hasNext()) {
             Map.Entry<String, JsonNode> entry = iter.next();
@@ -235,6 +230,10 @@ public class Utils {
             updatedLine[originalLineLength] = comment;
         }
         return updatedLine;
+    }
+
+    public static void updateSessionFromOutputFile(Session session, File outputFile) {
+        // TODO update the three counts; also update the skippedLinesToProcess...
     }
 
     @SuppressWarnings("SameParameterValue")
