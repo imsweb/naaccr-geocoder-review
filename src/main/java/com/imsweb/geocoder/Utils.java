@@ -41,26 +41,37 @@ import com.imsweb.geocoder.entity.Session;
 
 public class Utils {
 
+    // the CSV header for the column containing the JSON Geocode results
     public static final String CSV_COLUMN_JSON = "OutputGeocodes";
 
+    // the JSON properties for the main JSON blocks
     public static final String JSON_FIELD_INPUT_ADDRESS = "InputAddress";
     public static final String JSON_FIELD_PARSED_ADDRESS = "ParsedAddress";
     public static final String JSON_FIELD_OUTPUT_GEOCODES = "OutputGeocodes";
 
-    public static final String FIELD_TYPE_OUTPUT_GEOCODES = "outputGeocode";
-    public static final String FIELD_TYPE_CENSUS_VALUE = "censusValue";
-    public static final String FIELD_TYPE_REFERENCE_FEATURE = "referenceFeature";
-
-    public static final String SUBHEADER_OUTPUT_GEOCODES = "OutputGeocode";
-    public static final String SUBHEADER_CENSUS_VALUES = "CensusValues";
-    public static final String SUBHEADER_REFERENCE_FEATURE = "ReferenceFeature";
-
+    // the JSON properties for the input fields within the JSON_FIELD_INPUT_ADDRESS block
     public static final String INPUT_ADDRESS_FIELD_STREET = "Street";
     public static final String INPUT_ADDRESS_FIELD_CITY = "City";
     public static final String INPUT_ADDRESS_FIELD_STATE = "State";
     public static final String INPUT_ADDRESS_FIELD_ZIP = "Zip";
 
+    // the JSON properties for the sections within the JSON_FIELD_OUTPUT_GEOCODES block
+    public static final String SUBHEADER_OUTPUT_GEOCODES = "OutputGeocode";
+    public static final String SUBHEADER_CENSUS_VALUES = "CensusValues"; // note that this one has one extra level (CensusValue1) in the JSON
+    public static final String SUBHEADER_REFERENCE_FEATURE = "ReferenceFeature";
+
+    // the prefix used for each section within the JSON_FIELD_OUTPUT_GEOCODES block (those prefix are used when returning all the possible JSON fields)
+    public static final String FIELD_TYPE_OUTPUT_GEOCODES = "outputGeocode";
+    public static final String FIELD_TYPE_CENSUS_VALUE = "censusValue";
+    public static final String FIELD_TYPE_REFERENCE_FEATURE = "referenceFeature";
+
+    // the JSON properties to ignore (regardless of the block)
     public static final List<String> JSON_IGNORED = Arrays.asList("Exception", "ExceptionOccured", "ErrorMessage");
+
+    // the extra CSV columns we add as a result of the processing, in that order (don't change these labels or we won't be able to re-open already-existing output file)
+    public static final String PROCESSING_COLUMN_STATUS = "Processing Status";
+    public static final String PROCESSING_COLUMN_SELECTED_RESULT_IDX = "Selected Result Index";
+    public static final String PROCESSING_COLUMN_COMMENT = "Processing comment";
 
     public static Reader createReader(File file) throws IOException {
         InputStream is = new FileInputStream(file);
@@ -163,10 +174,11 @@ public class Utils {
         }
         results.setParsedInputFields(simpleJsonToMap(rootNode.get(JSON_FIELD_PARSED_ADDRESS)));
 
-        // iterate over the output geocodes
-        Map<Integer, GeocodeResult> tmpMap = new LinkedHashMap<>();
         Pattern keyPattern = Pattern.compile("(" + SUBHEADER_OUTPUT_GEOCODES + "|" + SUBHEADER_CENSUS_VALUES + "|" + SUBHEADER_REFERENCE_FEATURE + ")(\\d+)");
 
+        Map<Integer, GeocodeResult> tmpMap = new LinkedHashMap<>();
+
+        // iterate over the output geocodes
         Iterator<Map.Entry<String, JsonNode>> iter = rootNode.get(JSON_FIELD_OUTPUT_GEOCODES).get(0).fields();
         while (iter.hasNext()) {
             Map.Entry<String, JsonNode> entry = iter.next();
@@ -207,33 +219,64 @@ public class Utils {
         return result;
     }
 
+    public static Integer extractResultFromProcessedLine(String[] csvLine) {
+        return Integer.valueOf(csvLine[csvLine.length - 3]);
+    }
+
+    public static String extractCommentFromProcessedLine(String[] csvLine) {
+        return csvLine[csvLine.length - 1];
+    }
+
     public static String[] getResultCsvLine(Session session, String[] originalLine, GeocodeResult selectedResult, Integer status, String comment) {
         int originalLineLength = originalLine.length;
-        String[] updatedLine = new String[originalLineLength + 3];
-        System.arraycopy(originalLine, 0, updatedLine, 0, originalLine.length);
 
         List<String> headers = session.getInputCsvHeaders();
+        boolean skippedMode = Boolean.TRUE.equals(session.getSkippedMode());
+
+        String[] updatedLine = new String[skippedMode ? originalLineLength : (originalLineLength + 3)];
+        System.arraycopy(originalLine, 0, updatedLine, 0, originalLine.length);
+
         if (status.equals(Session.STATUS_UPDATED)) {
+            // update all "outputGeocode" values
             for (Map.Entry<String, String> entry : selectedResult.getOutputGeocode().entrySet())
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
+            // update all "censusValue" values
             for (Map.Entry<String, String> entry : selectedResult.getCensusValue().entrySet())
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
+            // update all "referenceFeature" values
             for (Map.Entry<String, String> entry : selectedResult.getReferenceFeature().entrySet())
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
         }
-        if (!headers.get(headers.size() - 1).equals("Comment")) {
+
+        // add processing information (add to the end of the line, or replace if the columns already exists)
+        if (skippedMode) {
+            updatedLine[originalLineLength - 3] = Integer.toString(status);
+            updatedLine[originalLineLength - 2] = Integer.toString(selectedResult.getIndex());
+            updatedLine[originalLineLength - 1] = comment;
+        }
+        else {
             updatedLine[originalLineLength++] = Integer.toString(status);
             updatedLine[originalLineLength++] = Integer.toString(selectedResult.getIndex());
             updatedLine[originalLineLength] = comment;
         }
+
         return updatedLine;
     }
 
-    public static void updateSessionFromOutputFile(Session session, File outputFile) {
-        // TODO update the three counts; also update the skippedLinesToProcess...
+    public static String addReviewedSuffix(String filename) {
+        int idx = filename.indexOf('.');
+        if (idx == -1)
+            return filename + "-reviewed";
+        return filename.substring(0, idx) + "-reviewed" + filename.substring(idx);
+    }
+
+    public static String addTmpSuffix(String filename) {
+        if (filename.endsWith(".gz"))
+            return filename.replace(".gz", ".tmp.gz");
+        return filename + ".tmp";
     }
 
     @SuppressWarnings("SameParameterValue")

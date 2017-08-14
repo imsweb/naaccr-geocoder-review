@@ -12,6 +12,7 @@ import java.awt.Font;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -52,7 +53,7 @@ public class OutputSelectionPanel extends JPanel {
         _outputChooser.setDialogTitle("Select Output File");
         _outputChooser.setApproveButtonToolTipText("Select file");
         _outputChooser.setMultiSelectionEnabled(false);
-        _outputChooser.setSelectedFile(new File(createTargetFromSource(parent.getSession().getInputFile().getPath())));
+        _outputChooser.setSelectedFile(new File(Utils.addReviewedSuffix(parent.getSession().getInputFile().getPath())));
 
         this.setLayout(new BorderLayout());
 
@@ -73,11 +74,11 @@ public class OutputSelectionPanel extends JPanel {
         JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 5));
         selectPnl.add(Utils.createBoldLabel("Output file: "));
         _outputFld = new JTextField(90);
-        _outputFld.setText(createTargetFromSource(parent.getSession().getInputFile().getPath()));
+        _outputFld.setText(Utils.addReviewedSuffix(parent.getSession().getInputFile().getPath()));
         selectPnl.add(_outputFld);
-        // TODO the file selection should open in the parent folder of the current target file...
         JButton selectBtn = new JButton("Browse...");
         selectBtn.addActionListener(e -> {
+            _outputChooser.setSelectedFile(new File(_outputFld.getText()).getParentFile());
             if (_outputChooser.showDialog(OutputSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION)
                 _outputFld.setText(_outputChooser.getSelectedFile().getAbsolutePath());
         });
@@ -104,13 +105,26 @@ public class OutputSelectionPanel extends JPanel {
                             "The output file already exists, would you like to process the skipped results?\n\nClick 'Yes' to process the skipped results.\nClick 'No' to start a new review of the input file.";
                     int option = JOptionPane.showConfirmDialog(this, msg, "Message", JOptionPane.YES_NO_CANCEL_OPTION);
                     if (option == JOptionPane.YES_OPTION) {
+                        try {
+                            // TODO re-creating the session from the results in the output file might be slow for large file, I think we need a spinner or something like that...
+                            _parent.getSession().setSkippedMode(true);
+                            _parent.getSession().setOutputFile(new File(_outputFld.getText()));
+                            // this is tricky, but since we have to read the output file (to know the previous results) and since we can't open a reader/writer to the same file,
+                            // we have to rename the output file and use it as an input!
+                            File newInputFile = new File(outputFile.getParentFile(), Utils.addTmpSuffix(outputFile.getName()));
+                            if (newInputFile.exists())
+                                if (!newInputFile.delete())
+                                    throw new IOException("Unable to delete previous \"tmp\" output file");
+                            if (!new File(outputFile.getPath()).renameTo(newInputFile))
+                                throw new IOException("Unable to rename output file");
+                            _parent.getSession().setInputFileForSkippedMode(newInputFile);
 
-                        // TODO re-creating the session from the results in the output file might be slow for large file, I think we need a spinner or something like that...
-
-                        _parent.getSession().setOutputFile(new File(_outputFld.getText()));
-                        _parent.getSession().setSkippedMode(true);
-                        Utils.updateSessionFromOutputFile(_parent.getSession(), outputFile);
-                        _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                            _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                        }
+                        catch (IOException e1) {
+                            msg = "Unable to read existing output file.\n\n   Error: " + (e1.getMessage() == null ? "null access" : e1.getMessage());
+                            JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                     else if (option == JOptionPane.NO_OPTION) {
                         msg = "The existing output file will be deleted and any review it contains will be list. Are you sure?";
@@ -249,12 +263,5 @@ public class OutputSelectionPanel extends JPanel {
         mappingPnl.add(scrollPane, BorderLayout.CENTER);
 
         return mappingPnl;
-    }
-
-    public static String createTargetFromSource(String sourceFilename) {
-        int idx = sourceFilename.indexOf('.');
-        if (idx == -1)
-            return sourceFilename + "-reviewed";
-        return sourceFilename.substring(0, idx) + "-reviewed" + sourceFilename.substring(idx);
     }
 }

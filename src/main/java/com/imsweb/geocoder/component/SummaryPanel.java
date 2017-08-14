@@ -60,6 +60,8 @@ public class SummaryPanel extends JPanel {
         leftFileInfoPnl.setOpaque(false);
         leftFileInfoPnl.add(Utils.createBoldLabel("Input file: "));
         leftFileInfoPnl.add(Utils.createLabel(session.getInputFile().getPath()));
+        if (Boolean.TRUE.equals(session.getSkippedMode()))
+            leftFileInfoPnl.add(Utils.createLabel(" (review skipped results)"));
         fileInfoPnl.add(leftFileInfoPnl, BorderLayout.WEST);
 
         return fileInfoPnl;
@@ -72,7 +74,6 @@ public class SummaryPanel extends JPanel {
 
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridwidth = 1;
-        //constraints.insets = new Insets(0, 10, 7, 0);
 
         constraints.gridy = 0;
         constraints.gridx = 0;
