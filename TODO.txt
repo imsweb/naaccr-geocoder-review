@@ -1,11 +1,28 @@
 08/10/2017
 
 - input page: add more content on the bottom half, maybe help about using the online NAACCR Geocoder?
-- calculating number of lines could be pretty slow, we need to deal with that gracefully in the GUI.
+- (bug) when the app is resized, the horizontal scroll is not properly shown in the process page
+
+
+- move "_currentLineNumber" out of processing panel into the session
+- add toMap and fromMap in session
+- on exit, in processing panel (close streams), if not all lines processed, serialize session into "<input-file>.progess"
+- on startup, after input file selection, if progress file found, deserialize, validate, fix processing panel setup (move reader, append writer)
+- on startup, after input file selection, if no progress file found, analyze input file
+  -> unprocessed -> output file selection
+  -> processed with skipped -> set "skipped mode" in session, swap the files, still show selected file as input, but also use selected file as output, and for the input, use the swapped "tmp" file.
+  -> processed no skipped -> summary panel
+- on show summary, if progress exists, delete the file
+- on show summary, if tmp exists (if we are in skipped-mode), delete tmp
+
+
+
+
+
+
 - [DONE] output page: clean up the Fields Mapping table, use some background colors, etc...
 - [DONE] process page: the "Next" and "Skip" buttons are too close to each other; maybe use a checkbox to allow coming back to this line later...
 - [DONE] at the end of the process, there should be summary page with how many addresses changed, how many skipped, etc...
-- (bug) when the app is resized, the horizontal scroll is not properly shown in the process page
 - (future) process page: allow the user to see the full parsed address.
 - (future) need to save the session and allow the user to interrupt a processing, need to show a popup asking "save session" or "discard"
 - (future) need to detect if a session file is present, and if it is ask if it should be open

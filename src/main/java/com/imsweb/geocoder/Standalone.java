@@ -42,8 +42,8 @@ public class Standalone extends JFrame implements ActionListener {
 
     public static final String VERSION = getVersion();
 
-    public static final String PANEL_ID_SOURCE = "source";
-    public static final String PANEL_ID_TARGET = "target";
+    public static final String PANEL_ID_INPUT = "input";
+    public static final String PANEL_ID_OUTPUT = "output";
     public static final String PANEL_ID_PROCESS = "process";
     public static final String PANEL_ID_SUMMARY = "summary";
 
@@ -87,7 +87,7 @@ public class Standalone extends JFrame implements ActionListener {
 
         _layout = new CardLayout();
         _centerPnl = new JPanel(_layout);
-        _centerPnl.add(PANEL_ID_SOURCE, new InputSelectionPanel(this));
+        _centerPnl.add(PANEL_ID_INPUT, new InputSelectionPanel(this));
         this.getContentPane().add(_centerPnl, BorderLayout.CENTER);
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
@@ -101,8 +101,8 @@ public class Standalone extends JFrame implements ActionListener {
     }
 
     public void showPanel(String panelId) {
-        if (PANEL_ID_TARGET.equals(panelId))
-            _centerPnl.add(PANEL_ID_TARGET, new OutputSelectionPanel(this));
+        if (PANEL_ID_OUTPUT.equals(panelId))
+            _centerPnl.add(PANEL_ID_OUTPUT, new OutputSelectionPanel(this));
         else if (PANEL_ID_PROCESS.equals(panelId)) {
             _processingPanel = new ProcessingPanel(this);
             _centerPnl.add(PANEL_ID_PROCESS, _processingPanel);

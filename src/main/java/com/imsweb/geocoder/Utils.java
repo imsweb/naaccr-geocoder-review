@@ -39,6 +39,7 @@ import com.imsweb.geocoder.entity.GeocodeResult;
 import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
 
+// TODO remove the deprecated methods, they shouldn't be used anymore (other than unit tests)
 public class Utils {
 
     // the possible states for an input file (if you change these, think about serialization!)
@@ -194,10 +195,12 @@ public class Utils {
             session.setUserSelectedResultColumnIndex(versionColumnIdx + 2);
             session.setUserCommentColumnIndex(versionColumnIdx + 3);
 
-            if (INPUT_PARTIALLY_PROCESSED.equals(result) || INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result) || INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result))
+            // for the following results, the selected input file is actually the output file (we are either going to re-process the file, or just show the summary)
+            if (INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result) || INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result))
                 session.setOutputFile(file);
 
-            if (INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result)) {
+            // for the following results, we are not going to re-process the output file again, so we need to set the counts now
+            if (INPUT_PARTIALLY_PROCESSED.equals(result) || INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result)) {
                 session.setNumConfirmedLines(numLinesConfirmed);
                 session.setNumModifiedLines(numLinesModified);
                 session.setNumSkippedLines(numLinesSkipped);

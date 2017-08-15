@@ -43,6 +43,8 @@ public class Session {
 
     private Integer _numModifiedLines;
 
+    private Boolean _skippedMode;
+
     public Session() {
         _versionColumnIndex = -1;
         _processingStatusColumnIndex = -1;
@@ -51,6 +53,7 @@ public class Session {
         _numSkippedLines = 0;
         _numConfirmedLines = 0;
         _numModifiedLines = 0;
+        _skippedMode = false;
     }
 
     public String getVersion() {
@@ -187,5 +190,13 @@ public class Session {
 
     public void setOutputFile(File outputFile) {
         _outputFile = outputFile;
+    }
+
+    public Boolean getSkippedMode() {
+        return _skippedMode;
+    }
+
+    public void setSkippedMode(Boolean skippedMode) {
+        _skippedMode = skippedMode;
     }
 }
