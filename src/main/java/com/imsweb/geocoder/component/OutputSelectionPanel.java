@@ -101,15 +101,6 @@ public class OutputSelectionPanel extends JPanel {
                 if (outputFile.getAbsolutePath().equals(_parent.getSession().getInputFile().getAbsolutePath()))
                     JOptionPane.showMessageDialog(this, "The output file must be different than the input file.", "Error", JOptionPane.ERROR_MESSAGE);
                 else {
-                    //todo validate that the output file has the expcted columns
-                    /*try {
-                        if (!Utils.hasOutputHeaders(Utils.parseHeaders(outputFile)))
-                            JOptionPane.showMessageDialog(this, "The output file already exists and has the wrong format. Please select a valid file.", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                    catch (IOException ex) {
-                        //todo something here
-                    }*/
-
                     String msg =
                             "The output file already exists, would you like to process the skipped results?\n\nClick 'Yes' to process the skipped results.\nClick 'No' to start a new review of the input file.";
                     int option = JOptionPane.showConfirmDialog(this, msg, "Message", JOptionPane.YES_NO_CANCEL_OPTION);
@@ -136,7 +127,7 @@ public class OutputSelectionPanel extends JPanel {
                         }
                     }
                     else if (option == JOptionPane.NO_OPTION) {
-                        msg = "The existing output file will be deleted and any review it contains will be list. Are you sure?";
+                        msg = "The existing output file will be deleted and any review it contains will be lost. Are you sure?";
                         option = JOptionPane.showConfirmDialog(this, msg, "Confirmation", JOptionPane.YES_NO_OPTION);
                         if (option == JOptionPane.YES_OPTION) {
                             if (!outputFile.delete())

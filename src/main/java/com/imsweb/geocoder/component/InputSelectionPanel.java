@@ -91,7 +91,7 @@ public class InputSelectionPanel extends JPanel {
                     File selectedFile = _inputChooser.getSelectedFile();
 
                     File progressFile = Utils.getProgressFile(selectedFile);
-                    if (progressFile == null) {
+                    if (!progressFile.exists()) {
                         // TODO analyzing the input file might be slow for large files, I think we need some kind of progress dialog or something like that...
                         Utils.analyzeInputFile(selectedFile, _parent.getSession());
                         _parent.showPanel(Standalone.PANEL_ID_OUTPUT);

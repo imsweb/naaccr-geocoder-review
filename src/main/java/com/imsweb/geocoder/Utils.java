@@ -44,11 +44,6 @@ import com.imsweb.geocoder.entity.Session;
 // TODO remove the deprecated methods, they shouldn't be used anymore (other than unit tests)
 public class Utils {
 
-    // the possible states for an input file (if you change these, think about serialization!)
-    public static final Integer INPUT_UNPROCESSED = 0;
-    public static final Integer INPUT_PROCESSED_WITH_SKIPPED = 2;
-    public static final Integer INPUT_PROCESSED_NO_SKIPPED = 3;
-
     // the different processing status (if you change these, think about serialization!)
     public static final Integer PROCESSING_STATUS_CONFIRMED = 0;
     public static final Integer PROCESSING_STATUS_UPDATED = 1;
@@ -117,34 +112,20 @@ public class Utils {
     }
 
     public static void analyzeInputFile(File file, Session session) throws IOException {
-        Integer result;
-
         try (CSVReader reader = new CSVReader(createReader(file))) {
             List<String> allHeaders = Arrays.asList(reader.readNext());
             if (!allHeaders.contains(CSV_COLUMN_JSON))
                 throw new IOException("Unable to find Geocoder results column.");
             int versionColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_VERSION);
-            int resultColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_STATUS);
 
             if (versionColumnIdx != -1)
                 throw new IOException("The selected file is an output file. Please use an input file.");
 
-            int numLinesWithoutHeaders = 0, numLinesConfirmed = 0, numLinesModified = 0, numLinesSkipped = 0;
+            int numLinesWithoutHeaders = 0;
             String rawJson = null;
             String[] line = readNextCsvLine(reader);
             while (line != null) {
                 numLinesWithoutHeaders++;
-
-                // update processing result counts if we can
-                if (resultColumnIdx != -1 && line.length == allHeaders.size()) {
-                    Integer processingStatus = Integer.valueOf(line[resultColumnIdx]);
-                    if (PROCESSING_STATUS_CONFIRMED.equals(processingStatus))
-                        numLinesConfirmed++;
-                    else if (PROCESSING_STATUS_UPDATED.equals(processingStatus))
-                        numLinesModified++;
-                    else if (PROCESSING_STATUS_SKIPPED.equals(processingStatus))
-                        numLinesSkipped++;
-                }
 
                 // we only need to the JSON data once (to compute the fields); we assume the fields are the same for every line...
                 if (rawJson == null && allHeaders.contains(CSV_COLUMN_JSON))
@@ -156,21 +137,8 @@ public class Utils {
             if (rawJson == null)
                 throw new IOException("Unable to find Geocoder results.");
 
-            //todo move the skip stuff to the output
-            // compute the result
-            if (versionColumnIdx == -1)
-                result = INPUT_UNPROCESSED;
-            else if (numLinesSkipped > 0)
-                result = INPUT_PROCESSED_WITH_SKIPPED;
-            else
-                result = INPUT_PROCESSED_NO_SKIPPED;
-
-            // adjust the headers (we never want the processing columns included)
-            List<String> headers = versionColumnIdx == -1 ? allHeaders : allHeaders.subList(0, versionColumnIdx);
-
-            // if we didn't find a version, the column is set to the next available in the file
-            if (versionColumnIdx == -1)
-                versionColumnIdx = headers.size();
+            // The version column is set to the next available in the file
+            versionColumnIdx = allHeaders.size();
 
             GeocodeResult geocoderResult = parseGeocodeResults(rawJson).getResults().get(0);
             List<String> jsonFields = new ArrayList<>();
@@ -187,33 +155,18 @@ public class Utils {
             // update the session
             session.setInputFile(file);
             session.setNumResultsToProcess(numLinesWithoutHeaders);
-            session.setInputCsvHeaders(headers);
+            session.setInputCsvHeaders(allHeaders);
             session.setInputJsonFields(jsonFields);
-            session.setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(jsonFields, headers));
-            session.setJsonColumnIndex(headers.indexOf(CSV_COLUMN_JSON));
+            session.setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(jsonFields, allHeaders));
+            session.setJsonColumnIndex(allHeaders.indexOf(CSV_COLUMN_JSON));
             session.setVersionColumnIndex(versionColumnIdx);
             session.setProcessingStatusColumnIndex(versionColumnIdx + 1);
             session.setUserSelectedResultColumnIndex(versionColumnIdx + 2);
             session.setUserCommentColumnIndex(versionColumnIdx + 3);
-
-            // for the following results, the selected input file is actually the output file (we are either going to re-process the file, or just show the summary)
-            /*if (INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result) || INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result))
-                session.setOutputFile(file);
-
-            // for the following results, we are not going to re-process the output file again, so we need to set the counts now
-            if (INPUT_PARTIALLY_PROCESSED.equals(result) || INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result)) {
-                session.setNumConfirmedLines(numLinesConfirmed);
-                session.setNumModifiedLines(numLinesModified);
-                session.setNumSkippedLines(numLinesSkipped);
-            }*/
         }
         catch (RuntimeException e) {
             throw new IOException("Unable to analyze input file: " + e.getMessage());
         }
-    }
-
-    public static boolean hasOutputHeaders(List<String> line) {
-        return (line.contains(PROCESSING_COLUMN_STATUS) && line.contains(PROCESSING_COLUMN_VERSION) && line.contains(PROCESSING_COLUMN_SELECTED_RESULT) && line.contains(PROCESSING_COLUMN_COMMENT));
     }
 
     public static String[] readNextCsvLine(CSVReader reader) throws IOException {
@@ -338,16 +291,6 @@ public class Utils {
         return result;
     }
 
-    @Deprecated
-    public static Integer extractResultFromProcessedLine(String[] csvLine) {
-        return Integer.valueOf(csvLine[csvLine.length - 3]);
-    }
-
-    @Deprecated
-    public static String extractCommentFromProcessedLine(String[] csvLine) {
-        return csvLine[csvLine.length - 1];
-    }
-
     public static String[] getResultCsvLine(Session session, String[] originalLine, GeocodeResult selectedResult, Integer status, String comment) {
         int originalLineLength = originalLine.length;
 
@@ -393,16 +336,8 @@ public class Utils {
         return filename + ".tmp";
     }
 
-    public static String addProgressSuffix(String filename) {
-        return filename + ".progress";
-    }
-
     public static File getProgressFile(File inputFile) {
-        File progressFile = new File(inputFile.getParentFile(), addProgressSuffix(inputFile.getName()));
-        if (progressFile.exists())
-            return progressFile;
-        else
-            return null;
+        return new File(inputFile.getParentFile(), inputFile.getName() + ".progress");
     }
 
     @SuppressWarnings("unchecked")
@@ -417,7 +352,7 @@ public class Utils {
             session.deserializeFromMap((Map<String, Object>)ois.readObject());
         }
         catch (ClassNotFoundException e) {
-            throw new IOException("Unable to find require class", e);
+            throw new IOException("Unable to find required class", e);
         }
         finally {
             if (ois != null)

@@ -76,10 +76,12 @@ public class ProcessingPanel extends JPanel {
     private JTextArea _commentArea;
 
     // variables for the current line/selection information- needed for writing the line
-   // private Integer _currentLineNumber;
     private String[] _currentLine;
     private GeocodeResult _selectedGeocodeResult;
     private GeocodeResults _currentGeocodeResults;
+
+    // This is true when the reader has reached the end of the file
+    private boolean _reachedEndOfFile = false;
 
     public ProcessingPanel(Standalone parent) {
         _parent = parent;
@@ -107,12 +109,10 @@ public class ProcessingPanel extends JPanel {
 
                 // using a copy of the headers since we might modify them...
                 List<String> headers = new ArrayList<>(session.getInputCsvHeaders());
-                if (!Boolean.TRUE.equals(session.getSkippedMode())) {
-                    headers.add(Utils.PROCESSING_COLUMN_VERSION);
-                    headers.add(Utils.PROCESSING_COLUMN_STATUS);
-                    headers.add(Utils.PROCESSING_COLUMN_SELECTED_RESULT);
-                    headers.add(Utils.PROCESSING_COLUMN_COMMENT);
-                }
+                headers.add(Utils.PROCESSING_COLUMN_VERSION);
+                headers.add(Utils.PROCESSING_COLUMN_STATUS);
+                headers.add(Utils.PROCESSING_COLUMN_SELECTED_RESULT);
+                headers.add(Utils.PROCESSING_COLUMN_COMMENT);
 
                 _outputWriter.writeNext(headers.toArray(new String[0]));
             }
@@ -122,7 +122,7 @@ public class ProcessingPanel extends JPanel {
             JOptionPane.showMessageDialog(ProcessingPanel.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        // re-read the file that was in progress
+        // re-read the line that was in progress
         if (session.getCurrentLineNumber() > 0)
             session.setCurrentLineNumber(session.getCurrentLineNumber() - 1);
 
@@ -307,23 +307,23 @@ public class ProcessingPanel extends JPanel {
 
         try {
             String[] csvLine = Utils.readNextCsvLine(_inputReader);
+            _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + 1);
             if (csvLine == null)
                 handleEndOfFile();
             else if (csvLine.length != numExpectedValues)
-                handleBadCsvLine("Unexpected number of columns on line " + (_parent.getSession().getCurrentLineNumber() + 1) + ", expected " + numExpectedValues + " but got " + csvLine.length);
+                handleBadCsvLine("Unexpected number of columns on line " + (_parent.getSession().getCurrentLineNumber()) + ", expected " + numExpectedValues + " but got " + csvLine.length);
             else {
-                _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + 1);
                 _currentLine = csvLine;
 
                 // if we are in skipped mode, skip any line that wasn't previously skipped
-                Integer existingProcessingResult = skippedMode ? Utils.extractResultFromProcessedLine(csvLine) : -1;
+                Integer existingProcessingResult = skippedMode ? Integer.valueOf(csvLine[_parent.getSession().getProcessingStatusColumnIndex()]) : -1;
                 if (skippedMode && !PROCESSING_STATUS_SKIPPED.equals(existingProcessingResult))
                     writeCurrentLineAndReadNextOne(existingProcessingResult, csvLine);
                 else {
                     _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()]);
 
                     // refresh the GUI
-                    _commentArea.setText(skippedMode ? Utils.extractCommentFromProcessedLine(csvLine) : "");
+                    _commentArea.setText(skippedMode ? csvLine[_parent.getSession().getUserCommentColumnIndex()] : "");
                     _skipBox.setSelected(false);
                     _currentResultIdxLbl.setText(_parent.getSession().getCurrentLineNumber().toString());
                     _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
@@ -472,6 +472,7 @@ public class ProcessingPanel extends JPanel {
 
     private void handleEndOfFile() {
         closeStreams();
+        _reachedEndOfFile = true;
         _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
     }
 
@@ -482,6 +483,10 @@ public class ProcessingPanel extends JPanel {
             populateTableFromNextLine();
         else
             _parent.performExit();
+    }
+
+    public boolean reachedEndOfFile() {
+        return _reachedEndOfFile;
     }
 
     public void closeStreams() {

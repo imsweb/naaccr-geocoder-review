@@ -112,7 +112,8 @@ public class Standalone extends JFrame implements ActionListener {
             _centerPnl.add(PANEL_ID_OUTPUT, new OutputSelectionPanel(this));
         else if (PANEL_ID_PROCESS.equals(panelId)) {
             _processingPanel = new ProcessingPanel(this);
-            _centerPnl.add(PANEL_ID_PROCESS, _processingPanel);
+            if (!_processingPanel.reachedEndOfFile())
+                _centerPnl.add(PANEL_ID_PROCESS, _processingPanel);
         }
         else if (PANEL_ID_SUMMARY.equals(panelId))
             _centerPnl.add(PANEL_ID_SUMMARY, new SummaryPanel(this));
@@ -155,10 +156,10 @@ public class Standalone extends JFrame implements ActionListener {
             if (_session.getCurrentLineNumber() < _session.getNumResultsToProcess()) {
                 File inputFile = _session.getInputFile();
                 try {
-                    Utils.writeSessionToProgressFile(_session, new File(inputFile.getParentFile(), Utils.addProgressSuffix(inputFile.getName())));
+                    Utils.writeSessionToProgressFile(_session, Utils.getProgressFile(inputFile));
                 }
                 catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, "Unable to save progress. Your progress will be lost.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Unable to save progress file. Your progress will be lost.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
