@@ -91,8 +91,19 @@ public class InputSelectionPanel extends JPanel {
                     Integer result = Utils.analyzeInputFile(_inputChooser.getSelectedFile(), _parent.getSession());
                     if (Utils.INPUT_UNPROCESSED.equals(result))
                         _parent.showPanel(Standalone.PANEL_ID_TARGET);
-                    else if (Utils.INPUT_PARTIALLY_PROCESSED.equals(result) || Utils.INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result))
+                    else if (Utils.INPUT_PARTIALLY_PROCESSED.equals(result) || Utils.INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result)) {
+                        // this is tricky, but since we have to read the output file (to know the previous results) and since we can't open a reader/writer to the same file,
+                        // we have to rename the output file and use it as an input!
+                        File oldOutputFile = new File(_parent.getSession().getOutputFile().getPath());
+                        File newInputFile = new File(oldOutputFile.getParentFile(), Utils.addTmpSuffix(oldOutputFile.getName()));
+                        if (newInputFile.exists())
+                            if (!newInputFile.delete())
+                                throw new IOException("Unable to delete previous \"tmp\" output file");
+                        if (!new File(oldOutputFile.getPath()).renameTo(newInputFile))
+                            throw new IOException("Unable to rename output file");
+                        _parent.getSession().setTmpInputFile(newInputFile);
                         _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                    }
                     else if (Utils.INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result))
                         _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
                     else

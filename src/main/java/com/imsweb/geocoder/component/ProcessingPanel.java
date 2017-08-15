@@ -88,7 +88,7 @@ public class ProcessingPanel extends JPanel {
 
         // setup reader
         try {
-            _inputReader = new CSVReader(Utils.createReader(session.getInputFile()));
+            _inputReader = new CSVReader(Utils.createReader(session.getTmpInputFile() != null ? session.getTmpInputFile() : session.getInputFile()));
             _inputReader.readNext(); // ignore headers
         }
         catch (IOException e) {

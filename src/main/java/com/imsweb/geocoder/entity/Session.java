@@ -13,6 +13,8 @@ public class Session {
 
     private File _inputFile;
 
+    private File _tmpInputFile;
+
     private Integer _inputFileAnalysisResult;
 
     private Integer _numResultsToProcess; // number of lines NOT including CSV (so number of lines - 1 basically)
@@ -65,6 +67,14 @@ public class Session {
 
     public void setInputFile(File inputFile) {
         _inputFile = inputFile;
+    }
+
+    public File getTmpInputFile() {
+        return _tmpInputFile;
+    }
+
+    public void setTmpInputFile(File tmpInputFile) {
+        _tmpInputFile = tmpInputFile;
     }
 
     public Integer getInputFileAnalysisResult() {
