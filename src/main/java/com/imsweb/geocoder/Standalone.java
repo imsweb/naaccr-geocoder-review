@@ -83,6 +83,7 @@ public class Standalone extends JFrame implements ActionListener {
         this.setJMenuBar(bar);
 
         _session = new Session();
+        _session.setVersion(getVersion());
 
         _layout = new CardLayout();
         _centerPnl = new JPanel(_layout);

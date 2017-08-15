@@ -54,9 +54,9 @@ import com.imsweb.geocoder.entity.GeocodeResult;
 import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
 
-import static com.imsweb.geocoder.entity.Session.STATUS_CONFIRMED;
-import static com.imsweb.geocoder.entity.Session.STATUS_SKIPPED;
-import static com.imsweb.geocoder.entity.Session.STATUS_UPDATED;
+import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_CONFIRMED;
+import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_SKIPPED;
+import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_UPDATED;
 
 public class ProcessingPanel extends JPanel {
 
@@ -76,7 +76,7 @@ public class ProcessingPanel extends JPanel {
     private JTextArea _commentArea;
 
     // variables for the current line/selection information- needed for writing the line
-    private Integer _currentResultIdx;
+    private Integer _currentLineNumber;
     private String[] _currentLine;
     private GeocodeResult _selectedGeocodeResult;
     private GeocodeResults _currentGeocodeResults;
@@ -88,7 +88,7 @@ public class ProcessingPanel extends JPanel {
 
         // setup reader
         try {
-            _inputReader = new CSVReader(Utils.createReader(Boolean.TRUE.equals(session.getSkippedMode()) ? session.getInputFileForSkippedMode() : session.getInputFile()));
+            _inputReader = new CSVReader(Utils.createReader(session.getInputFile()));
             _inputReader.readNext(); // ignore headers
         }
         catch (IOException e) {
@@ -104,7 +104,7 @@ public class ProcessingPanel extends JPanel {
             List<String> headers = new ArrayList<>(session.getInputCsvHeaders());
             if (!Boolean.TRUE.equals(session.getSkippedMode())) {
                 headers.add(Utils.PROCESSING_COLUMN_STATUS);
-                headers.add(Utils.PROCESSING_COLUMN_SELECTED_RESULT_IDX);
+                headers.add(Utils.PROCESSING_COLUMN_SELECTED_RESULT);
                 headers.add(Utils.PROCESSING_COLUMN_COMMENT);
             }
 
@@ -115,7 +115,7 @@ public class ProcessingPanel extends JPanel {
             JOptionPane.showMessageDialog(ProcessingPanel.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        _currentResultIdx = 0;
+        _currentLineNumber = 0;
 
         this.setLayout(new BorderLayout());
         this.add(buildNorthPanel(parent.getSession()), BorderLayout.NORTH);
@@ -227,7 +227,9 @@ public class ProcessingPanel extends JPanel {
         _skipBox = new JCheckBox("Flag this line as skipped");
         controlsPnl.add(_skipBox, BorderLayout.NORTH);
         _nextBtn = Utils.createButton("Next Line", "next", "Confirm this line and go to the next line",
-                e -> writeCurrentLineAndReadNextOne(_skipBox.isSelected() ? STATUS_SKIPPED : _selectedGeocodeResult.equals(_selectionBox.getItemAt(0)) ? STATUS_CONFIRMED : STATUS_UPDATED));
+                e -> writeCurrentLineAndReadNextOne(
+                        // TODO FPD
+                        _skipBox.isSelected() ? PROCESSING_STATUS_SKIPPED : _selectedGeocodeResult.equals(_selectionBox.getItemAt(0)) ? PROCESSING_STATUS_CONFIRMED : PROCESSING_STATUS_UPDATED));
         controlsPnl.add(_nextBtn, BorderLayout.SOUTH);
         centerPnl.add(controlsPnl, BorderLayout.EAST);
 
@@ -299,14 +301,14 @@ public class ProcessingPanel extends JPanel {
             if (csvLine == null)
                 handleEndOfFile();
             else if (csvLine.length != numExpectedValues)
-                handleBadCsvLine("Unexpected number of columns on line " + (_currentResultIdx + 1) + ", expected " + numExpectedValues + " but got " + csvLine.length);
+                handleBadCsvLine("Unexpected number of columns on line " + (_currentLineNumber + 1) + ", expected " + numExpectedValues + " but got " + csvLine.length);
             else {
-                _currentResultIdx++;
+                _currentLineNumber++;
                 _currentLine = csvLine;
 
                 // if we are in skipped mode, skip any line that wasn't previously skipped
                 Integer existingProcessingResult = skippedMode ? Utils.extractResultFromProcessedLine(csvLine) : -1;
-                if (skippedMode && !STATUS_SKIPPED.equals(existingProcessingResult))
+                if (skippedMode && !PROCESSING_STATUS_SKIPPED.equals(existingProcessingResult))
                     writeCurrentLineAndReadNextOne(existingProcessingResult, csvLine);
                 else {
                     _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()]);
@@ -314,7 +316,7 @@ public class ProcessingPanel extends JPanel {
                     // refresh the GUI
                     _commentArea.setText(skippedMode ? Utils.extractCommentFromProcessedLine(csvLine) : "");
                     _skipBox.setSelected(false);
-                    _currentResultIdxLbl.setText(_currentResultIdx.toString());
+                    _currentResultIdxLbl.setText(_currentLineNumber.toString());
                     _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
                     _numModifiedLbl.setText(_parent.getSession().getNumModifiedLines().toString());
                     _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
@@ -446,11 +448,11 @@ public class ProcessingPanel extends JPanel {
             _outputWriter.writeNext(Utils.getResultCsvLine(_parent.getSession(), _currentLine, _selectedGeocodeResult, status, _commentArea.getText()));
 
         // update the quick access count
-        if (STATUS_CONFIRMED.equals(status))
+        if (PROCESSING_STATUS_CONFIRMED.equals(status))
             _parent.getSession().setNumConfirmedLines(_parent.getSession().getNumConfirmedLines() + 1);
-        else if (STATUS_UPDATED.equals(status))
+        else if (PROCESSING_STATUS_UPDATED.equals(status))
             _parent.getSession().setNumModifiedLines(_parent.getSession().getNumModifiedLines() + 1);
-        else if (STATUS_SKIPPED.equals(status)) {
+        else if (PROCESSING_STATUS_SKIPPED.equals(status)) {
             _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
         }
         else
@@ -461,10 +463,6 @@ public class ProcessingPanel extends JPanel {
 
     private void handleEndOfFile() {
         closeStreams();
-        if (Boolean.TRUE.equals(_parent.getSession().getSkippedMode()))
-            if (!_parent.getSession().getInputFileForSkippedMode().delete())
-                JOptionPane.showMessageDialog(this, "Unable to delete \"tmp\" file.", "Error", JOptionPane.ERROR_MESSAGE);
-
         _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
     }
 

@@ -8,7 +8,6 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -22,7 +21,6 @@ import javax.swing.border.MatteBorder;
 
 import com.imsweb.geocoder.Standalone;
 import com.imsweb.geocoder.Utils;
-import com.imsweb.geocoder.entity.Session;
 
 public class InputSelectionPanel extends JPanel {
 
@@ -88,26 +86,17 @@ public class InputSelectionPanel extends JPanel {
         JButton selectBtn = new JButton("Select Input File");
         selectBtn.addActionListener(e -> {
             if (_inputChooser.showDialog(InputSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
-                File inputFile = _inputChooser.getSelectedFile();
-
-                // note that we don't need to validate anything because it's all handled in catching the IOException hereunder...
-
-                Session session = _parent.getSession();
                 try {
-                    List<String> csvHeaders = Utils.parseHeaders(inputFile);
-                    List<String> jsonFields = Utils.parserJsonFields(inputFile);
-
-                    // TODO computing the number of lines (and validating them) might be slow for large file, I think we need a spinner or something like that...
-
-                    session.setInputFile(inputFile);
-                    session.setNumResultsToProcess(Utils.getNumResultsToProcess(inputFile)); // NOT including the headers
-                    session.setInputCsvHeaders(csvHeaders);
-                    session.setInputJsonFields(jsonFields);
-                    session.setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(jsonFields, csvHeaders));
-                    session.setJsonColumnName(Utils.CSV_COLUMN_JSON);
-                    session.setJsonColumnIndex(csvHeaders.indexOf(Utils.CSV_COLUMN_JSON));
-
-                    _parent.showPanel(Standalone.PANEL_ID_TARGET);
+                    // TODO analyzing the input file might be slow for large files, I think we need some kind of progress dialog or something like that...
+                    Integer result = Utils.analyzeInputFile(_inputChooser.getSelectedFile(), _parent.getSession());
+                    if (Utils.INPUT_UNPROCESSED.equals(result))
+                        _parent.showPanel(Standalone.PANEL_ID_TARGET);
+                    else if (Utils.INPUT_PARTIALLY_PROCESSED.equals(result) || Utils.INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result))
+                        _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                    else if (Utils.INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result))
+                        _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
+                    else
+                        throw new RuntimeException("Unsupported analysis result: " + result);
                 }
                 catch (IOException ex) {
                     String msg = "Unable to recognize file format.\n\n   Error: " + (ex.getMessage() == null ? "null access" : ex.getMessage());

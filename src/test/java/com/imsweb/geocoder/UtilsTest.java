@@ -19,6 +19,10 @@ import com.imsweb.geocoder.entity.GeocodeResult;
 import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
 
+import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_CONFIRMED;
+import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_SKIPPED;
+import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_UPDATED;
+
 public class UtilsTest {
 
     @Test
@@ -159,27 +163,27 @@ public class UtilsTest {
         String[] originalLine = {"geo1", "geo2", "census1", "census2", "ref1", "ref2"};
 
         //Confirmed result - no comment
-        String[] resultLine = {"geo1", "geo2", "census1", "census2", "ref1", "ref2", Integer.toString(Session.STATUS_CONFIRMED), "1", null};
-        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_CONFIRMED, null));
+        String[] resultLine = {"geo1", "geo2", "census1", "census2", "ref1", "ref2", Integer.toString(PROCESSING_STATUS_CONFIRMED), "1", null};
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, PROCESSING_STATUS_CONFIRMED, null));
 
         //Confirmed result - with comment
         String comment = "This is a comment";
         resultLine[8] = comment;
-        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_CONFIRMED, comment));
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, PROCESSING_STATUS_CONFIRMED, comment));
 
         //Skipped Result
-        resultLine[6] = Integer.toString(Session.STATUS_SKIPPED);
-        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_SKIPPED, comment));
+        resultLine[6] = Integer.toString(PROCESSING_STATUS_SKIPPED);
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, PROCESSING_STATUS_SKIPPED, comment));
 
         //Updated Result
-        resultLine[6] = Integer.toString(Session.STATUS_UPDATED);
-        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_UPDATED, comment));
+        resultLine[6] = Integer.toString(PROCESSING_STATUS_UPDATED);
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, PROCESSING_STATUS_UPDATED, comment));
 
         //Updated Result - one null value
         referenceFeature.remove("ReferenceFeatureHeader1");
         referenceFeature.put("ReferenceFeatureHeader1", null);
         resultLine[4] = null;
-        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_UPDATED, comment));
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, PROCESSING_STATUS_UPDATED, comment));
 
         //Updated Result - different non null value
         referenceFeature.put("ReferenceFeatureHeader1", "newRef1");
@@ -187,7 +191,7 @@ public class UtilsTest {
         geocodeResult.setIndex(5);
         resultLine[4] = "newRef1";
         resultLine[7] = "5";
-        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, Session.STATUS_UPDATED, comment));
+        Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, PROCESSING_STATUS_UPDATED, comment));
 
     }
 }

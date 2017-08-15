@@ -41,7 +41,18 @@ import com.imsweb.geocoder.entity.Session;
 
 public class Utils {
 
-    // the CSV header for the column containing the JSON Geocode results
+    // the possible states for an input file (if you change these, think about serialization!)
+    public static final Integer INPUT_UNPROCESSED = 0;
+    public static final Integer INPUT_PARTIALLY_PROCESSED = 1;
+    public static final Integer INPUT_FULLY_PROCESSED_WITH_SKIPPED = 2;
+    public static final Integer INPUT_FULLY_PROCESSED_NO_SKIPPED = 3;
+
+    // the different processing status (if you change these, think about serialization!)
+    public static final Integer PROCESSING_STATUS_CONFIRMED = 0;
+    public static final Integer PROCESSING_STATUS_UPDATED = 1;
+    public static final Integer PROCESSING_STATUS_SKIPPED = 2;
+
+    // the CSV header for the column containing the JSON Geocode results (if you change this, think about serialization!)
     public static final String CSV_COLUMN_JSON = "OutputGeocodes";
 
     // the JSON properties for the main JSON blocks
@@ -69,8 +80,9 @@ public class Utils {
     public static final List<String> JSON_IGNORED = Arrays.asList("Exception", "ExceptionOccured", "ErrorMessage");
 
     // the extra CSV columns we add as a result of the processing, in that order (don't change these labels or we won't be able to re-open already-existing output file)
+    public static final String PROCESSING_COLUMN_VERSION = "Review App Version";
     public static final String PROCESSING_COLUMN_STATUS = "Processing Status";
-    public static final String PROCESSING_COLUMN_SELECTED_RESULT_IDX = "Selected Result Index";
+    public static final String PROCESSING_COLUMN_SELECTED_RESULT = "Selected Result Index";
     public static final String PROCESSING_COLUMN_COMMENT = "Processing comment";
 
     public static Reader createReader(File file) throws IOException {
@@ -87,6 +99,7 @@ public class Utils {
         return new OutputStreamWriter(os, StandardCharsets.UTF_8);
     }
 
+    @Deprecated
     public static int getNumResultsToProcess(File file) throws IOException {
         int numLines = 0;
         try (CSVReader reader = new CSVReader(createReader(file))) {
@@ -99,6 +112,104 @@ public class Utils {
         return numLines - 1; // don't take headers into account (that line doesn't need to be processed)
     }
 
+    public static Integer analyzeInputFile(File file, Session session) throws IOException {
+        Integer result;
+
+        try (CSVReader reader = new CSVReader(createReader(file))) {
+            List<String> allHeaders = Arrays.asList(reader.readNext());
+            if (!allHeaders.contains(CSV_COLUMN_JSON))
+                throw new IOException("Unable to find Geocoder results column.");
+            int versionColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_VERSION);
+            int resultColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_STATUS);
+
+            int numLinesWithoutHeaders = 0, numLinesUnprocessed = 0, numLinesConfirmed = 0, numLinesModified = 0, numLinesSkipped = 0;
+            String rawJson = null;
+            String[] line = readNextCsvLine(reader);
+            while (line != null) {
+                numLinesWithoutHeaders++;
+
+                // a line is unprocessed if we have processing headers, but the line length is smaller
+                if (versionColumnIdx != -1 && line.length < allHeaders.size())
+                    numLinesUnprocessed++;
+
+                // update processing result counts if we can
+                if (resultColumnIdx != -1 && line.length == allHeaders.size()) {
+                    Integer processingStatus = Integer.valueOf(line[resultColumnIdx]);
+                    if (PROCESSING_STATUS_CONFIRMED.equals(processingStatus))
+                        numLinesConfirmed++;
+                    else if (PROCESSING_STATUS_UPDATED.equals(processingStatus))
+                        numLinesModified++;
+                    else if (PROCESSING_STATUS_SKIPPED.equals(processingStatus))
+                        numLinesSkipped++;
+                }
+
+                // we only need to the JSON data once (to compute the fields); we assume the fields are the same for every line...
+                if (rawJson == null && allHeaders.contains(CSV_COLUMN_JSON))
+                    rawJson = line[allHeaders.indexOf(CSV_COLUMN_JSON)];
+
+                line = readNextCsvLine(reader);
+            }
+
+            if (rawJson == null)
+                throw new IOException("Unable to find Geocoder results.");
+
+            // compute the result
+            if (versionColumnIdx == -1)
+                result = INPUT_UNPROCESSED;
+            else if (numLinesUnprocessed == 0)
+                result = INPUT_PARTIALLY_PROCESSED;
+            else if (numLinesSkipped > 0)
+                result = INPUT_FULLY_PROCESSED_WITH_SKIPPED;
+            else
+                result = INPUT_FULLY_PROCESSED_NO_SKIPPED;
+
+            // adjust the headers (we never want the processing columns included)
+            List<String> headers = versionColumnIdx == -1 ? allHeaders : allHeaders.subList(0, versionColumnIdx);
+
+            // if we didn't find a version, the column is set to the next available in the file
+            if (versionColumnIdx == -1)
+                versionColumnIdx = headers.size();
+
+            GeocodeResult geocoderResult = parseGeocodeResults(rawJson).getResults().get(0);
+            List<String> jsonFields = new ArrayList<>();
+            for (Map.Entry<String, String> entry : geocoderResult.getOutputGeocode().entrySet())
+                if (!JSON_IGNORED.contains(entry.getKey()))
+                    jsonFields.add(FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
+            for (Map.Entry<String, String> entry : geocoderResult.getCensusValue().entrySet())
+                if (!JSON_IGNORED.contains(entry.getKey()))
+                    jsonFields.add(FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
+            for (Map.Entry<String, String> entry : geocoderResult.getReferenceFeature().entrySet())
+                if (!JSON_IGNORED.contains(entry.getKey()))
+                    jsonFields.add(FIELD_TYPE_REFERENCE_FEATURE + "." + entry.getKey());
+
+            // update the session
+            session.setInputFile(file);
+            session.setNumResultsToProcess(numLinesWithoutHeaders);
+            session.setInputCsvHeaders(headers);
+            session.setInputJsonFields(jsonFields);
+            session.setJsonFieldsToHeaders(Utils.mapJsonFieldsToHeaders(jsonFields, headers));
+            session.setJsonColumnIndex(headers.indexOf(CSV_COLUMN_JSON));
+            session.setVersionColumnIndex(versionColumnIdx);
+            session.setProcessingStatusColumnIndex(versionColumnIdx + 1);
+            session.setUserSelectedResultColumnIndex(versionColumnIdx + 2);
+            session.setUserCommentColumnIndex(versionColumnIdx + 3);
+
+            if (INPUT_PARTIALLY_PROCESSED.equals(result) || INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result) || INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result))
+                session.setOutputFile(file);
+
+            if (INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result)) {
+                session.setNumConfirmedLines(numLinesConfirmed);
+                session.setNumModifiedLines(numLinesModified);
+                session.setNumSkippedLines(numLinesSkipped);
+            }
+        }
+        catch (RuntimeException e) {
+            throw new IOException("Unable to analyze input file: " + e.getMessage());
+        }
+
+        return result;
+    }
+
     public static String[] readNextCsvLine(CSVReader reader) throws IOException {
         String[] line = reader.readNext();
         //Ignore empty lines - empty line at end of file was messing up line count
@@ -107,6 +218,7 @@ public class Utils {
         return line;
     }
 
+    @Deprecated
     public static List<String> parseHeaders(File file) throws IOException {
         try (CSVReader reader = new CSVReader(createReader(file))) {
             return Arrays.asList(reader.readNext());
@@ -116,6 +228,7 @@ public class Utils {
         }
     }
 
+    @Deprecated
     public static List<String> parserJsonFields(File file) throws IOException {
         try {
             List<String> fields = new ArrayList<>();
@@ -219,10 +332,12 @@ public class Utils {
         return result;
     }
 
+    @Deprecated
     public static Integer extractResultFromProcessedLine(String[] csvLine) {
         return Integer.valueOf(csvLine[csvLine.length - 3]);
     }
 
+    @Deprecated
     public static String extractCommentFromProcessedLine(String[] csvLine) {
         return csvLine[csvLine.length - 1];
     }
@@ -231,12 +346,11 @@ public class Utils {
         int originalLineLength = originalLine.length;
 
         List<String> headers = session.getInputCsvHeaders();
-        boolean skippedMode = Boolean.TRUE.equals(session.getSkippedMode());
 
-        String[] updatedLine = new String[skippedMode ? originalLineLength : (originalLineLength + 3)];
+        String[] updatedLine = new String[INPUT_UNPROCESSED.equals(session.getInputFileAnalysisResult()) ? (originalLineLength + 3) : originalLineLength];
         System.arraycopy(originalLine, 0, updatedLine, 0, originalLine.length);
 
-        if (status.equals(Session.STATUS_UPDATED)) {
+        if (status.equals(PROCESSING_STATUS_UPDATED)) {
             // update all "outputGeocode" values
             for (Map.Entry<String, String> entry : selectedResult.getOutputGeocode().entrySet())
                 if (headers.contains(entry.getKey()))
@@ -252,16 +366,10 @@ public class Utils {
         }
 
         // add processing information (add to the end of the line, or replace if the columns already exists)
-        if (skippedMode) {
-            updatedLine[originalLineLength - 3] = Integer.toString(status);
-            updatedLine[originalLineLength - 2] = Integer.toString(selectedResult.getIndex());
-            updatedLine[originalLineLength - 1] = comment;
-        }
-        else {
-            updatedLine[originalLineLength++] = Integer.toString(status);
-            updatedLine[originalLineLength++] = Integer.toString(selectedResult.getIndex());
-            updatedLine[originalLineLength] = comment;
-        }
+        updatedLine[session.getVersionColumnIndex()] = session.getVersion();
+        updatedLine[session.getProcessingStatusColumnIndex()] = Integer.toString(status);
+        updatedLine[session.getUserSelectedResultColumnIndex()] = Integer.toString(selectedResult.getIndex());
+        updatedLine[session.getUserCommentColumnIndex()] = comment;
 
         return updatedLine;
     }

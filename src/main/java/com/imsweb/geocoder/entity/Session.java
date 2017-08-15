@@ -9,16 +9,13 @@ import java.util.Map;
 
 public class Session {
 
-    // do NOT change these (or anything else) or it will break existing serialized sessions!
-    public static final Integer STATUS_CONFIRMED = 0;
-    public static final Integer STATUS_UPDATED = 1;
-    public static final Integer STATUS_SKIPPED = 2;
+    private String _version;
 
     private File _inputFile;
 
-    private File _inputFileForSkippedMode;
+    private Integer _inputFileAnalysisResult;
 
-    private Integer _numResultsToProcess; // so number of lines NOT including CSV
+    private Integer _numResultsToProcess; // number of lines NOT including CSV (so number of lines - 1 basically)
 
     private List<String> _inputCsvHeaders;
 
@@ -26,13 +23,17 @@ public class Session {
 
     private Map<String, String> _jsonFieldsToHeaders;
 
-    private String _jsonColumnName;
-
     private Integer _jsonColumnIndex;
 
-    private File _outputFile;
+    private Integer _versionColumnIndex;
 
-    private Boolean _skippedMode;
+    private Integer _processingStatusColumnIndex;
+
+    private Integer _userSelectedResultColumnIndex;
+
+    private Integer _userCommentColumnIndex;
+
+    private File _outputFile;
 
     private Integer _numSkippedLines;
 
@@ -41,10 +42,21 @@ public class Session {
     private Integer _numModifiedLines;
 
     public Session() {
-        _skippedMode = false;
+        _versionColumnIndex = -1;
+        _processingStatusColumnIndex = -1;
+        _userSelectedResultColumnIndex = -1;
+        _userCommentColumnIndex = -1;
         _numSkippedLines = 0;
         _numConfirmedLines = 0;
         _numModifiedLines = 0;
+    }
+
+    public String getVersion() {
+        return _version;
+    }
+
+    public void setVersion(String version) {
+        _version = version;
     }
 
     public File getInputFile() {
@@ -55,12 +67,12 @@ public class Session {
         _inputFile = inputFile;
     }
 
-    public File getInputFileForSkippedMode() {
-        return _inputFileForSkippedMode;
+    public Integer getInputFileAnalysisResult() {
+        return _inputFileAnalysisResult;
     }
 
-    public void setInputFileForSkippedMode(File inputFileForSkippedMode) {
-        _inputFileForSkippedMode = inputFileForSkippedMode;
+    public void setInputFileAnalysisResult(Integer inputFileAnalysisResult) {
+        _inputFileAnalysisResult = inputFileAnalysisResult;
     }
 
     public Integer getNumResultsToProcess() {
@@ -119,14 +131,6 @@ public class Session {
         _jsonFieldsToHeaders = jsonFieldsToHeaders;
     }
 
-    public String getJsonColumnName() {
-        return _jsonColumnName;
-    }
-
-    public void setJsonColumnName(String jsonColumnName) {
-        _jsonColumnName = jsonColumnName;
-    }
-
     public Integer getJsonColumnIndex() {
         return _jsonColumnIndex;
     }
@@ -135,19 +139,43 @@ public class Session {
         _jsonColumnIndex = jsonColumnIndex;
     }
 
+    public Integer getVersionColumnIndex() {
+        return _versionColumnIndex;
+    }
+
+    public void setVersionColumnIndex(Integer versionColumnIndex) {
+        _versionColumnIndex = versionColumnIndex;
+    }
+
+    public Integer getProcessingStatusColumnIndex() {
+        return _processingStatusColumnIndex;
+    }
+
+    public void setProcessingStatusColumnIndex(Integer processingStatusColumnIndex) {
+        _processingStatusColumnIndex = processingStatusColumnIndex;
+    }
+
+    public Integer getUserSelectedResultColumnIndex() {
+        return _userSelectedResultColumnIndex;
+    }
+
+    public void setUserSelectedResultColumnIndex(Integer userSelectedResultColumnIndex) {
+        _userSelectedResultColumnIndex = userSelectedResultColumnIndex;
+    }
+
+    public Integer getUserCommentColumnIndex() {
+        return _userCommentColumnIndex;
+    }
+
+    public void setUserCommentColumnIndex(Integer userCommentColumnIndex) {
+        _userCommentColumnIndex = userCommentColumnIndex;
+    }
+
     public File getOutputFile() {
         return _outputFile;
     }
 
     public void setOutputFile(File outputFile) {
         _outputFile = outputFile;
-    }
-
-    public Boolean getSkippedMode() {
-        return _skippedMode;
-    }
-
-    public void setSkippedMode(Boolean skippedMode) {
-        _skippedMode = skippedMode;
     }
 }
