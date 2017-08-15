@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.io.File;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -48,6 +49,17 @@ public class SummaryPanel extends JPanel {
         contentPnl.setBorder(new EmptyBorder(0, 15, 0, 0));
         contentPnl.add(centerPanel, BorderLayout.NORTH);
         this.add(contentPnl, BorderLayout.CENTER);
+
+        // Delete any existing progress file
+        File inputFile = parent.getSession().getInputFile();
+        File progressFile = new File(inputFile.getParentFile(), Utils.addProgressSuffix(inputFile.getName()));
+        if (progressFile.exists())
+            progressFile.delete();
+
+        // Delete any existing tmp file
+        File tmpFile = parent.getSession().getTmpInputFile();
+        if (tmpFile != null && tmpFile.exists())
+            tmpFile.delete();
     }
 
     private JPanel buildFileInfoPanel(Session session) {

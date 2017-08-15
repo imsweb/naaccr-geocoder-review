@@ -76,7 +76,7 @@ public class ProcessingPanel extends JPanel {
     private JTextArea _commentArea;
 
     // variables for the current line/selection information- needed for writing the line
-    private Integer _currentLineNumber;
+   // private Integer _currentLineNumber;
     private String[] _currentLine;
     private GeocodeResult _selectedGeocodeResult;
     private GeocodeResults _currentGeocodeResults;
@@ -90,6 +90,8 @@ public class ProcessingPanel extends JPanel {
         try {
             _inputReader = new CSVReader(Utils.createReader(session.getTmpInputFile() != null ? session.getTmpInputFile() : session.getInputFile()));
             _inputReader.readNext(); // ignore headers
+            for (int i = 1; i < session.getCurrentLineNumber(); i++) // if we are using an in-progress output file, skip to where we left off
+                _inputReader.readNext();
         }
         catch (IOException e) {
             String msg = "Unable to start reading from input file.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
@@ -98,24 +100,31 @@ public class ProcessingPanel extends JPanel {
 
         // setup writer
         try {
-            _outputWriter = new CSVWriter(Utils.createWriter(session.getOutputFile()));
+            if (session.getCurrentLineNumber() > 0)
+                _outputWriter = new CSVWriter(Utils.createWriter(session.getOutputFile(), true));
+            else {
+                _outputWriter = new CSVWriter(Utils.createWriter(session.getOutputFile(), false));
 
-            // using a copy of the headers since we might modify them...
-            List<String> headers = new ArrayList<>(session.getInputCsvHeaders());
-            if (!Boolean.TRUE.equals(session.getSkippedMode())) {
-                headers.add(Utils.PROCESSING_COLUMN_STATUS);
-                headers.add(Utils.PROCESSING_COLUMN_SELECTED_RESULT);
-                headers.add(Utils.PROCESSING_COLUMN_COMMENT);
+                // using a copy of the headers since we might modify them...
+                List<String> headers = new ArrayList<>(session.getInputCsvHeaders());
+                if (!Boolean.TRUE.equals(session.getSkippedMode())) {
+                    headers.add(Utils.PROCESSING_COLUMN_VERSION);
+                    headers.add(Utils.PROCESSING_COLUMN_STATUS);
+                    headers.add(Utils.PROCESSING_COLUMN_SELECTED_RESULT);
+                    headers.add(Utils.PROCESSING_COLUMN_COMMENT);
+                }
+
+                _outputWriter.writeNext(headers.toArray(new String[0]));
             }
-
-            _outputWriter.writeNext(headers.toArray(new String[0]));
         }
         catch (IOException e) {
             String msg = "Unable to start writing to output file.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
             JOptionPane.showMessageDialog(ProcessingPanel.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        _currentLineNumber = 0;
+        // re-read the file that was in progress
+        if (session.getCurrentLineNumber() > 0)
+            session.setCurrentLineNumber(session.getCurrentLineNumber() - 1);
 
         this.setLayout(new BorderLayout());
         this.add(buildNorthPanel(parent.getSession()), BorderLayout.NORTH);
@@ -294,16 +303,16 @@ public class ProcessingPanel extends JPanel {
         boolean skippedMode = Boolean.TRUE.equals(_parent.getSession().getSkippedMode());
 
         // in skipped mode, the values will contain the processed results, but the CSV are taken from the original input file which doesn't contain them
-        int numExpectedValues = skippedMode ? (_parent.getSession().getInputCsvHeaders().size() + 3) : _parent.getSession().getInputCsvHeaders().size();
+        int numExpectedValues = skippedMode ? (_parent.getSession().getInputCsvHeaders().size() + Utils.NUM_EXTRA_OUTPUT_COLUMNS) : _parent.getSession().getInputCsvHeaders().size();
 
         try {
             String[] csvLine = Utils.readNextCsvLine(_inputReader);
             if (csvLine == null)
                 handleEndOfFile();
             else if (csvLine.length != numExpectedValues)
-                handleBadCsvLine("Unexpected number of columns on line " + (_currentLineNumber + 1) + ", expected " + numExpectedValues + " but got " + csvLine.length);
+                handleBadCsvLine("Unexpected number of columns on line " + (_parent.getSession().getCurrentLineNumber() + 1) + ", expected " + numExpectedValues + " but got " + csvLine.length);
             else {
-                _currentLineNumber++;
+                _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + 1);
                 _currentLine = csvLine;
 
                 // if we are in skipped mode, skip any line that wasn't previously skipped
@@ -316,7 +325,7 @@ public class ProcessingPanel extends JPanel {
                     // refresh the GUI
                     _commentArea.setText(skippedMode ? Utils.extractCommentFromProcessedLine(csvLine) : "");
                     _skipBox.setSelected(false);
-                    _currentResultIdxLbl.setText(_currentLineNumber.toString());
+                    _currentResultIdxLbl.setText(_parent.getSession().getCurrentLineNumber().toString());
                     _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
                     _numModifiedLbl.setText(_parent.getSession().getNumModifiedLines().toString());
                     _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());

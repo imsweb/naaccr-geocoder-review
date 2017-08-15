@@ -21,6 +21,7 @@ import javax.swing.border.MatteBorder;
 
 import com.imsweb.geocoder.Standalone;
 import com.imsweb.geocoder.Utils;
+import com.imsweb.geocoder.entity.Session;
 
 public class InputSelectionPanel extends JPanel {
 
@@ -89,40 +90,19 @@ public class InputSelectionPanel extends JPanel {
                 try {
                     File selectedFile = _inputChooser.getSelectedFile();
 
-                    // TODO analyzing the input file might be slow for large files, I think we need some kind of progress dialog or something like that...
-                    Integer result = Utils.analyzeInputFile(selectedFile, _parent.getSession());
-
-                    // UNPROCESSED - regular case, just let the user select the output file
-                    if (Utils.INPUT_UNPROCESSED.equals(result)) {
+                    File progressFile = Utils.getProgressFile(selectedFile);
+                    if (progressFile == null) {
+                        // TODO analyzing the input file might be slow for large files, I think we need some kind of progress dialog or something like that...
+                        Utils.analyzeInputFile(selectedFile, _parent.getSession());
                         _parent.showPanel(Standalone.PANEL_ID_OUTPUT);
                     }
-                    // PARTIALLY_PROCESSED - we can't have this; the user has to select the input file for resuming a review
-                    else if (Utils.INPUT_PARTIALLY_PROCESSED.equals(result)) {
-                        String msg = "You selected a data file that was already partially reviewed.\n\n";
-                        msg += "Please select the corresponding input file instead, and re-select this file in the next screen (output file selection).";
-                        JOptionPane.showMessageDialog(this, msg, "Warning", JOptionPane.WARNING_MESSAGE);
-                    }
-                    // FULLY_PROCESSED_WITH_SKIP - output file becomes input, process in "skipped" mode, copy remaining of new input on exit, go to the processing page right away
-                    else if (Utils.INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result)) {
-                        // this is tricky, but since we have to read the output file (to know the previous results) and since we can't open a reader/writer to the same file,
-                        // we have to rename the output file and use it as an input!
-                        File newInputFile = new File(selectedFile.getParentFile(), Utils.addTmpSuffix(selectedFile.getName()));
-                        if (newInputFile.exists())
-                            if (!newInputFile.delete())
-                                throw new IOException("Unable to delete previous \"tmp\" output file");
-                        if (!new File(selectedFile.getPath()).renameTo(newInputFile))
-                            throw new IOException("Unable to rename output file");
-                        _parent.getSession().setTmpInputFile(newInputFile);
-                        _parent.getSession().setOutputFile(selectedFile);
+                    else {
+                        Session session = _parent.getSession();
+                        Utils.readSessionFromProgressFile(session, progressFile);
+                        if (!session.getOutputFile().exists() || (session.getTmpInputFile() != null && !session.getTmpInputFile().exists()))
+                            throw new IOException("Progress file references files that do not exist anymore!");
                         _parent.showPanel(Standalone.PANEL_ID_PROCESS);
                     }
-                    // FULLY_PROCESSED_NO_SKIP - no more work to be done, go to the summary page (counts have been updated in the analysis call)
-                    else if (Utils.INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result)) {
-                        _parent.getSession().setOutputFile(selectedFile);
-                        _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
-                    }
-                    else
-                        throw new RuntimeException("Unsupported analysis result: " + result);
                 }
                 catch (IOException ex) {
                     String msg = "Unable to recognize file format.\n\n   Error: " + (ex.getMessage() == null ? "null access" : ex.getMessage());

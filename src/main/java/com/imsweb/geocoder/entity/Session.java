@@ -4,6 +4,7 @@
 package com.imsweb.geocoder.entity;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,8 +15,6 @@ public class Session {
     private File _inputFile;
 
     private File _tmpInputFile;
-
-    private Integer _inputFileAnalysisResult;
 
     private Integer _numResultsToProcess; // number of lines NOT including CSV (so number of lines - 1 basically)
 
@@ -43,7 +42,29 @@ public class Session {
 
     private Integer _numModifiedLines;
 
+    private Integer _currentLineNumber;
+
     private Boolean _skippedMode;
+
+    // Serialization keys
+    private static final String _KEY_VERSION = "version";
+    private static final String _KEY_INPUT_FILE = "input-file";
+    private static final String _KEY_TMP_INPUT_FILE = "tmp-input-file";
+    private static final String _KEY_NUM_RESULTS_TO_PROCESS = "num-results-to-process";
+    private static final String _KEY_INPUT_CSV_HEADERS = "input-csv-headers";
+    private static final String _KEY_INPUT_JSON_FIELDS = "input-json-fields";
+    private static final String _KEY_JSON_FIELDS_TO_HEADERS = "json-fields-to-headers";
+    private static final String _KEY_JSON_COLUMN_INDEX = "json-column-index";
+    private static final String _KEY_VERSION_COLUMN_INDEX = "version-column-index";
+    private static final String _KEY_PROCESSING_STATUS_COLUMN_INDEX = "processing-status-column-index";
+    private static final String _KEY_USER_SELECTED_RESULT_COLUMN_INDEX = "user-selected-result-column-index";
+    private static final String _KEY_USER_COMMENT_COLUMN_INDEX = "user-comment-column-index";
+    private static final String _KEY_OUTPUT_FILE = "output-file";
+    private static final String _KEY_NUM_SKIPPED_LINES = "num-skipped-lines";
+    private static final String _KEY_NUM_CONFIRMED_LINES = "num-confirmed-lines";
+    private static final String _KEY_NUM_MODIFIED_LINES = "num-modified-lines";
+    private static final String _KEY_CURRENT_LINE_NUMBER = "current-line-number";
+    private static final String _KEY_SKIPPED_MODE = "skipped-mode";
 
     public Session() {
         _versionColumnIndex = -1;
@@ -53,6 +74,7 @@ public class Session {
         _numSkippedLines = 0;
         _numConfirmedLines = 0;
         _numModifiedLines = 0;
+        _currentLineNumber = 0;
         _skippedMode = false;
     }
 
@@ -78,14 +100,6 @@ public class Session {
 
     public void setTmpInputFile(File tmpInputFile) {
         _tmpInputFile = tmpInputFile;
-    }
-
-    public Integer getInputFileAnalysisResult() {
-        return _inputFileAnalysisResult;
-    }
-
-    public void setInputFileAnalysisResult(Integer inputFileAnalysisResult) {
-        _inputFileAnalysisResult = inputFileAnalysisResult;
     }
 
     public Integer getNumResultsToProcess() {
@@ -192,11 +206,67 @@ public class Session {
         _outputFile = outputFile;
     }
 
+    public Integer getCurrentLineNumber() {
+        return _currentLineNumber;
+    }
+
+    public void setCurrentLineNumber(Integer currentLineNumber) {
+        _currentLineNumber = currentLineNumber;
+    }
+
     public Boolean getSkippedMode() {
         return _skippedMode;
     }
 
     public void setSkippedMode(Boolean skippedMode) {
         _skippedMode = skippedMode;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void deserializeFromMap(Map<String, Object> map) {
+        setVersion((String)map.get(_KEY_VERSION));
+        String inputFilePath = (String)map.get(_KEY_INPUT_FILE);
+        setInputFile(inputFilePath != null ? new File(inputFilePath) : null);
+        String tmpInputFilePath = (String)map.get(_KEY_TMP_INPUT_FILE);
+        setTmpInputFile(tmpInputFilePath != null ? new File(tmpInputFilePath) : null);
+        setNumResultsToProcess((Integer)map.get(_KEY_NUM_RESULTS_TO_PROCESS));
+        setInputCsvHeaders((List<String>)map.get(_KEY_INPUT_CSV_HEADERS));
+        setInputJsonFields((List<String>)map.get(_KEY_INPUT_JSON_FIELDS));
+        setJsonFieldsToHeaders((Map<String, String>)map.get(_KEY_JSON_FIELDS_TO_HEADERS));
+        setJsonColumnIndex((Integer)map.get(_KEY_JSON_COLUMN_INDEX));
+        setVersionColumnIndex((Integer)map.get(_KEY_VERSION_COLUMN_INDEX));
+        setProcessingStatusColumnIndex((Integer)map.get(_KEY_PROCESSING_STATUS_COLUMN_INDEX));
+        setUserSelectedResultColumnIndex((Integer)map.get(_KEY_USER_SELECTED_RESULT_COLUMN_INDEX));
+        setUserCommentColumnIndex((Integer)map.get(_KEY_USER_COMMENT_COLUMN_INDEX));
+        String outputFilePath = (String)map.get(_KEY_OUTPUT_FILE);
+        setOutputFile(outputFilePath != null ? new File(outputFilePath) : null);
+        setNumSkippedLines((Integer)map.get(_KEY_NUM_SKIPPED_LINES));
+        setNumConfirmedLines((Integer)map.get(_KEY_NUM_CONFIRMED_LINES));
+        setNumModifiedLines((Integer)map.get(_KEY_NUM_MODIFIED_LINES));
+        setCurrentLineNumber((Integer)map.get(_KEY_CURRENT_LINE_NUMBER));
+        setSkippedMode((Boolean)map.get(_KEY_SKIPPED_MODE));
+    }
+
+    public Map<String, Object> serializeToMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put(_KEY_VERSION, getVersion());
+        map.put(_KEY_INPUT_FILE, getInputFile() != null ? getInputFile().getAbsolutePath() : getInputFile());
+        map.put(_KEY_TMP_INPUT_FILE, getTmpInputFile() != null ? getTmpInputFile().getAbsolutePath() : getTmpInputFile());
+        map.put(_KEY_NUM_RESULTS_TO_PROCESS, getNumResultsToProcess());
+        map.put(_KEY_INPUT_CSV_HEADERS, getInputCsvHeaders());
+        map.put(_KEY_INPUT_JSON_FIELDS, getInputJsonFields());
+        map.put(_KEY_JSON_FIELDS_TO_HEADERS, getJsonFieldsToHeaders());
+        map.put(_KEY_JSON_COLUMN_INDEX, getJsonColumnIndex());
+        map.put(_KEY_VERSION_COLUMN_INDEX, getVersionColumnIndex());
+        map.put(_KEY_PROCESSING_STATUS_COLUMN_INDEX, getProcessingStatusColumnIndex());
+        map.put(_KEY_USER_SELECTED_RESULT_COLUMN_INDEX, getUserSelectedResultColumnIndex());
+        map.put(_KEY_USER_COMMENT_COLUMN_INDEX, getUserCommentColumnIndex());
+        map.put(_KEY_OUTPUT_FILE, getOutputFile() != null ? getOutputFile().getAbsolutePath() : getOutputFile());
+        map.put(_KEY_NUM_SKIPPED_LINES, getNumSkippedLines());
+        map.put(_KEY_NUM_CONFIRMED_LINES, getNumConfirmedLines());
+        map.put(_KEY_NUM_MODIFIED_LINES, getNumModifiedLines());
+        map.put(_KEY_CURRENT_LINE_NUMBER, getCurrentLineNumber());
+        map.put(_KEY_SKIPPED_MODE, getSkippedMode());
+        return map;
     }
 }

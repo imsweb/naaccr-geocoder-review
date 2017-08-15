@@ -11,6 +11,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -44,9 +46,8 @@ public class Utils {
 
     // the possible states for an input file (if you change these, think about serialization!)
     public static final Integer INPUT_UNPROCESSED = 0;
-    public static final Integer INPUT_PARTIALLY_PROCESSED = 1;
-    public static final Integer INPUT_FULLY_PROCESSED_WITH_SKIPPED = 2;
-    public static final Integer INPUT_FULLY_PROCESSED_NO_SKIPPED = 3;
+    public static final Integer INPUT_PROCESSED_WITH_SKIPPED = 2;
+    public static final Integer INPUT_PROCESSED_NO_SKIPPED = 3;
 
     // the different processing status (if you change these, think about serialization!)
     public static final Integer PROCESSING_STATUS_CONFIRMED = 0;
@@ -86,6 +87,8 @@ public class Utils {
     public static final String PROCESSING_COLUMN_SELECTED_RESULT = "Selected Result Index";
     public static final String PROCESSING_COLUMN_COMMENT = "Processing comment";
 
+    public static final Integer NUM_EXTRA_OUTPUT_COLUMNS = 4;
+
     public static Reader createReader(File file) throws IOException {
         InputStream is = new FileInputStream(file);
         if (file.getName().endsWith(".gz"))
@@ -93,8 +96,8 @@ public class Utils {
         return new InputStreamReader(is, StandardCharsets.UTF_8);
     }
 
-    public static Writer createWriter(File file) throws IOException {
-        OutputStream os = new FileOutputStream(file);
+    public static Writer createWriter(File file, boolean appendMode) throws IOException {
+        OutputStream os = new FileOutputStream(file, appendMode);
         if (file.getName().endsWith(".gz"))
             os = new GZIPOutputStream(os);
         return new OutputStreamWriter(os, StandardCharsets.UTF_8);
@@ -113,7 +116,7 @@ public class Utils {
         return numLines - 1; // don't take headers into account (that line doesn't need to be processed)
     }
 
-    public static Integer analyzeInputFile(File file, Session session) throws IOException {
+    public static void analyzeInputFile(File file, Session session) throws IOException {
         Integer result;
 
         try (CSVReader reader = new CSVReader(createReader(file))) {
@@ -123,15 +126,14 @@ public class Utils {
             int versionColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_VERSION);
             int resultColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_STATUS);
 
-            int numLinesWithoutHeaders = 0, numLinesUnprocessed = 0, numLinesConfirmed = 0, numLinesModified = 0, numLinesSkipped = 0;
+            if (versionColumnIdx != -1)
+                throw new IOException("The selected file is an output file. Please use an input file.");
+
+            int numLinesWithoutHeaders = 0, numLinesConfirmed = 0, numLinesModified = 0, numLinesSkipped = 0;
             String rawJson = null;
             String[] line = readNextCsvLine(reader);
             while (line != null) {
                 numLinesWithoutHeaders++;
-
-                // a line is unprocessed if we have processing headers, but the line length is smaller
-                if (versionColumnIdx != -1 && line.length < allHeaders.size())
-                    numLinesUnprocessed++;
 
                 // update processing result counts if we can
                 if (resultColumnIdx != -1 && line.length == allHeaders.size()) {
@@ -154,15 +156,14 @@ public class Utils {
             if (rawJson == null)
                 throw new IOException("Unable to find Geocoder results.");
 
+            //todo move the skip stuff to the output
             // compute the result
             if (versionColumnIdx == -1)
                 result = INPUT_UNPROCESSED;
-            else if (numLinesUnprocessed == 0)
-                result = INPUT_PARTIALLY_PROCESSED;
             else if (numLinesSkipped > 0)
-                result = INPUT_FULLY_PROCESSED_WITH_SKIPPED;
+                result = INPUT_PROCESSED_WITH_SKIPPED;
             else
-                result = INPUT_FULLY_PROCESSED_NO_SKIPPED;
+                result = INPUT_PROCESSED_NO_SKIPPED;
 
             // adjust the headers (we never want the processing columns included)
             List<String> headers = versionColumnIdx == -1 ? allHeaders : allHeaders.subList(0, versionColumnIdx);
@@ -196,7 +197,7 @@ public class Utils {
             session.setUserCommentColumnIndex(versionColumnIdx + 3);
 
             // for the following results, the selected input file is actually the output file (we are either going to re-process the file, or just show the summary)
-            if (INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result) || INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result))
+            /*if (INPUT_FULLY_PROCESSED_WITH_SKIPPED.equals(result) || INPUT_FULLY_PROCESSED_NO_SKIPPED.equals(result))
                 session.setOutputFile(file);
 
             // for the following results, we are not going to re-process the output file again, so we need to set the counts now
@@ -204,13 +205,15 @@ public class Utils {
                 session.setNumConfirmedLines(numLinesConfirmed);
                 session.setNumModifiedLines(numLinesModified);
                 session.setNumSkippedLines(numLinesSkipped);
-            }
+            }*/
         }
         catch (RuntimeException e) {
             throw new IOException("Unable to analyze input file: " + e.getMessage());
         }
+    }
 
-        return result;
+    public static boolean hasOutputHeaders(List<String> line) {
+        return (line.contains(PROCESSING_COLUMN_STATUS) && line.contains(PROCESSING_COLUMN_VERSION) && line.contains(PROCESSING_COLUMN_SELECTED_RESULT) && line.contains(PROCESSING_COLUMN_COMMENT));
     }
 
     public static String[] readNextCsvLine(CSVReader reader) throws IOException {
@@ -350,7 +353,7 @@ public class Utils {
 
         List<String> headers = session.getInputCsvHeaders();
 
-        String[] updatedLine = new String[INPUT_UNPROCESSED.equals(session.getInputFileAnalysisResult()) ? (originalLineLength + 3) : originalLineLength];
+        String[] updatedLine = new String[session.getTmpInputFile() == null ? (originalLineLength + Utils.NUM_EXTRA_OUTPUT_COLUMNS) : originalLineLength];
         System.arraycopy(originalLine, 0, updatedLine, 0, originalLine.length);
 
         if (status.equals(PROCESSING_STATUS_UPDATED)) {
@@ -388,6 +391,58 @@ public class Utils {
         if (filename.endsWith(".gz"))
             return filename.replace(".gz", ".tmp.gz");
         return filename + ".tmp";
+    }
+
+    public static String addProgressSuffix(String filename) {
+        return filename + ".progress";
+    }
+
+    public static File getProgressFile(File inputFile) {
+        File progressFile = new File(inputFile.getParentFile(), addProgressSuffix(inputFile.getName()));
+        if (progressFile.exists())
+            return progressFile;
+        else
+            return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void readSessionFromProgressFile(Session session, File progressFile) throws IOException {
+        FileInputStream fis = null;
+        ObjectInputStream ois = null;
+
+        try {
+            fis = new FileInputStream(progressFile);
+            ois = new ObjectInputStream(fis);
+
+            session.deserializeFromMap((Map<String, Object>)ois.readObject());
+        }
+        catch (ClassNotFoundException e) {
+            throw new IOException("Unable to find require class", e);
+        }
+        finally {
+            if (ois != null)
+                ois.close();
+            if (fis != null)
+                fis.close();
+        }
+    }
+
+    public static void writeSessionToProgressFile(Session session, File progressFile) throws IOException {
+        FileOutputStream fos = null;
+        ObjectOutputStream oos = null;
+
+        try {
+            fos = new FileOutputStream(progressFile);
+            oos = new ObjectOutputStream(fos);
+
+            oos.writeObject(session.serializeToMap());
+        }
+        finally {
+            if (oos != null)
+                oos.close();
+            if (fos != null)
+                fos.close();
+        }
     }
 
     @SuppressWarnings("SameParameterValue")
