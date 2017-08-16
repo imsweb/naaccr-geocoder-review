@@ -64,15 +64,27 @@ public class InputSelectionPanel extends JPanel {
         disc1Pnl.add(Utils.createBoldLabel("NAACCR Geocoder"));
         disc1Pnl.add(Utils.createLabel(" online application."));
         northPnl.add(disc1Pnl);
+
         northPnl.add(Box.createVerticalStrut(15));
-        JPanel disc2Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
-        disc2Pnl.add(Box.createHorizontalStrut(15));
-        disc2Pnl.add(Utils.createLabel("The file format can only be  "));
-        disc2Pnl.add(Utils.createBoldLabel("Comma Separated Values (CSV)"));
-        disc2Pnl.add(Utils.createLabel(" or "));
-        disc2Pnl.add(Utils.createBoldLabel("Tab Separated Values (TSV)"));
-        disc2Pnl.add(Utils.createLabel("; the NAACCR Geocoder also supports processing databases but those are not supported by this application."));
-        northPnl.add(disc2Pnl);
+        JPanel disc2aPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc2aPnl.add(Box.createHorizontalStrut(15));
+        disc2aPnl.add(Utils.createLabel("The file format can only be  "));
+        disc2aPnl.add(Utils.createBoldLabel("Comma Separated Values (CSV)"));
+        disc2aPnl.add(Utils.createLabel(" or "));
+        disc2aPnl.add(Utils.createBoldLabel("Tab Separated Values (TSV)"));
+        disc2aPnl.add(Utils.createLabel("; the application does NOT use the file extension to recognize those formats."));
+        northPnl.add(disc2aPnl);
+        northPnl.add(Box.createVerticalStrut(3));
+        JPanel disc2bPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc2bPnl.add(Box.createHorizontalStrut(15));
+        disc2bPnl.add(Utils.createLabel("The input file is expected to contain the column headers in the first line."));
+        northPnl.add(disc2bPnl);
+        northPnl.add(Box.createVerticalStrut(3));
+        JPanel disc2cPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc2cPnl.add(Box.createHorizontalStrut(15));
+        disc2cPnl.add(Utils.createLabel("The NAACCR Geocoder also supports processing databases but those are NOT supported by this application."));
+        northPnl.add(disc2cPnl);
+
         northPnl.add(Box.createVerticalStrut(15));
         JPanel disc3Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         disc3Pnl.add(Box.createHorizontalStrut(15));
@@ -83,7 +95,8 @@ public class InputSelectionPanel extends JPanel {
 
         // NORTH/3 - controls
         northPnl.add(Box.createVerticalStrut(50));
-        JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        selectPnl.add(Box.createHorizontalStrut(200));
         JButton selectBtn = new JButton("Select Input File");
         selectBtn.addActionListener(e -> {
             if (_inputChooser.showDialog(InputSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
@@ -112,5 +125,44 @@ public class InputSelectionPanel extends JPanel {
         });
         selectPnl.add(selectBtn);
         northPnl.add(selectPnl);
+
+        // NORTH/4 - more disclaimers
+        northPnl.add(Box.createVerticalStrut(50));
+        JPanel disc10Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc10Pnl.add(Box.createHorizontalStrut(15));
+        disc10Pnl.add(Utils.createLabel("Progress is saved as you complete the review of each result; to interrupt a review, just exit the application (File > Exit)."));
+        northPnl.add(disc10Pnl);
+
+        northPnl.add(Box.createVerticalStrut(15));
+        JPanel disc11Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc11Pnl.add(Box.createHorizontalStrut(15));
+        disc11Pnl.add(Utils.createBoldLabel("To resume a review you interrupted, "));
+        disc11Pnl.add(Utils.createLabel("start the application and re-select your original input file; your review session will resume where you stopped it."));
+        northPnl.add(disc11Pnl);
+
+        northPnl.add(Box.createVerticalStrut(15));
+        JPanel disc12Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc12Pnl.add(Box.createHorizontalStrut(15));
+        disc12Pnl.add(Utils.createLabel("You may skipped specific results during a review session; just check the 'Flag as Skipped' box and use the 'Next Line' button as you would normally."));
+        northPnl.add(disc12Pnl);
+
+        northPnl.add(Box.createVerticalStrut(15));
+        JPanel disc13aPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc13aPnl.add(Box.createHorizontalStrut(15));
+        disc13aPnl.add(Utils.createBoldLabel("To re-process skipped results, "));
+        disc13aPnl.add(Utils.createLabel(
+                "start the application and re-select both your original input and output files; you will be prompted if you want to re-process the skipped results. Click the 'Yes' button."));
+        northPnl.add(disc13aPnl);
+        northPnl.add(Box.createVerticalStrut(3));
+        JPanel disc13bPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc13bPnl.add(Box.createHorizontalStrut(15));
+        disc13bPnl.add(Utils.createLabel("Note that you can initiate a review of the skipped results only when all the results have been reviewed once."));
+        northPnl.add(disc13bPnl);
+
+        northPnl.add(Box.createVerticalStrut(15));
+        JPanel disc14Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc14Pnl.add(Box.createHorizontalStrut(15));
+        disc14Pnl.add(Utils.createLabel("Once you reach the end of a review session (regular or skipped-only), you will be presented with a summary of the decisions you made on the entire file."));
+        northPnl.add(disc14Pnl);
     }
 }

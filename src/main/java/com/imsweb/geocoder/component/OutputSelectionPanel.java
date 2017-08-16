@@ -103,7 +103,7 @@ public class OutputSelectionPanel extends JPanel {
                 else {
                     String msg = "The output file already exists, would you like to process the skipped results?";
                     msg += "\n\nIf you click 'Yes', the review will start and only skipped results will be presented to you.";
-                    msg += "\n\nIf you click 'No', the existing output file will be deleted and you will start a new review of the input file.";
+                    msg += "\n\nIf you click 'No', the existing output file will be deleted and you will start a new review of the input file.\n";
                     int option = JOptionPane.showConfirmDialog(this, msg, "Message", JOptionPane.YES_NO_CANCEL_OPTION);
                     if (option == JOptionPane.YES_OPTION) {
                         try {
