@@ -390,7 +390,7 @@ public class Utils {
         progressLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 
         JProgressBar progressBar = new JProgressBar();
-        progressBar.setPreferredSize(new Dimension(250, 20));
+        progressBar.setPreferredSize(new Dimension(275, 20));
         progressBar.setIndeterminate(true);
 
         JButton cancelBtn = createButton("Cancel", "cancel", "Cancel analysis", e -> {
@@ -412,7 +412,7 @@ public class Utils {
         progressBarContentPnl.add(cancelBtnWrapperPnl, BorderLayout.SOUTH);
         progressDlg.add(progressBarContentPnl, BorderLayout.CENTER);
 
-        progressDlg.setPreferredSize(new Dimension(300, 150));
+        progressDlg.setPreferredSize(new Dimension(350, 150));
         progressDlg.pack();
         Point center = new Point();
         center.setLocation(parent.getLocationOnScreen().x + parent.getWidth() / 2, parent.getLocationOnScreen().y + parent.getHeight() / 2);

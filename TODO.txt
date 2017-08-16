@@ -1,7 +1,7 @@
 08/10/2017
 
 - input page: add more content on the bottom half, maybe help about using the online NAACCR Geocoder?
-- (bug) when the app is resized, the horizontal scroll is not properly shown in the process page
+- progress dialog is not quite centered
 
 
 - [DONE] move "_currentLineNumber" out of processing panel into the session

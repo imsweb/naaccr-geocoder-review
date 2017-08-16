@@ -280,6 +280,7 @@ public class ProcessingPanel extends JPanel {
         _resultsTbl.setRowSelectionAllowed(false);
         _resultsTbl.setColumnSelectionAllowed(false);
         _resultsTbl.setBackground(pnl.getBackground());
+        _resultsTbl.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         // table can't be edited
         _resultsTbl.setModel(new DefaultTableModel() {
@@ -327,7 +328,7 @@ public class ProcessingPanel extends JPanel {
 
     private String[] getNextSkippedCsvLinee(int numExpectedValues) {
         SkippedModeSwingWorker worker = new SkippedModeSwingWorker(numExpectedValues);
-        JDialog progressDlg = Utils.createProgressDialog(_parent, worker, "Getting the next result. This may be slow...");
+        JDialog progressDlg = Utils.createProgressDialog(_parent, worker, "Getting the next skipped result. This may be slow...");
         worker.addPropertyChangeListener(evt -> {
             if (evt.getNewValue() instanceof SwingWorker.StateValue && (SwingWorker.StateValue.DONE.equals(evt.getNewValue())))
                 SwingUtilities.invokeLater(progressDlg::dispose);
@@ -543,6 +544,7 @@ public class ProcessingPanel extends JPanel {
         }
     }
 
+
     /**
      * Special header renderer that supports a radio button.
      */
@@ -635,6 +637,9 @@ public class ProcessingPanel extends JPanel {
         }
     }
 
+    /**
+     * SwingWorker for getting the next line in skipped mode
+     */
     class SkippedModeSwingWorker extends SwingWorker<String[], Void> {
 
         private String[] _result;

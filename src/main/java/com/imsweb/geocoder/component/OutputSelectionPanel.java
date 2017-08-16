@@ -207,6 +207,7 @@ public class OutputSelectionPanel extends JPanel {
         table.setRowSelectionAllowed(false);
         table.setColumnSelectionAllowed(false);
         table.setAutoCreateRowSorter(true);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setModel(new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int col) {

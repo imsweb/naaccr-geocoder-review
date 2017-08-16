@@ -109,7 +109,7 @@ public class InputSelectionPanel extends JPanel {
                     File selectedFile = _inputChooser.getSelectedFile();
                     File progressFile = Utils.getProgressFile(selectedFile);
                     if (!progressFile.exists()) {
-                        JDialog progressDlg = Utils.createProgressDialog(_parent, _worker, "Analyzing input file. This may be slow...");
+                        JDialog progressDlg = Utils.createProgressDialog(_parent, _worker, "Analyzing the input file. This may be slow...");
                         SwingUtilities.invokeLater(() -> progressDlg.setVisible(true));
                         _worker = new SwingWorker<Void, Void>() {
                             @Override
@@ -162,7 +162,7 @@ public class InputSelectionPanel extends JPanel {
         northPnl.add(Box.createVerticalStrut(15));
         JPanel disc12Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         disc12Pnl.add(Box.createHorizontalStrut(15));
-        disc12Pnl.add(Utils.createLabel("You may skipped specific results during a review session; just check the 'Flag as Skipped' box and use the 'Next Line' button as you would normally."));
+        disc12Pnl.add(Utils.createLabel("You may skip specific results during a review session; just check the 'Flag as Skipped' box and use the 'Next Line' button as you would normally."));
         northPnl.add(disc12Pnl);
 
         northPnl.add(Box.createVerticalStrut(15));
@@ -170,7 +170,7 @@ public class InputSelectionPanel extends JPanel {
         disc13aPnl.add(Box.createHorizontalStrut(15));
         disc13aPnl.add(Utils.createBoldLabel("To re-process skipped results, "));
         disc13aPnl.add(Utils.createLabel(
-                "start the application and re-select both your original input and output files; you will be prompted if you want to re-process the skipped results. Click the 'Yes' button."));
+                "start the application and re-select both your original input and output files; you will see a prompt asking if you want to re-process the skipped results. Click the 'Yes' button."));
         northPnl.add(disc13aPnl);
         northPnl.add(Box.createVerticalStrut(3));
         JPanel disc13bPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
