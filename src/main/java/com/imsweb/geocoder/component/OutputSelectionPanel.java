@@ -101,8 +101,9 @@ public class OutputSelectionPanel extends JPanel {
                 if (outputFile.getAbsolutePath().equals(_parent.getSession().getInputFile().getAbsolutePath()))
                     JOptionPane.showMessageDialog(this, "The output file must be different than the input file.", "Error", JOptionPane.ERROR_MESSAGE);
                 else {
-                    String msg =
-                            "The output file already exists, would you like to process the skipped results?\n\nClick 'Yes' to process the skipped results.\nClick 'No' to start a new review of the input file.";
+                    String msg = "The output file already exists, would you like to process the skipped results?";
+                    msg += "\n\nIf you click 'Yes', the review will start and only skipped results will be presented to you.";
+                    msg += "\n\nIf you click 'No', the existing output file will be deleted and you will start a new review of the input file.";
                     int option = JOptionPane.showConfirmDialog(this, msg, "Message", JOptionPane.YES_NO_CANCEL_OPTION);
                     if (option == JOptionPane.YES_OPTION) {
                         try {
