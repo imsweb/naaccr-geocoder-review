@@ -12,9 +12,12 @@ import java.io.IOException;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
@@ -29,6 +32,8 @@ public class InputSelectionPanel extends JPanel {
 
     protected JFileChooser _inputChooser;
 
+    private SwingWorker<Void, Void> _worker;
+
     public InputSelectionPanel(Standalone parent) {
         _parent = parent;
 
@@ -39,7 +44,7 @@ public class InputSelectionPanel extends JPanel {
         _inputChooser.setMultiSelectionEnabled(false);
 
         // TODO remove this! (it's convenient to now always have to re-select the data file from the project!)
-        _inputChooser.setSelectedFile(new File(System.getProperty("user.dir") + "\\src\\test\\resources\\sample_input_c.csv"));
+        _inputChooser.setSelectedFile(new File(System.getProperty("user.dir") + "\\build\\resources\\test\\sample_input_c_10000.csv"));
 
         this.setLayout(new BorderLayout());
 
@@ -102,17 +107,31 @@ public class InputSelectionPanel extends JPanel {
             if (_inputChooser.showDialog(InputSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
                 try {
                     File selectedFile = _inputChooser.getSelectedFile();
-
                     File progressFile = Utils.getProgressFile(selectedFile);
                     if (!progressFile.exists()) {
-                        // TODO analyzing the input file might be slow for large files, I think we need some kind of progress dialog or something like that...
-                        Utils.analyzeInputFile(selectedFile, _parent.getSession());
-                        _parent.showPanel(Standalone.PANEL_ID_OUTPUT);
+                        JDialog progressDlg = Utils.createProgressDialog(_parent, _worker, "Analyzing input file. This may be slow...");
+                        SwingUtilities.invokeLater(() -> progressDlg.setVisible(true));
+                        _worker = new SwingWorker<Void, Void>() {
+                            @Override
+                            protected Void doInBackground() throws Exception {
+                                Utils.analyzeInputFile(selectedFile, _parent.getSession());
+                                return null;
+                            }
+
+                            @Override
+                            protected void done() {
+                                if (!isCancelled()) {
+                                    SwingUtilities.invokeLater(progressDlg::dispose);
+                                    _parent.showPanel(Standalone.PANEL_ID_OUTPUT);
+                                }
+                            }
+                        };
+                        _worker.execute();
                     }
                     else {
                         Session session = _parent.getSession();
                         Utils.readSessionFromProgressFile(session, progressFile);
-                        if (!session.getOutputFile().exists() || (session.getTmpInputFile() != null && !session.getTmpInputFile().exists()))
+                        if (session.getOutputFile() == null || !session.getOutputFile().exists() || (session.getTmpInputFile() != null && !session.getTmpInputFile().exists()))
                             throw new IOException("Progress file references files that do not exist anymore!");
                         _parent.showPanel(Standalone.PANEL_ID_PROCESS);
                     }

@@ -107,7 +107,6 @@ public class OutputSelectionPanel extends JPanel {
                     int option = JOptionPane.showConfirmDialog(this, msg, "Message", JOptionPane.YES_NO_CANCEL_OPTION);
                     if (option == JOptionPane.YES_OPTION) {
                         try {
-                            // TODO re-creating the session from the results in the output file might be slow for large file, I think we need a spinner or something like that...
                             _parent.getSession().setSkippedMode(true);
                             _parent.getSession().setOutputFile(new File(_outputFld.getText()));
                             // this is tricky, but since we have to read the output file (to know the previous results) and since we can't open a reader/writer to the same file,

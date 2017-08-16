@@ -15,6 +15,8 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import au.com.bytecode.opencsv.CSVReader;
+
 import com.imsweb.geocoder.entity.GeocodeResult;
 import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
@@ -26,33 +28,15 @@ import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_UPDATED;
 public class UtilsTest {
 
     @Test
-    public void testGetNumResultsToProcess() throws IOException {
-        URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
-        Assert.assertNotNull(url);
-        Assert.assertEquals(7, Utils.getNumResultsToProcess(new File(url.getFile())));
-    }
-
-    @Test
     public void testParseHeaders() throws IOException {
         URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
         Assert.assertNotNull(url);
 
-        List<String> headers = Utils.parseHeaders(new File(url.getFile()));
+        List<String> headers = parseHeaders(new File(url.getFile()));
         Assert.assertEquals(139, headers.size());
         Assert.assertEquals("UNIQUEID", headers.get(0));
         Assert.assertEquals("FeatureMatchingResultCount", headers.get(25));
         Assert.assertEquals("FCounty", headers.get(123));
-    }
-
-    @Test
-    public void testParserJsonFields() throws IOException {
-        URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
-        Assert.assertNotNull(url);
-
-        List<String> jsonFields = Utils.parserJsonFields(new File(url.getFile()));
-        Assert.assertEquals(70, jsonFields.size());
-        Assert.assertEquals(Utils.FIELD_TYPE_OUTPUT_GEOCODES + "Latitude", jsonFields.get(0));
-        Assert.assertEquals(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".Source", jsonFields.get(jsonFields.size() - 1));
     }
 
     @Test
@@ -62,8 +46,8 @@ public class UtilsTest {
         URL url = Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv");
         Assert.assertNotNull(url);
 
-        List<String> headers = Utils.parseHeaders(new File(url.getFile()));
-        List<String> jsonFields = Utils.parserJsonFields(new File(url.getFile()));
+        List<String> headers = parseHeaders(new File(url.getFile()));
+        List<String> jsonFields = parserJsonFields(new File(url.getFile()));
         Map<String, String> mappings = Utils.mapJsonFieldsToHeaders(jsonFields, headers);
 
         // input fields shouldn't be mapped
@@ -192,6 +176,40 @@ public class UtilsTest {
         resultLine[4] = "newRef1";
         resultLine[7] = "5";
         Assert.assertArrayEquals(resultLine, Utils.getResultCsvLine(session, originalLine, geocodeResult, PROCESSING_STATUS_UPDATED, comment));
+    }
 
+    // helper methods used by testMapJsonFieldsToHeaders
+    private List<String> parseHeaders(File file) throws IOException {
+        try (CSVReader reader = new CSVReader(Utils.createReader(file))) {
+            return Arrays.asList(reader.readNext());
+        }
+        catch (RuntimeException e) {
+            throw new IOException("Unable to parse column headers.", e);
+        }
+    }
+
+    private List<String> parserJsonFields(File file) throws IOException {
+        try {
+            List<String> fields = new ArrayList<>();
+            try (CSVReader reader = new CSVReader(Utils.createReader(file))) {
+                int jsonColumnIndex = Arrays.asList(reader.readNext()).indexOf(Utils.CSV_COLUMN_JSON);
+                if (jsonColumnIndex == -1)
+                    throw new IOException("Unable to locate geocoder output column");
+                GeocodeResult result = Utils.parseGeocodeResults(Arrays.asList(reader.readNext()).get(jsonColumnIndex)).getResults().get(0);
+                for (Map.Entry<String, String> entry : result.getOutputGeocode().entrySet())
+                    if (!Utils.JSON_IGNORED.contains(entry.getKey()))
+                        fields.add(Utils.FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
+                for (Map.Entry<String, String> entry : result.getCensusValue().entrySet())
+                    if (!Utils.JSON_IGNORED.contains(entry.getKey()))
+                        fields.add(Utils.FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
+                for (Map.Entry<String, String> entry : result.getReferenceFeature().entrySet())
+                    if (!Utils.JSON_IGNORED.contains(entry.getKey()))
+                        fields.add(Utils.FIELD_TYPE_REFERENCE_FEATURE + "." + entry.getKey());
+            }
+            return fields;
+        }
+        catch (RuntimeException e) {
+            throw new IOException("Unable to parse JSON fields.", e);
+        }
     }
 }

@@ -99,6 +99,7 @@ public class Standalone extends JFrame implements ActionListener {
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
             String msg = "An unexpected error happened, it is recommended to close the application.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
+            e.printStackTrace();
             JOptionPane.showMessageDialog(Standalone.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
         }));
     }
@@ -112,6 +113,7 @@ public class Standalone extends JFrame implements ActionListener {
             _centerPnl.add(PANEL_ID_OUTPUT, new OutputSelectionPanel(this));
         else if (PANEL_ID_PROCESS.equals(panelId)) {
             _processingPanel = new ProcessingPanel(this);
+            // If we are done with the file, don't show the processing panel
             if (!_processingPanel.reachedEndOfFile())
                 _centerPnl.add(PANEL_ID_PROCESS, _processingPanel);
         }
@@ -153,7 +155,8 @@ public class Standalone extends JFrame implements ActionListener {
             _processingPanel.closeStreams();
 
             // If we are not done processing, create a progress file
-            if (_session.getCurrentLineNumber() < _session.getNumResultsToProcess()) {
+            // If we are done, remove progress and tmp files from this session
+            if (!_processingPanel.reachedEndOfFile()) {
                 File inputFile = _session.getInputFile();
                 try {
                     Utils.writeSessionToProgressFile(_session, Utils.getProgressFile(inputFile));
@@ -161,6 +164,20 @@ public class Standalone extends JFrame implements ActionListener {
                 catch (IOException ex) {
                     JOptionPane.showMessageDialog(this, "Unable to save progress file. Your progress will be lost.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
+            }
+            else {
+                // Delete any existing progress file for this session
+                File inputFile = getSession().getInputFile();
+                File progressFile = Utils.getProgressFile(inputFile);
+                if (progressFile.exists())
+                    if (!progressFile.delete())
+                        JOptionPane.showMessageDialog(this, "Unable to delete progress file. Please delete it by hand.", "Error", JOptionPane.ERROR_MESSAGE);
+
+                // Delete any existing tmp file for this session
+                File tmpFile = getSession().getTmpInputFile();
+                if (tmpFile != null && tmpFile.exists())
+                    if (!tmpFile.delete())
+                        JOptionPane.showMessageDialog(this, "Unable to delete tmp file. Please delete it by hand.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
         System.exit(0);

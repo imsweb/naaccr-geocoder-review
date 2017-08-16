@@ -8,12 +8,10 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.io.File;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -50,19 +48,6 @@ public class SummaryPanel extends JPanel {
         contentPnl.setBorder(new EmptyBorder(0, 15, 0, 0));
         contentPnl.add(centerPanel, BorderLayout.NORTH);
         this.add(contentPnl, BorderLayout.CENTER);
-
-        // Delete any existing progress file for this session
-        File inputFile = parent.getSession().getInputFile();
-        File progressFile = Utils.getProgressFile(inputFile);
-        if (progressFile != null && progressFile.exists())
-            if (!progressFile.delete())
-                JOptionPane.showMessageDialog(this, "Unable to delete progress file. Please delete it by hand.", "Error", JOptionPane.ERROR_MESSAGE);
-
-        // Delete any existing tmp file for this session
-        File tmpFile = parent.getSession().getTmpInputFile();
-        if (tmpFile != null && tmpFile.exists())
-            if (!tmpFile.delete())
-                JOptionPane.showMessageDialog(this, "Unable to delete tmp file. Please delete it by hand.", "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     private JPanel buildFileInfoPanel(Session session) {

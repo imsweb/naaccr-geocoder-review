@@ -3,8 +3,14 @@
  */
 package com.imsweb.geocoder;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Point;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,8 +35,14 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingWorker;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +53,6 @@ import com.imsweb.geocoder.entity.GeocodeResult;
 import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
 
-// TODO remove the deprecated methods, they shouldn't be used anymore (other than unit tests)
 public class Utils {
 
     // the different processing status (if you change these, think about serialization!)
@@ -96,19 +107,6 @@ public class Utils {
         if (file.getName().endsWith(".gz"))
             os = new GZIPOutputStream(os);
         return new OutputStreamWriter(os, StandardCharsets.UTF_8);
-    }
-
-    @Deprecated
-    public static int getNumResultsToProcess(File file) throws IOException {
-        int numLines = 0;
-        try (CSVReader reader = new CSVReader(createReader(file))) {
-            String[] line = readNextCsvLine(reader);
-            while (line != null) {
-                numLines++;
-                line = readNextCsvLine(reader);
-            }
-        }
-        return numLines - 1; // don't take headers into account (that line doesn't need to be processed)
     }
 
     public static void analyzeInputFile(File file, Session session) throws IOException {
@@ -175,42 +173,6 @@ public class Utils {
         while (line != null && (line.length == 0 || line[0].trim().isEmpty()))
             line = reader.readNext();
         return line;
-    }
-
-    @Deprecated
-    public static List<String> parseHeaders(File file) throws IOException {
-        try (CSVReader reader = new CSVReader(createReader(file))) {
-            return Arrays.asList(reader.readNext());
-        }
-        catch (RuntimeException e) {
-            throw new IOException("Unable to parse column headers.", e);
-        }
-    }
-
-    @Deprecated
-    public static List<String> parserJsonFields(File file) throws IOException {
-        try {
-            List<String> fields = new ArrayList<>();
-            try (CSVReader reader = new CSVReader(createReader(file))) {
-                int jsonColumnIndex = Arrays.asList(reader.readNext()).indexOf(CSV_COLUMN_JSON);
-                if (jsonColumnIndex == -1)
-                    throw new IOException("Unable to locate geocoder output column");
-                GeocodeResult result = parseGeocodeResults(Arrays.asList(reader.readNext()).get(jsonColumnIndex)).getResults().get(0);
-                for (Map.Entry<String, String> entry : result.getOutputGeocode().entrySet())
-                    if (!JSON_IGNORED.contains(entry.getKey()))
-                        fields.add(FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
-                for (Map.Entry<String, String> entry : result.getCensusValue().entrySet())
-                    if (!JSON_IGNORED.contains(entry.getKey()))
-                        fields.add(FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
-                for (Map.Entry<String, String> entry : result.getReferenceFeature().entrySet())
-                    if (!JSON_IGNORED.contains(entry.getKey()))
-                        fields.add(FIELD_TYPE_REFERENCE_FEATURE + "." + entry.getKey());
-            }
-            return fields;
-        }
-        catch (RuntimeException e) {
-            throw new IOException("Unable to parse JSON fields.", e);
-        }
     }
 
     public static Map<String, String> mapJsonFieldsToHeaders(List<String> jsonFields, List<String> headers) {
@@ -408,5 +370,53 @@ public class Utils {
         btn.setToolTipText(tooltip);
         btn.addActionListener(listener);
         return btn;
+    }
+
+    public static JDialog createProgressDialog(JFrame parent, SwingWorker<?, Void> worker, String label) {
+        JDialog progressDlg = new JDialog(parent, "Processing", true);
+        progressDlg.setLayout(new BorderLayout());
+
+        progressDlg.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        progressDlg.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent we) {
+                if (worker != null)
+                    worker.cancel(true);
+                progressDlg.dispose();
+            }
+        });
+
+        JLabel progressLbl = createBoldLabel(label);
+        progressLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setPreferredSize(new Dimension(250, 20));
+        progressBar.setIndeterminate(true);
+
+        JButton cancelBtn = createButton("Cancel", "cancel", "Cancel analysis", e -> {
+            if (worker != null)
+                worker.cancel(true);
+            progressBar.setIndeterminate(false);
+            progressDlg.dispose();
+        });
+        cancelBtn.setVerticalAlignment(JButton.CENTER);
+
+        JPanel cancelBtnWrapperPnl = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        cancelBtnWrapperPnl.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        cancelBtnWrapperPnl.add(cancelBtn);
+
+        JPanel progressBarContentPnl = new JPanel();
+        progressBarContentPnl.setBorder(BorderFactory.createEmptyBorder(15, 40, 15, 40));
+        progressBarContentPnl.add(progressLbl, BorderLayout.NORTH);
+        progressBarContentPnl.add(progressBar, BorderLayout.CENTER);
+        progressBarContentPnl.add(cancelBtnWrapperPnl, BorderLayout.SOUTH);
+        progressDlg.add(progressBarContentPnl, BorderLayout.CENTER);
+
+        progressDlg.setPreferredSize(new Dimension(300, 150));
+        progressDlg.pack();
+        Point center = new Point();
+        center.setLocation(parent.getLocationOnScreen().x + parent.getWidth() / 2, parent.getLocationOnScreen().y + parent.getHeight() / 2);
+        progressDlg.setLocation(center.x - progressDlg.getWidth() / 2, center.y - progressDlg.getHeight() / 2);
+        return progressDlg;
     }
 }
