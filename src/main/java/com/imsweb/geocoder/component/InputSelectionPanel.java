@@ -43,9 +43,6 @@ public class InputSelectionPanel extends JPanel {
         _inputChooser.setApproveButtonToolTipText("Select file");
         _inputChooser.setMultiSelectionEnabled(false);
 
-        // TODO remove this! (it's convenient to now always have to re-select the data file from the project!)
-        _inputChooser.setSelectedFile(new File(System.getProperty("user.dir") + "\\build\\resources\\test\\sample_input_c_10000.csv"));
-
         this.setLayout(new BorderLayout());
 
         // NORTH - pretty much everything
