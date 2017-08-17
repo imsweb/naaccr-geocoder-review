@@ -275,7 +275,12 @@ public class ProcessingPanel extends JPanel {
     private JPanel buildCenterPanel() {
         JPanel pnl = new JPanel(new BorderLayout());
 
-        _resultsTbl = new JTable();
+        _resultsTbl = new JTable() {
+            @Override
+            public boolean getScrollableTracksViewportWidth() {
+                return getPreferredSize().width < getParent().getWidth();
+            }
+        };
         _resultsTbl.setBorder(null);
         _resultsTbl.setRowSelectionAllowed(false);
         _resultsTbl.setColumnSelectionAllowed(false);

@@ -202,7 +202,12 @@ public class OutputSelectionPanel extends JPanel {
             data.add(row);
         }
 
-        JTable table = new JTable(data, headers);
+        JTable table = new JTable(data, headers) {
+            @Override
+            public boolean getScrollableTracksViewportWidth() {
+                return getPreferredSize().width < getParent().getWidth();
+            }
+        };
         table.setBorder(null);
         table.setRowSelectionAllowed(false);
         table.setColumnSelectionAllowed(false);
