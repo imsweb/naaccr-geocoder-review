@@ -17,13 +17,15 @@ public class CreateLargeFileLab {
 
     @SuppressWarnings("ConstantConditions")
     public static void main(String[] args) throws IOException {
+        int numRows = 10000;
+
         File inputFile = new File(Thread.currentThread().getContextClassLoader().getResource("sample_input_c.csv").getFile());
-        File outputFile = new File(inputFile.getParentFile(), "sample_input_c_10000.csv");
+        File outputFile = new File(inputFile.getParentFile(), "sample_input_c_" + numRows + ".csv");
 
         try (CSVReader reader = new CSVReader(new FileReader(inputFile)); CSVWriter writer = new CSVWriter(new FileWriter(outputFile))) {
             writer.writeNext(reader.readNext()); // copy headers
             String[] lineToCopy = reader.readNext();
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < numRows; i++)
                 writer.writeNext(lineToCopy);
         }
 
@@ -31,8 +33,8 @@ public class CreateLargeFileLab {
 
 
         // Create output file from the large input file
-        inputFile = new File(Thread.currentThread().getContextClassLoader().getResource("sample_input_c_10000.csv").getFile());
-        outputFile = new File(inputFile.getParentFile(), "sample_input_c_10000-reviewed.csv");
+        inputFile = new File(Thread.currentThread().getContextClassLoader().getResource("sample_input_c_" + numRows + ".csv").getFile());
+        outputFile = new File(inputFile.getParentFile(), "sample_input_c_" + numRows + "-reviewed.csv");
 
         try (CSVReader reader = new CSVReader(new FileReader(inputFile)); CSVWriter writer = new CSVWriter(new FileWriter(outputFile))) {
             String[] header = reader.readNext();
@@ -52,7 +54,7 @@ public class CreateLargeFileLab {
             newLine[length+1] = "0";
             newLine[length+2] = "1";
             newLine[length+3] = "";
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < numRows; i++)
                 writer.writeNext(newLine);
         }
     }
