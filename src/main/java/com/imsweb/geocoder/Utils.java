@@ -412,11 +412,13 @@ public class Utils {
         progressBarContentPnl.add(cancelBtnWrapperPnl, BorderLayout.SOUTH);
         progressDlg.add(progressBarContentPnl, BorderLayout.CENTER);
 
-        progressDlg.setPreferredSize(new Dimension(350, 150));
+        int dialogWidth = 350;
+        int dialogHeight = 150;
+        progressDlg.setPreferredSize(new Dimension(dialogWidth, dialogHeight));
         progressDlg.pack();
         Point center = new Point();
         center.setLocation(parent.getLocationOnScreen().x + parent.getWidth() / 2, parent.getLocationOnScreen().y + parent.getHeight() / 2);
-        progressDlg.setLocation(center.x - progressDlg.getWidth() / 2, center.y - progressDlg.getHeight() / 2);
+        progressDlg.setLocation(center.x - dialogWidth / 2, center.y - dialogHeight / 2);
         return progressDlg;
     }
 }
