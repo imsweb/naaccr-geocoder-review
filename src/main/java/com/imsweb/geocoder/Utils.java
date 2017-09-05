@@ -59,6 +59,7 @@ public class Utils {
     public static final Integer PROCESSING_STATUS_CONFIRMED = 0;
     public static final Integer PROCESSING_STATUS_UPDATED = 1;
     public static final Integer PROCESSING_STATUS_SKIPPED = 2;
+    public static final Integer PROCESSING_STATUS_REJECTED = 3;
 
     // the CSV header for the column containing the JSON Geocode results (if you change this, think about serialization!)
     public static final String CSV_COLUMN_JSON = "OutputGeocodes";
@@ -89,7 +90,7 @@ public class Utils {
 
     // these properties are going to be ignored, but only in the GUI
     public static final List<String> JSON_IGNORED_GUI_ONLY = Arrays.asList("CensusCbsaFips", "CensusCbsaMicro", "CensusMcdFips", "CensusMetDivFips",
-            "CenssusMsaFips", "CensusPlaceFips", "PrimaryIdField", "PrimaryIdValue", "SecondaryIDField", "SecondaryIDValue");
+            "CensusMsaFips", "CensusPlaceFips", "PrimaryIdField", "PrimaryIdValue", "SecondaryIdField", "SecondaryIdValue");
 
     // the extra CSV columns we add as a result of the processing, in that order (don't change these labels or we won't be able to re-open already-existing output file)
     public static final String PROCESSING_COLUMN_VERSION = "Review App Version";
@@ -273,25 +274,39 @@ public class Utils {
         String[] updatedLine = new String[session.getTmpInputFile() == null ? (originalLineLength + Utils.NUM_EXTRA_OUTPUT_COLUMNS) : originalLineLength];
         System.arraycopy(originalLine, 0, updatedLine, 0, originalLine.length);
 
-        if (status.equals(PROCESSING_STATUS_UPDATED)) {
+        // when the status is rejected, there will still be a selected result because the interface doesn't requires a selection, but it should be ignored and the values should be blanked out
+
+        if (status.equals(PROCESSING_STATUS_UPDATED) || status.equals(PROCESSING_STATUS_REJECTED)) {
             // update all "outputGeocode" values
             for (Map.Entry<String, String> entry : selectedResult.getOutputGeocode().entrySet())
                 if (headers.contains(entry.getKey()))
-                    updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
+                    updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
             // update all "censusValue" values
             for (Map.Entry<String, String> entry : selectedResult.getCensusValue().entrySet())
                 if (headers.contains(entry.getKey()))
-                    updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
+                    updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
             // update all "referenceFeature" values
             for (Map.Entry<String, String> entry : selectedResult.getReferenceFeature().entrySet())
                 if (headers.contains(entry.getKey()))
-                    updatedLine[headers.indexOf(entry.getKey())] = entry.getValue();
+                    updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
+        }
+
+        // special case: if rejected, set some columns to specific values
+        if (status.equals(PROCESSING_STATUS_REJECTED)) {
+            if (headers.contains("naaccrQualCode"))
+                updatedLine[headers.indexOf("naaccrQualCode")] = "99";
+            if (headers.contains("naaccrQualType"))
+                updatedLine[headers.indexOf("naaccrQualCode")] = "Ungeocodable";
+            if (headers.contains("naaccrCertCode"))
+                updatedLine[headers.indexOf("naaccrQualCode")] = "9";
+            if (headers.contains("naaccrCertType"))
+                updatedLine[headers.indexOf("naaccrQualCode")] = "Ungeocodable";
         }
 
         // add processing information (add to the end of the line, or replace if the columns already exists)
         updatedLine[session.getVersionColumnIndex()] = session.getVersion();
         updatedLine[session.getProcessingStatusColumnIndex()] = Integer.toString(status);
-        updatedLine[session.getUserSelectedResultColumnIndex()] = Integer.toString(selectedResult.getIndex());
+        updatedLine[session.getUserSelectedResultColumnIndex()] = Integer.toString(status.equals(PROCESSING_STATUS_REJECTED) ? -1 : selectedResult.getIndex());
         updatedLine[session.getUserCommentColumnIndex()] = comment;
 
         return updatedLine;

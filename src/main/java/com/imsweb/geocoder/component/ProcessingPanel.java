@@ -60,6 +60,7 @@ import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
 
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_CONFIRMED;
+import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_REJECTED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_SKIPPED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_UPDATED;
 
@@ -74,7 +75,7 @@ public class ProcessingPanel extends JPanel {
 
     //GUI components
     private JButton _nextBtn;
-    private JCheckBox _skipBox;
+    private JCheckBox _skipBox, _rejectBox;
     private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numSkippedLbl, _inputAddressLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
@@ -262,11 +263,30 @@ public class ProcessingPanel extends JPanel {
 
         // CENTER/EAST - controls
         JPanel controlsPnl = new JPanel(new BorderLayout());
-        _skipBox = new JCheckBox("Flag this line as skipped");
-        controlsPnl.add(_skipBox, BorderLayout.NORTH);
-        _nextBtn = Utils.createButton("Next Line", "next", "Confirm this line and go to the next line",
-                e -> writeCurrentLineAndReadNextOne(
-                        _skipBox.isSelected() ? PROCESSING_STATUS_SKIPPED : _selectedGeocodeResult.equals(_selectionBox.getItemAt(0)) ? PROCESSING_STATUS_CONFIRMED : PROCESSING_STATUS_UPDATED));
+        JPanel boxWrapperPnl = new JPanel(new BorderLayout());
+        boxWrapperPnl.setBorder(new EmptyBorder(0, 0, 5, 0));
+        _skipBox = new JCheckBox("<html>Flag this line as <b>skipped</b></html>");
+        boxWrapperPnl.add(_skipBox, BorderLayout.NORTH);
+        _rejectBox = new JCheckBox("<html>Flag this line as <b>rejected</b></html>");
+        boxWrapperPnl.add(_rejectBox, BorderLayout.SOUTH);
+        controlsPnl.add(boxWrapperPnl, BorderLayout.NORTH);
+        _nextBtn = Utils.createButton("Next Line", "next", "Confirm this line and go to the next line", e -> {
+            if (_skipBox.isSelected() && _rejectBox.isSelected()) {
+                String msg = "A line can either be skipped or rejected, not both.";
+                JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (_skipBox.isSelected())
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_SKIPPED);
+            else if (_rejectBox.isSelected())
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_REJECTED);
+            else if (_selectedGeocodeResult.equals(_selectionBox.getItemAt(0)))
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_CONFIRMED);
+            else
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_UPDATED);
+
+        });
         controlsPnl.add(_nextBtn, BorderLayout.SOUTH);
         centerPnl.add(controlsPnl, BorderLayout.EAST);
 
@@ -373,6 +393,7 @@ public class ProcessingPanel extends JPanel {
                 // refresh the GUI
                 _commentArea.setText(skippedMode ? csvLine[_parent.getSession().getUserCommentColumnIndex()] : "");
                 _skipBox.setSelected(false);
+                _rejectBox.setSelected(false);
                 _currentResultIdxLbl.setText(_parent.getSession().getCurrentLineNumber().toString());
                 _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
                 _numModifiedLbl.setText(_parent.getSession().getNumModifiedLines().toString());
@@ -530,9 +551,10 @@ public class ProcessingPanel extends JPanel {
             _parent.getSession().setNumConfirmedLines(_parent.getSession().getNumConfirmedLines() + 1);
         else if (PROCESSING_STATUS_UPDATED.equals(status))
             _parent.getSession().setNumModifiedLines(_parent.getSession().getNumModifiedLines() + 1);
-        else if (PROCESSING_STATUS_SKIPPED.equals(status)) {
+        else if (PROCESSING_STATUS_SKIPPED.equals(status))
             _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
-        }
+        else if (PROCESSING_STATUS_REJECTED.equals(status))
+            _parent.getSession().setNumRejectedLines(_parent.getSession().getNumRejectedLines() + 1);
         else
             throw new RuntimeException("Unknown status: " + status);
     }

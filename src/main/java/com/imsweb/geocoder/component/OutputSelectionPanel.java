@@ -130,8 +130,10 @@ public class OutputSelectionPanel extends JPanel {
                         msg = "The existing output file will be deleted and any review it contains will be lost. Are you sure?";
                         option = JOptionPane.showConfirmDialog(this, msg, "Confirmation", JOptionPane.YES_NO_OPTION);
                         if (option == JOptionPane.YES_OPTION) {
-                            if (!outputFile.delete())
-                                JOptionPane.showMessageDialog(this, "The file cannot be deleted, please remove it by hand.", "Cannot Delete File", JOptionPane.ERROR_MESSAGE);
+                            if (!outputFile.delete()) {
+                                msg = "The existing output file cannot be deleted, please make sure it's not opened in another application (like Excel or a Text Editor).";
+                                JOptionPane.showMessageDialog(this, msg, "Unable to delete file", JOptionPane.ERROR_MESSAGE);
+                            }
                             else {
                                 _parent.getSession().setOutputFile(new File(_outputFld.getText()));
                                 _parent.showPanel(Standalone.PANEL_ID_PROCESS);

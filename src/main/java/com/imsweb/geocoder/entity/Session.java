@@ -42,6 +42,8 @@ public class Session {
 
     private Integer _numModifiedLines;
 
+    private Integer _numRejectedLines;
+
     private Integer _currentLineNumber;
 
     private Boolean _skippedMode;
@@ -63,6 +65,7 @@ public class Session {
     private static final String _KEY_NUM_SKIPPED_LINES = "num-skipped-lines";
     private static final String _KEY_NUM_CONFIRMED_LINES = "num-confirmed-lines";
     private static final String _KEY_NUM_MODIFIED_LINES = "num-modified-lines";
+    private static final String _KEY_NUM_REJECTED_LINES = "num-rejected-lines";
     private static final String _KEY_CURRENT_LINE_NUMBER = "current-line-number";
     private static final String _KEY_SKIPPED_MODE = "skipped-mode";
 
@@ -74,6 +77,7 @@ public class Session {
         _numSkippedLines = 0;
         _numConfirmedLines = 0;
         _numModifiedLines = 0;
+        _numRejectedLines = 0;
         _currentLineNumber = 0;
         _skippedMode = false;
     }
@@ -132,6 +136,14 @@ public class Session {
 
     public void setNumModifiedLines(Integer numModifiedLines) {
         _numModifiedLines = numModifiedLines;
+    }
+
+    public Integer getNumRejectedLines() {
+        return _numRejectedLines;
+    }
+
+    public void setNumRejectedLines(Integer numRejectedLines) {
+        _numRejectedLines = numRejectedLines;
     }
 
     public List<String> getInputCsvHeaders() {
@@ -243,6 +255,7 @@ public class Session {
         setNumSkippedLines((Integer)map.get(_KEY_NUM_SKIPPED_LINES));
         setNumConfirmedLines((Integer)map.get(_KEY_NUM_CONFIRMED_LINES));
         setNumModifiedLines((Integer)map.get(_KEY_NUM_MODIFIED_LINES));
+        setNumRejectedLines((Integer)map.get(_KEY_NUM_REJECTED_LINES));
         setCurrentLineNumber((Integer)map.get(_KEY_CURRENT_LINE_NUMBER));
         setSkippedMode((Boolean)map.get(_KEY_SKIPPED_MODE));
     }
@@ -265,6 +278,7 @@ public class Session {
         map.put(_KEY_NUM_SKIPPED_LINES, getNumSkippedLines());
         map.put(_KEY_NUM_CONFIRMED_LINES, getNumConfirmedLines());
         map.put(_KEY_NUM_MODIFIED_LINES, getNumModifiedLines());
+        map.put(_KEY_NUM_REJECTED_LINES, getNumRejectedLines());
         map.put(_KEY_CURRENT_LINE_NUMBER, getCurrentLineNumber());
         map.put(_KEY_SKIPPED_MODE, getSkippedMode());
         return map;
