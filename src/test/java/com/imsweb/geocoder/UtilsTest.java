@@ -103,7 +103,7 @@ public class UtilsTest {
                 + "\t]\n"
                 + "}";
 
-        GeocodeResults testResults = Utils.parseGeocodeResults(rawResults);
+        GeocodeResults testResults = Utils.parseGeocodeResults(rawResults, 0);
         Assert.assertEquals("LOS ANGELES", testResults.getInputCity());
         Assert.assertEquals("441", testResults.getParsedInputFields().get("Number"));
         Assert.assertEquals("34.0596874561221", testResults.getResults().get(0).getOutputGeocode().get("Latitude"));
@@ -191,7 +191,7 @@ public class UtilsTest {
                 int jsonColumnIndex = Arrays.asList(reader.readNext()).indexOf(Utils.CSV_COLUMN_JSON);
                 if (jsonColumnIndex == -1)
                     throw new IOException("Unable to locate geocoder output column");
-                GeocodeResult result = Utils.parseGeocodeResults(Arrays.asList(reader.readNext()).get(jsonColumnIndex)).getResults().get(0);
+                GeocodeResult result = Utils.parseGeocodeResults(Arrays.asList(reader.readNext()).get(jsonColumnIndex), 0).getResults().get(0);
                 for (Map.Entry<String, String> entry : result.getOutputGeocode().entrySet())
                     if (!Utils.JSON_IGNORED.contains(entry.getKey()))
                         fields.add(Utils.FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());

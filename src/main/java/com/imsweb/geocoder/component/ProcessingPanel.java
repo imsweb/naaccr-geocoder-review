@@ -15,6 +15,7 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Vector;
 import java.util.concurrent.CancellationException;
@@ -204,7 +205,7 @@ public class ProcessingPanel extends JPanel {
         inputAddressPnl.setBackground(new Color(167, 191, 205));
         inputAddressPnl.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY), new EmptyBorder(5, 5, 5, 5)));
         inputAddressPnl.add(Utils.createLabel("Address sent to the Geocoder: "));
-        _inputAddressLbl = Utils.createBoldLabel("");
+        _inputAddressLbl = Utils.createLabel("");
         inputAddressPnl.add(_inputAddressLbl); // this needs to come from the session
         northPnl.add(inputAddressPnl, BorderLayout.SOUTH);
 
@@ -367,7 +368,7 @@ public class ProcessingPanel extends JPanel {
                 handleBadCsvLine("Unexpected number of columns on line " + (_parent.getSession().getCurrentLineNumber()) + ", expected " + numExpectedValues + " but got " + csvLine.length);
             else {
                 _currentLine = csvLine;
-                _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()]);
+                _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()], _parent.getSession().getCurrentLineNumber());
 
                 // refresh the GUI
                 _commentArea.setText(skippedMode ? csvLine[_parent.getSession().getUserCommentColumnIndex()] : "");
@@ -378,6 +379,7 @@ public class ProcessingPanel extends JPanel {
                 _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
 
                 StringBuilder addressText = new StringBuilder();
+                addressText.append("<html><b>");
                 if (_currentGeocodeResults.getInputStreet() != null)
                     addressText.append(_currentGeocodeResults.getInputStreet()).append(", ");
                 if (_currentGeocodeResults.getInputCity() != null)
@@ -388,6 +390,21 @@ public class ProcessingPanel extends JPanel {
                     addressText.append(_currentGeocodeResults.getInputZip());
                 if (addressText.charAt(addressText.length() - 2) == ',')
                     addressText.setLength(addressText.length() - 2);
+                addressText.append("</b>");
+
+                // also add the parsed address, but only the non-blank field
+                addressText.append("   (");
+                boolean firstValue = true;
+                for (Entry<String, String> entry : _currentGeocodeResults.getParsedInputFields().entrySet()) {
+                    if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                        if (!firstValue)
+                            addressText.append(", ");
+                        else
+                            firstValue = false;
+                        addressText.append(entry.getKey()).append("=").append(entry.getValue());
+                    }
+                }
+                addressText.append(")</html>");
 
                 _inputAddressLbl.setText(addressText.toString());
 
@@ -401,31 +418,37 @@ public class ProcessingPanel extends JPanel {
                 data.add(createSeparationRow("Output Geocode", _currentGeocodeResults.getResults().size()));
                 _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".")).forEach(f -> {
                             String fieldName = f.replace(Utils.FIELD_TYPE_OUTPUT_GEOCODES + ".", "");
-                            Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
-                            row.add("    " + fieldName);
-                            _currentGeocodeResults.getResults().forEach(r -> row.add(r.getOutputGeocode().get(fieldName)));
-                            if (!isEmptyRow(row))
-                                data.add(row);
+                            if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
+                                Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
+                                row.add("    " + fieldName);
+                                _currentGeocodeResults.getResults().forEach(r -> row.add(r.getOutputGeocode().get(fieldName)));
+                                if (!isEmptyRow(row))
+                                    data.add(row);
+                            }
                         }
                 );
                 data.add(createSeparationRow("Census Value", _currentGeocodeResults.getResults().size()));
                 _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
                             String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
-                            Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
-                            row.add("    " + fieldName);
-                            _currentGeocodeResults.getResults().forEach(r -> row.add(r.getCensusValue().get(fieldName)));
-                            if (!isEmptyRow(row))
-                                data.add(row);
+                            if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
+                                Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
+                                row.add("    " + fieldName);
+                                _currentGeocodeResults.getResults().forEach(r -> row.add(r.getCensusValue().get(fieldName)));
+                                if (!isEmptyRow(row))
+                                    data.add(row);
+                            }
                         }
                 );
                 data.add(createSeparationRow("Reference Feature", _currentGeocodeResults.getResults().size()));
                 _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".")).forEach(f -> {
                             String fieldName = f.replace(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".", "");
-                            Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
-                            row.add("    " + fieldName);
-                            _currentGeocodeResults.getResults().forEach(r -> row.add(r.getReferenceFeature().get(fieldName)));
-                            if (!isEmptyRow(row))
-                                data.add(row);
+                            if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
+                                Vector<String> row = new Vector<>(_currentGeocodeResults.getResults().size() + 1);
+                                row.add("    " + fieldName);
+                                _currentGeocodeResults.getResults().forEach(r -> row.add(r.getReferenceFeature().get(fieldName)));
+                                if (!isEmptyRow(row))
+                                    data.add(row);
+                            }
                         }
                 );
 
@@ -548,7 +571,6 @@ public class ProcessingPanel extends JPanel {
             // we close the streams when we are done or we exit, so whatever...
         }
     }
-
 
     /**
      * Special header renderer that supports a radio button.

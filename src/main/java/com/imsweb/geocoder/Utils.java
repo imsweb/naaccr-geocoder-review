@@ -87,6 +87,10 @@ public class Utils {
     // the JSON properties to ignore (regardless of the block)
     public static final List<String> JSON_IGNORED = Arrays.asList("Exception", "ExceptionOccured", "ErrorMessage");
 
+    // these properties are going to be ignored, but only in the GUI
+    public static final List<String> JSON_IGNORED_GUI_ONLY = Arrays.asList("CensusCbsaFips", "CensusCbsaMicro", "CensusMcdFips", "CensusMetDivFips",
+            "CenssusMsaFips", "CensusPlaceFips", "PrimaryIdField", "PrimaryIdValue", "SecondaryIDField", "SecondaryIDValue");
+
     // the extra CSV columns we add as a result of the processing, in that order (don't change these labels or we won't be able to re-open already-existing output file)
     public static final String PROCESSING_COLUMN_VERSION = "Review App Version";
     public static final String PROCESSING_COLUMN_STATUS = "Processing Status";
@@ -119,15 +123,17 @@ public class Utils {
             if (versionColumnIdx != -1)
                 throw new IOException("The selected file is an output file. Please use an input file.");
 
-            int numLinesWithoutHeaders = 0;
+            int numLinesWithoutHeaders = 0, jsonLineNumber = -1;
             String rawJson = null;
             String[] line = readNextCsvLine(reader);
             while (line != null) {
                 numLinesWithoutHeaders++;
 
                 // we only need to the JSON data once (to compute the fields); we assume the fields are the same for every line...
-                if (rawJson == null && allHeaders.contains(CSV_COLUMN_JSON))
+                if (rawJson == null && allHeaders.contains(CSV_COLUMN_JSON)) {
                     rawJson = line[allHeaders.indexOf(CSV_COLUMN_JSON)];
+                    jsonLineNumber = numLinesWithoutHeaders;
+                }
 
                 line = readNextCsvLine(reader);
             }
@@ -138,7 +144,7 @@ public class Utils {
             // The version column is set to the next available in the file
             versionColumnIdx = allHeaders.size();
 
-            GeocodeResult geocoderResult = parseGeocodeResults(rawJson).getResults().get(0);
+            GeocodeResult geocoderResult = parseGeocodeResults(rawJson, jsonLineNumber).getResults().get(0);
             List<String> jsonFields = new ArrayList<>();
             for (Map.Entry<String, String> entry : geocoderResult.getOutputGeocode().entrySet())
                 if (!JSON_IGNORED.contains(entry.getKey()))
@@ -194,49 +200,55 @@ public class Utils {
         return mappings;
     }
 
-    public static GeocodeResults parseGeocodeResults(String rawResults) throws IOException {
+    public static GeocodeResults parseGeocodeResults(String rawResults, int lineNumber) throws JsonParsingIOException {
         GeocodeResults results = new GeocodeResults();
 
-        JsonNode rootNode = new ObjectMapper().readTree(rawResults);
+        try {
+            JsonNode rootNode = new ObjectMapper().readTree(rawResults);
 
-        Map<String, String> inputAddress = simpleJsonToMap(rootNode.get(JSON_FIELD_INPUT_ADDRESS));
-        if (inputAddress != null && !inputAddress.isEmpty()) {
-            results.setInputStreet(inputAddress.get(INPUT_ADDRESS_FIELD_STREET));
-            results.setInputCity(inputAddress.get(INPUT_ADDRESS_FIELD_CITY));
-            results.setInputState(inputAddress.get(INPUT_ADDRESS_FIELD_STATE));
-            results.setInputZip(inputAddress.get(INPUT_ADDRESS_FIELD_ZIP));
-        }
-        results.setParsedInputFields(simpleJsonToMap(rootNode.get(JSON_FIELD_PARSED_ADDRESS)));
+            Map<String, String> inputAddress = simpleJsonToMap(rootNode.get(JSON_FIELD_INPUT_ADDRESS));
+            if (inputAddress != null && !inputAddress.isEmpty()) {
+                results.setInputStreet(inputAddress.get(INPUT_ADDRESS_FIELD_STREET));
+                results.setInputCity(inputAddress.get(INPUT_ADDRESS_FIELD_CITY));
+                results.setInputState(inputAddress.get(INPUT_ADDRESS_FIELD_STATE));
+                results.setInputZip(inputAddress.get(INPUT_ADDRESS_FIELD_ZIP));
+            }
+            results.setParsedInputFields(simpleJsonToMap(rootNode.get(JSON_FIELD_PARSED_ADDRESS)));
 
-        Pattern keyPattern = Pattern.compile("(" + SUBHEADER_OUTPUT_GEOCODES + "|" + SUBHEADER_CENSUS_VALUES + "|" + SUBHEADER_REFERENCE_FEATURE + ")(\\d+)");
+            Pattern keyPattern = Pattern.compile("(" + SUBHEADER_OUTPUT_GEOCODES + "|" + SUBHEADER_CENSUS_VALUES + "|" + SUBHEADER_REFERENCE_FEATURE + ")(\\d+)");
 
-        Map<Integer, GeocodeResult> tmpMap = new LinkedHashMap<>();
+            Map<Integer, GeocodeResult> tmpMap = new LinkedHashMap<>();
 
-        // iterate over the output geocodes
-        Iterator<Map.Entry<String, JsonNode>> iter = rootNode.get(JSON_FIELD_OUTPUT_GEOCODES).get(0).fields();
-        while (iter.hasNext()) {
-            Map.Entry<String, JsonNode> entry = iter.next();
+            // iterate over the output geocodes
+            Iterator<Map.Entry<String, JsonNode>> iter = rootNode.get(JSON_FIELD_OUTPUT_GEOCODES).get(0).fields();
+            while (iter.hasNext()) {
+                Map.Entry<String, JsonNode> entry = iter.next();
 
-            Matcher matcher = keyPattern.matcher(entry.getKey());
-            if (matcher.matches()) {
-                Integer index = Integer.valueOf(matcher.group(2));
-                GeocodeResult result = tmpMap.computeIfAbsent(index, GeocodeResult::new);
-                switch (matcher.group(1)) {
-                    case SUBHEADER_OUTPUT_GEOCODES:
-                        result.setOutputGeocode(simpleJsonToMap(entry.getValue()));
-                        break;
-                    case SUBHEADER_CENSUS_VALUES:
-                        result.setCensusValue(simpleJsonToMap(entry.getValue().get(0).get("CensusValue1")));
-                        break;
-                    case SUBHEADER_REFERENCE_FEATURE:
-                        result.setReferenceFeature(simpleJsonToMap(entry.getValue()));
-                        break;
-                    default:
-                        // ignored
+                Matcher matcher = keyPattern.matcher(entry.getKey());
+                if (matcher.matches()) {
+                    Integer index = Integer.valueOf(matcher.group(2));
+                    GeocodeResult result = tmpMap.computeIfAbsent(index, GeocodeResult::new);
+                    switch (matcher.group(1)) {
+                        case SUBHEADER_OUTPUT_GEOCODES:
+                            result.setOutputGeocode(simpleJsonToMap(entry.getValue()));
+                            break;
+                        case SUBHEADER_CENSUS_VALUES:
+                            result.setCensusValue(simpleJsonToMap(entry.getValue().get(0).get("CensusValue1")));
+                            break;
+                        case SUBHEADER_REFERENCE_FEATURE:
+                            result.setReferenceFeature(simpleJsonToMap(entry.getValue()));
+                            break;
+                        default:
+                            // ignored
+                    }
                 }
             }
+            results.setResults(new ArrayList<>(tmpMap.values()));
         }
-        results.setResults(new ArrayList<>(tmpMap.values()));
+        catch (IOException | RuntimeException e) {
+            throw new JsonParsingIOException(lineNumber, rawResults);
+        }
+
         return results;
     }
 

@@ -6,6 +6,8 @@ package com.imsweb.geocoder.component;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
 
@@ -22,6 +24,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 
+import com.imsweb.geocoder.JsonParsingIOException;
 import com.imsweb.geocoder.Standalone;
 import com.imsweb.geocoder.Utils;
 import com.imsweb.geocoder.entity.Session;
@@ -102,40 +105,53 @@ public class InputSelectionPanel extends JPanel {
         JButton selectBtn = new JButton("Select Input File");
         selectBtn.addActionListener(e -> {
             if (_inputChooser.showDialog(InputSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
-                try {
-                    File selectedFile = _inputChooser.getSelectedFile();
-                    File progressFile = Utils.getProgressFile(selectedFile);
-                    if (!progressFile.exists()) {
-                        JDialog progressDlg = Utils.createProgressDialog(_parent, _worker, "Analyzing the input file. This may be slow...");
-                        SwingUtilities.invokeLater(() -> progressDlg.setVisible(true));
-                        _worker = new SwingWorker<Void, Void>() {
-                            @Override
-                            protected Void doInBackground() throws Exception {
+                File selectedFile = _inputChooser.getSelectedFile();
+                File progressFile = Utils.getProgressFile(selectedFile);
+                if (!progressFile.exists()) {
+                    JDialog progressDlg = Utils.createProgressDialog(_parent, _worker, "Analyzing the input file. This may be slow...");
+                    SwingUtilities.invokeLater(() -> progressDlg.setVisible(true));
+                    _worker = new SwingWorker<Void, Void>() {
+                        @Override
+                        protected Void doInBackground() throws Exception {
+                            try {
                                 Utils.analyzeInputFile(selectedFile, _parent.getSession());
-                                return null;
                             }
-
-                            @Override
-                            protected void done() {
-                                if (!isCancelled()) {
-                                    SwingUtilities.invokeLater(progressDlg::dispose);
-                                    _parent.showPanel(Standalone.PANEL_ID_OUTPUT);
+                            catch (IOException ex) {
+                                String msg;
+                                if (ex instanceof JsonParsingIOException) {
+                                    StringSelection data = new StringSelection(((JsonParsingIOException)ex).getRawJson());
+                                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, data);
+                                    msg = "Unable to parse the JSON returned by the Geocoder at line " + ((JsonParsingIOException)ex).getLineNumber() + ".\n\n";
+                                    msg += "The raw JSON has been copied to your clipboard; you can use Ctrl + V to paste it into an online JSON viewer to identify the error.";
                                 }
+                                else
+                                    msg = "Unable to recognize file format.";
+                                JOptionPane.showMessageDialog(InputSelectionPanel.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
                             }
-                        };
-                        _worker.execute();
-                    }
-                    else {
-                        Session session = _parent.getSession();
+                            return null;
+                        }
+
+                        @Override
+                        protected void done() {
+                            SwingUtilities.invokeLater(progressDlg::dispose);
+                            if (!isCancelled() && _parent.getSession().getInputFile() != null)
+                                _parent.showPanel(Standalone.PANEL_ID_OUTPUT);
+                        }
+                    };
+                    _worker.execute();
+                }
+                else {
+                    Session session = _parent.getSession();
+                    try {
                         Utils.readSessionFromProgressFile(session, progressFile);
                         if (session.getOutputFile() == null || !session.getOutputFile().exists() || (session.getTmpInputFile() != null && !session.getTmpInputFile().exists()))
                             throw new IOException("Progress file references files that do not exist anymore!");
                         _parent.showPanel(Standalone.PANEL_ID_PROCESS);
                     }
-                }
-                catch (IOException ex) {
-                    String msg = "Unable to recognize file format.\n\n   Error: " + (ex.getMessage() == null ? "null access" : ex.getMessage());
-                    JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                    catch (IOException ex) {
+                        String msg = "Unable to read progress file.\n\n   Error: " + (ex.getMessage() == null ? "null access" : ex.getMessage());
+                        JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
