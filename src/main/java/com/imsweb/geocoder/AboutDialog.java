@@ -11,6 +11,7 @@ import java.awt.Window;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -21,6 +22,7 @@ import javax.swing.border.LineBorder;
 
 public class AboutDialog extends JDialog {
 
+    @SuppressWarnings("ConstantConditions")
     public AboutDialog(Window owner) {
         super(owner);
 
@@ -49,7 +51,11 @@ public class AboutDialog extends JDialog {
         centerPnl.add(Box.createVerticalStrut(3));
         centerPnl.add(buildTextPnl("North American Association of Central Cancer Registries", true));
 
-        centerPnl.add(Box.createVerticalStrut(25));
+        JPanel iconPnl = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 15));
+        iconPnl.add(new JLabel(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("naaccr-logo-small.jpg"))));
+        centerPnl.add(iconPnl);
+
+        centerPnl.add(Box.createVerticalStrut(15));
         centerPnl.add(buildTextPnl("Developed by", false));
         centerPnl.add(Box.createVerticalStrut(3));
         centerPnl.add(buildTextPnl("Information Management Services, Inc.", true));

@@ -13,9 +13,11 @@ import java.io.IOException;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -37,6 +39,7 @@ public class InputSelectionPanel extends JPanel {
 
     private SwingWorker<Void, Void> _worker;
 
+    @SuppressWarnings("ConstantConditions")
     public InputSelectionPanel(Standalone parent) {
         _parent = parent;
 
@@ -196,5 +199,11 @@ public class InputSelectionPanel extends JPanel {
         disc14Pnl.add(Box.createHorizontalStrut(15));
         disc14Pnl.add(Utils.createLabel("Once you reach the end of a review session (regular or skipped-only), you will be presented with a summary of the decisions you made on the entire file."));
         northPnl.add(disc14Pnl);
+
+        // NORTH/5 - icon
+        northPnl.add(Box.createVerticalStrut(75));
+        JPanel iconPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 150, 0));
+        iconPnl.add(new JLabel(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("naaccr-logo-small.jpg"))));
+        northPnl.add(iconPnl);
     }
 }
