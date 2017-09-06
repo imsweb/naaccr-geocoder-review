@@ -6,6 +6,7 @@ package com.imsweb.geocoder.component;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.GridBagLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
@@ -24,6 +25,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
 import com.imsweb.geocoder.JsonParsingIOException;
@@ -102,58 +104,64 @@ public class InputSelectionPanel extends JPanel {
         northPnl.add(disc3Pnl);
 
         // NORTH/3 - controls
-        northPnl.add(Box.createVerticalStrut(50));
+        northPnl.add(Box.createVerticalStrut(40));
         JPanel selectPnl = new JPanel(new FlowLayout(FlowLayout.LEADING));
         selectPnl.add(Box.createHorizontalStrut(200));
         JButton selectBtn = new JButton("Select Input File");
         selectBtn.addActionListener(e -> {
             if (_inputChooser.showDialog(InputSelectionPanel.this, "Select") == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = _inputChooser.getSelectedFile();
-                File progressFile = Utils.getProgressFile(selectedFile);
-                if (!progressFile.exists()) {
-                    JDialog progressDlg = Utils.createProgressDialog(_parent, _worker, "Analyzing the input file. This may be slow...");
-                    SwingUtilities.invokeLater(() -> progressDlg.setVisible(true));
-                    _worker = new SwingWorker<Void, Void>() {
-                        @Override
-                        protected Void doInBackground() throws Exception {
-                            try {
-                                Utils.analyzeInputFile(selectedFile, _parent.getSession());
-                            }
-                            catch (IOException ex) {
-                                String msg;
-                                if (ex instanceof JsonParsingIOException) {
-                                    StringSelection data = new StringSelection(((JsonParsingIOException)ex).getRawJson());
-                                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, data);
-                                    msg = "Unable to parse the JSON returned by the Geocoder at line " + ((JsonParsingIOException)ex).getLineNumber() + ".\n\n";
-                                    msg += "The raw JSON has been copied to your clipboard; you can use Ctrl + V to paste it into an online JSON viewer to identify the error.";
-                                }
-                                else
-                                    msg = "Unable to recognize file format.";
-                                JOptionPane.showMessageDialog(InputSelectionPanel.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
-                            }
-                            return null;
-                        }
-
-                        @Override
-                        protected void done() {
-                            SwingUtilities.invokeLater(progressDlg::dispose);
-                            if (!isCancelled() && _parent.getSession().getInputFile() != null)
-                                _parent.showPanel(Standalone.PANEL_ID_OUTPUT);
-                        }
-                    };
-                    _worker.execute();
+                if (!selectedFile.exists()) {
+                    String msg = "Selected file does not exist.";
+                    JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
                 }
                 else {
-                    Session session = _parent.getSession();
-                    try {
-                        Utils.readSessionFromProgressFile(session, progressFile);
-                        if (session.getOutputFile() == null || !session.getOutputFile().exists() || (session.getTmpInputFile() != null && !session.getTmpInputFile().exists()))
-                            throw new IOException("Progress file references files that do not exist anymore!");
-                        _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                    File progressFile = Utils.getProgressFile(selectedFile);
+                    if (!progressFile.exists()) {
+                        JDialog progressDlg = Utils.createProgressDialog(_parent, _worker, "Analyzing the input file. This may be slow...");
+                        SwingUtilities.invokeLater(() -> progressDlg.setVisible(true));
+                        _worker = new SwingWorker<Void, Void>() {
+                            @Override
+                            protected Void doInBackground() throws Exception {
+                                try {
+                                    Utils.analyzeInputFile(selectedFile, _parent.getSession());
+                                }
+                                catch (IOException ex) {
+                                    String msg;
+                                    if (ex instanceof JsonParsingIOException) {
+                                        StringSelection data = new StringSelection(((JsonParsingIOException)ex).getRawJson());
+                                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, data);
+                                        msg = "Unable to parse the JSON returned by the Geocoder at line " + ((JsonParsingIOException)ex).getLineNumber() + ".\n\n";
+                                        msg += "The raw JSON has been copied to your clipboard; you can use Ctrl + V to paste it into an online JSON viewer to identify the error.";
+                                    }
+                                    else
+                                        msg = "Unable to recognize file format.";
+                                    JOptionPane.showMessageDialog(InputSelectionPanel.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                                }
+                                return null;
+                            }
+
+                            @Override
+                            protected void done() {
+                                SwingUtilities.invokeLater(progressDlg::dispose);
+                                if (!isCancelled() && _parent.getSession().getInputFile() != null)
+                                    _parent.showPanel(Standalone.PANEL_ID_OUTPUT);
+                            }
+                        };
+                        _worker.execute();
                     }
-                    catch (IOException ex) {
-                        String msg = "Unable to read progress file.\n\n   Error: " + (ex.getMessage() == null ? "null access" : ex.getMessage());
-                        JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                    else {
+                        Session session = _parent.getSession();
+                        try {
+                            Utils.readSessionFromProgressFile(session, progressFile);
+                            if (session.getOutputFile() == null || !session.getOutputFile().exists() || (session.getTmpInputFile() != null && !session.getTmpInputFile().exists()))
+                                throw new IOException("Progress file references files that do not exist anymore!");
+                            _parent.showPanel(Standalone.PANEL_ID_PROCESS);
+                        }
+                        catch (IOException ex) {
+                            String msg = "Unable to read progress file.\n\n   Error: " + (ex.getMessage() == null ? "null access" : ex.getMessage());
+                            JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                 }
             }
@@ -162,7 +170,7 @@ public class InputSelectionPanel extends JPanel {
         northPnl.add(selectPnl);
 
         // NORTH/4 - more disclaimers
-        northPnl.add(Box.createVerticalStrut(50));
+        northPnl.add(Box.createVerticalStrut(40));
         JPanel disc10Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         disc10Pnl.add(Box.createHorizontalStrut(15));
         disc10Pnl.add(Utils.createLabel("Progress is saved as you complete the review of each result; to interrupt a review, just exit the application (File > Exit)."));
@@ -178,7 +186,7 @@ public class InputSelectionPanel extends JPanel {
         northPnl.add(Box.createVerticalStrut(15));
         JPanel disc12Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         disc12Pnl.add(Box.createHorizontalStrut(15));
-        disc12Pnl.add(Utils.createLabel("You may skip specific results during a review session; just check the 'Flag as Skipped' box and use the 'Next Line' button as you would normally."));
+        disc12Pnl.add(Utils.createLabel("You may skip specific results during a review session; just check the 'Flag this line as Skipped' box and use the 'Next Line' button as you normally would."));
         northPnl.add(disc12Pnl);
 
         northPnl.add(Box.createVerticalStrut(15));
@@ -200,10 +208,22 @@ public class InputSelectionPanel extends JPanel {
         disc14Pnl.add(Utils.createLabel("Once you reach the end of a review session (regular or skipped-only), you will be presented with a summary of the decisions you made on the entire file."));
         northPnl.add(disc14Pnl);
 
-        // NORTH/5 - icon
-        northPnl.add(Box.createVerticalStrut(75));
-        JPanel iconPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 150, 0));
-        iconPnl.add(new JLabel(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("naaccr-logo-small.jpg"))));
+        // NORTH/5 - more disclaimers
+        northPnl.add(Box.createVerticalStrut(40));
+        JPanel disc20Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc20Pnl.add(Box.createHorizontalStrut(15));
+        disc20Pnl.add(Utils.createLabel("This application is provided by the "));
+        disc20Pnl.add(Utils.createBoldLabel("North American Association of Central Cancer Registries "));
+        disc20Pnl.add(Utils.createLabel("."));
+        northPnl.add(disc20Pnl);
+
+        // NORTH/6 - icon
+        JPanel iconPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 175, 0));
+        northPnl.add(Box.createVerticalStrut(35));
+        JPanel iconWrappedPnl = new JPanel(new GridBagLayout());
+        iconWrappedPnl.setBorder(new LineBorder(Color.GRAY));
+        iconWrappedPnl.add(new JLabel(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("naaccr-logo.jpg"))));
+        iconPnl.add(iconWrappedPnl);
         northPnl.add(iconPnl);
     }
 }

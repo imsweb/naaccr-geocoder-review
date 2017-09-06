@@ -296,11 +296,11 @@ public class Utils {
             if (headers.contains("naaccrQualCode"))
                 updatedLine[headers.indexOf("naaccrQualCode")] = "99";
             if (headers.contains("naaccrQualType"))
-                updatedLine[headers.indexOf("naaccrQualCode")] = "Ungeocodable";
+                updatedLine[headers.indexOf("naaccrQualType")] = "Ungeocodable";
             if (headers.contains("naaccrCertCode"))
-                updatedLine[headers.indexOf("naaccrQualCode")] = "9";
+                updatedLine[headers.indexOf("naaccrCertCode")] = "9";
             if (headers.contains("naaccrCertType"))
-                updatedLine[headers.indexOf("naaccrQualCode")] = "Ungeocodable";
+                updatedLine[headers.indexOf("naaccrCertType")] = "Ungeocodable";
         }
 
         // add processing information (add to the end of the line, or replace if the columns already exists)

@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagLayout;
 import java.awt.Window;
 
 import javax.swing.Box;
@@ -51,14 +52,24 @@ public class AboutDialog extends JDialog {
         centerPnl.add(Box.createVerticalStrut(3));
         centerPnl.add(buildTextPnl("North American Association of Central Cancer Registries", true));
 
-        JPanel iconPnl = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 15));
-        iconPnl.add(new JLabel(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("naaccr-logo-small.jpg"))));
-        centerPnl.add(iconPnl);
+        JPanel naaccrIconPnl = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 15));
+        JPanel naaccrIconWrappedPnl = new JPanel(new GridBagLayout());
+        naaccrIconWrappedPnl.setBorder(new LineBorder(Color.GRAY));
+        naaccrIconWrappedPnl.add(new JLabel(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("naaccr-logo.jpg"))));
+        naaccrIconPnl.add(naaccrIconWrappedPnl);
+        centerPnl.add(naaccrIconPnl);
 
         centerPnl.add(Box.createVerticalStrut(15));
         centerPnl.add(buildTextPnl("Developed by", false));
         centerPnl.add(Box.createVerticalStrut(3));
         centerPnl.add(buildTextPnl("Information Management Services, Inc.", true));
+
+        JPanel imsIconPnl = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 15));
+        JPanel imsIconWrappedPnl = new JPanel(new GridBagLayout());
+        imsIconWrappedPnl.setBorder(new LineBorder(Color.GRAY));
+        imsIconWrappedPnl.add(new JLabel(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("ims-logo.png"))));
+        imsIconPnl.add(imsIconWrappedPnl);
+        centerPnl.add(imsIconPnl);
 
     }
 

@@ -21,7 +21,6 @@ import java.util.Vector;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -76,7 +75,7 @@ public class ProcessingPanel extends JPanel {
     //GUI components
     private JButton _nextBtn;
     private JCheckBox _skipBox, _rejectBox;
-    private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numSkippedLbl, _inputAddressLbl;
+    private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numRejectedLbl, _numSkippedLbl, _inputAddressLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
     private JTextArea _commentArea;
@@ -194,6 +193,9 @@ public class ProcessingPanel extends JPanel {
         rightFileInfoPnl.add(Utils.createLabel(" ; modified: "));
         _numModifiedLbl = Utils.createBoldLabel("0");
         rightFileInfoPnl.add(_numModifiedLbl);
+        rightFileInfoPnl.add(Utils.createLabel(" ; rejected: "));
+        _numRejectedLbl = Utils.createBoldLabel("0");
+        rightFileInfoPnl.add(_numRejectedLbl);
         rightFileInfoPnl.add(Utils.createLabel(" ; skipped: "));
         _numSkippedLbl = Utils.createBoldLabel("0");
         rightFileInfoPnl.add(_numSkippedLbl);
@@ -244,9 +246,13 @@ public class ProcessingPanel extends JPanel {
         selectionPnl.add(currentSelectionPnl);
         JPanel selectionDisclaimer1Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         selectionDisclaimer1Pnl.setBorder(new EmptyBorder(0, 5, 0, 0));
-        selectionDisclaimer1Pnl.add(Utils.createItalicLabel("Select from the drop-down or click on a column header."));
+        selectionDisclaimer1Pnl.add(Utils.createItalicLabel("To select a different result, select it from the drop-down or click on its column header."));
         selectionPnl.add(selectionDisclaimer1Pnl);
-        selectionPnl.add(Box.createVerticalGlue());
+        JPanel selectionDisclaimer2Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        selectionDisclaimer2Pnl.setBorder(new EmptyBorder(0, 5, 0, 0));
+        selectionDisclaimer2Pnl.add(Utils.createItalicLabel("You may skip a line to process it later, or reject it if you don't agree with any of the results."));
+        selectionPnl.add(selectionDisclaimer2Pnl);
+        //selectionPnl.add(Box.createVerticalGlue());
         centerPnl.add(selectionPnl, BorderLayout.WEST);
 
         // CENTER/CENTER - comment
@@ -266,11 +272,12 @@ public class ProcessingPanel extends JPanel {
         JPanel boxWrapperPnl = new JPanel(new BorderLayout());
         boxWrapperPnl.setBorder(new EmptyBorder(0, 0, 5, 0));
         _skipBox = new JCheckBox("<html>Flag this line as <b>skipped</b></html>");
+        _skipBox.setToolTipText("Check this box to skip the current line; you will be able to re-process skipped line at the end of the review.");
         boxWrapperPnl.add(_skipBox, BorderLayout.NORTH);
         _rejectBox = new JCheckBox("<html>Flag this line as <b>rejected</b></html>");
         boxWrapperPnl.add(_rejectBox, BorderLayout.SOUTH);
         controlsPnl.add(boxWrapperPnl, BorderLayout.NORTH);
-        _nextBtn = Utils.createButton("Next Line", "next", "Confirm this line and go to the next line", e -> {
+        _nextBtn = Utils.createButton("Next Line", "next", "Confirm this line (write it to the output file) and display the next one", e -> {
             if (_skipBox.isSelected() && _rejectBox.isSelected()) {
                 String msg = "A line can either be skipped or rejected, not both.";
                 JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
@@ -397,6 +404,7 @@ public class ProcessingPanel extends JPanel {
                 _currentResultIdxLbl.setText(_parent.getSession().getCurrentLineNumber().toString());
                 _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
                 _numModifiedLbl.setText(_parent.getSession().getNumModifiedLines().toString());
+                _numRejectedLbl.setText(_parent.getSession().getNumRejectedLines().toString());
                 _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
 
                 StringBuilder addressText = new StringBuilder();

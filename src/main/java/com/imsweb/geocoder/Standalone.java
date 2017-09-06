@@ -93,7 +93,7 @@ public class Standalone extends JFrame implements ActionListener {
         this.setJMenuBar(bar);
 
         _session = new Session();
-        _session.setVersion(getVersion());
+        _session.setVersion(getVersion().replace("v", ""));
 
         _layout = new CardLayout();
         _centerPnl = new JPanel(_layout);
@@ -201,8 +201,8 @@ public class Standalone extends JFrame implements ActionListener {
         else if ("menu-about".equals(cmd)) {
             final JDialog dlg = new AboutDialog(this);
             dlg.pack();
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-            Point center = new Point(screenSize.width / 2, screenSize.height / 2);
+            Point center = new Point();
+            center.setLocation(this.getLocationOnScreen().x + this.getWidth() / 2, this.getLocationOnScreen().y + this.getHeight() / 2);
             dlg.setLocation(center.x - dlg.getWidth() / 2, center.y - dlg.getHeight() / 2);
             SwingUtilities.invokeLater(() -> dlg.setVisible(true));
         }

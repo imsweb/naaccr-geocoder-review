@@ -38,7 +38,8 @@ import com.imsweb.geocoder.entity.Session;
 
 public class OutputSelectionPanel extends JPanel {
 
-    private static final String _NOT_MAPPED_TEXT = "< Not mapped, CSV field copied as-is >";
+    private static final String _NOT_MAPPED_TEXT = "Not mapped (*)";
+    private static final String _NOT_MAPPED_TEXT_GEOCODE_COLUMN = "Not mapped (*) (**)";
 
     private Standalone _parent;
 
@@ -86,9 +87,14 @@ public class OutputSelectionPanel extends JPanel {
         northPnl.add(selectPnl);
 
         // NORTH/3 - disclaimers
-        JPanel disclaimer1Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 25, 5));
+        northPnl.add(Box.createVerticalStrut(5));
+        JPanel disclaimer1Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 25, 0));
         disclaimer1Pnl.add(Utils.createLabel("Use the text box or the Browse button to modify the default output file; click the Start Review button once you are ready to start your review."));
         northPnl.add(disclaimer1Pnl);
+        northPnl.add(Box.createVerticalStrut(5));
+        JPanel disclaimer2Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 25, 0));
+        disclaimer2Pnl.add(Utils.createLabel("If the output file already exists and has been entirely processed once, you will have the option to re-process any skipped lines."));
+        northPnl.add(disclaimer2Pnl);
 
         // NORTH/4 - controls
         northPnl.add(Box.createVerticalStrut(15));
@@ -162,13 +168,29 @@ public class OutputSelectionPanel extends JPanel {
         // CENTER/NORTH - title
         JPanel titlePnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
         titlePnl.add(Utils.createBoldLabel("Fields Mapping"));
-        titlePnl.add(Utils.createLabel("(bold CSV headers are the ones mapped to a Geocoder output; the ones not in bold will be copied as-is in the re-created CSV file)"));
+        titlePnl.add(Utils.createLabel("(this table shows all the CSV headers found in the input file, and for each of them, which Geocoder output field it maps to)"));
         centerPnl.add(titlePnl, BorderLayout.NORTH);
 
         // CENTER/CENTER - mappings
         JPanel mappingWrapperPnl = new JPanel(new BorderLayout());
         mappingWrapperPnl.add(buildMappingPanel(parent.getSession()), BorderLayout.CENTER);
         centerPnl.add(mappingWrapperPnl, BorderLayout.CENTER);
+
+        // SOUTH - more disclaimers
+        JPanel southPnl = new JPanel();
+        this.add(southPnl, BorderLayout.SOUTH);
+        southPnl.setLayout(new BoxLayout(southPnl, BoxLayout.Y_AXIS));
+        southPnl.add(Box.createVerticalStrut(5));
+        JPanel southDisclaimer1Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 10, 0));
+        southDisclaimer1Pnl.add(Utils.createLabel(
+                "(*) CSV columns that are not mapped will be copied as-is from the input file to the output file regardless of which result is selected (this is also true if all results are rejected)."));
+        southPnl.add(southDisclaimer1Pnl);
+        southPnl.add(Box.createVerticalStrut(5));
+        JPanel southDisclaimer2Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 10, 0));
+        southDisclaimer2Pnl.add(Utils.createLabel(
+                "(**) This is the column containing the JSON Geocode results used by this application."));
+        southPnl.add(southDisclaimer2Pnl);
+        southPnl.add(Box.createVerticalStrut(5));
 
         // show the focus on the start button by default
         this.addComponentListener(new ComponentAdapter() {
@@ -200,7 +222,7 @@ public class OutputSelectionPanel extends JPanel {
             Vector<Object> row = new Vector<>();
             row.add(i + 1); // show 1-based index instead of 0...
             row.add(csvHeader);
-            row.add(csvToJson.getOrDefault(csvHeader, _NOT_MAPPED_TEXT));
+            row.add(csvToJson.getOrDefault(csvHeader, csvHeader.equals(Utils.CSV_COLUMN_JSON) ? _NOT_MAPPED_TEXT_GEOCODE_COLUMN : _NOT_MAPPED_TEXT));
             data.add(row);
         }
 
@@ -242,13 +264,13 @@ public class OutputSelectionPanel extends JPanel {
                     c.setBackground(Color.WHITE);
 
                 if (column == 1) {
-                    if (_NOT_MAPPED_TEXT.equals(table.getValueAt(row, 2)))
+                    if (_NOT_MAPPED_TEXT.equals(table.getValueAt(row, 2)) || _NOT_MAPPED_TEXT_GEOCODE_COLUMN.equals(table.getValueAt(row, 2)))
                         c.setFont(c.getFont().deriveFont(Font.PLAIN));
                     else
                         c.setFont(c.getFont().deriveFont(Font.BOLD));
                 }
                 else if (column == 2) {
-                    if (_NOT_MAPPED_TEXT.equals(value)) {
+                    if (_NOT_MAPPED_TEXT.equals(value) || _NOT_MAPPED_TEXT_GEOCODE_COLUMN.equals(value)) {
                         c.setForeground(Color.GRAY);
                         c.setFont(c.getFont().deriveFont(Font.PLAIN));
                     }
