@@ -113,6 +113,15 @@ public class SummaryPanel extends JPanel {
         constraints.gridy++;
         constraints.gridx = 0;
         constraints.anchor = GridBagConstraints.EAST;
+        summaryPnl.add(Utils.createLabel("number no-result: "), constraints);
+        constraints.gridx = 1;
+        constraints.anchor = GridBagConstraints.WEST;
+        percentage = (float)_parent.getSession().getNumNoResultLines() / numResultLines * 100;
+        summaryPnl.add(new JLabel(Integer.toString(session.getNumNoResultLines()) + " (" + String.format("%.1f", percentage) + "%)"), constraints);
+
+        constraints.gridy++;
+        constraints.gridx = 0;
+        constraints.anchor = GridBagConstraints.EAST;
         summaryPnl.add(Utils.createLabel("number skipped: "), constraints);
         constraints.gridx = 1;
         constraints.anchor = GridBagConstraints.WEST;

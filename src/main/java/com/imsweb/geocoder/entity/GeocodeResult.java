@@ -54,4 +54,19 @@ public class GeocodeResult {
     public String toString() {
         return "Geocode Result #" + _index;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GeocodeResult that = (GeocodeResult)o;
+
+        return _index == that._index;
+    }
+
+    @Override
+    public int hashCode() {
+        return _index;
+    }
 }
