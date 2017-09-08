@@ -118,12 +118,13 @@ public class Utils {
     public static void analyzeInputFile(File file, Session session) throws IOException {
         try (CSVReader reader = new CSVReader(createReader(file))) {
             List<String> allHeaders = Arrays.asList(reader.readNext());
-            if (!allHeaders.contains(CSV_COLUMN_JSON))
-                throw new IOException("Unable to find Geocoder results column.");
-            int versionColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_VERSION);
 
+            int versionColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_VERSION);
             if (versionColumnIdx != -1)
                 throw new IOException("The selected file is an output file. Please use an input file.");
+
+            if (!allHeaders.contains(CSV_COLUMN_JSON))
+                throw new IOException("Unable to find Geocoder results column.");
 
             int numLinesWithoutHeaders = 0, jsonLineNumber = -1;
             String rawJson = null;

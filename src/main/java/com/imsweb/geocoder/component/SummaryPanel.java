@@ -42,7 +42,7 @@ public class SummaryPanel extends JPanel {
         centerPanel.add(Box.createVerticalStrut(25));
         centerPanel.add(createTextPanel("To close the application, use the Exit menu item under the File menu."));
         centerPanel.add(Box.createVerticalStrut(25));
-        centerPanel.add(createTextPanel("To re-process any skipped result, (re)start the application and select the existing reviewed file after selecting the input data file."));
+        centerPanel.add(createTextPanel("To re-process any skipped lines, (re)start the application and select the existing reviewed file after selecting the input data file."));
 
         JPanel contentPnl = new JPanel(new BorderLayout());
         contentPnl.setBorder(new EmptyBorder(0, 15, 0, 0));
