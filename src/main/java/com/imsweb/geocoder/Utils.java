@@ -58,9 +58,9 @@ public class Utils {
     // the different processing status (if you change these, think about serialization!)
     public static final Integer PROCESSING_STATUS_CONFIRMED = 0;
     public static final Integer PROCESSING_STATUS_UPDATED = 1;
-    public static final Integer PROCESSING_STATUS_SKIPPED = 2;
-    public static final Integer PROCESSING_STATUS_REJECTED = 3;
-    public static final Integer PROCESSING_STATUS_NO_RESULTS = 4;
+    public static final Integer PROCESSING_STATUS_REJECTED = 2;
+    public static final Integer PROCESSING_STATUS_NO_RESULTS = 3;
+    public static final Integer PROCESSING_STATUS_SKIPPED = 4;
 
     // the CSV header for the column containing the JSON Geocode results (if you change this, think about serialization!)
     public static final String CSV_COLUMN_JSON = "OutputGeocodes";
