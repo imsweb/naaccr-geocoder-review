@@ -296,10 +296,10 @@ public class ProcessingPanel extends JPanel {
                 return;
             }
 
-            if (_BLANK_GEOCODER_RESULT.equals(_selectedGeocodeResult))
-                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_NO_RESULTS);
-            else if (_skipBox.isSelected())
+            if (_skipBox.isSelected())
                 writeCurrentLineAndReadNextOne(PROCESSING_STATUS_SKIPPED);
+            else if (_BLANK_GEOCODER_RESULT.equals(_selectedGeocodeResult))
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_NO_RESULTS);
             else if (_rejectBox.isSelected())
                 writeCurrentLineAndReadNextOne(PROCESSING_STATUS_REJECTED);
             else if (_selectedGeocodeResult.equals(_selectionBox.getItemAt(0)))
@@ -468,6 +468,7 @@ public class ProcessingPanel extends JPanel {
 
     @SuppressWarnings("unchecked")
     private void displayGeocodeResults(List<GeocodeResult> results) {
+        _rejectBox.setEnabled(true);
 
         // create headers
         Vector<String> headers = new Vector<>();
@@ -552,6 +553,7 @@ public class ProcessingPanel extends JPanel {
 
     @SuppressWarnings("unchecked")
     private void displayMissingGeocodeResults() {
+        _rejectBox.setEnabled(false);
 
         // refresh the table model
         ((DefaultTableModel)_resultsTbl.getModel()).setDataVector(new Vector<Vector<String>>(), new Vector<String>());

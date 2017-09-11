@@ -176,12 +176,18 @@ public class InputSelectionPanel extends JPanel {
         disc10Pnl.add(Utils.createLabel("Progress is saved as you complete the review of each result; to interrupt a review, just exit the application (File > Exit)."));
         northPnl.add(disc10Pnl);
 
-        northPnl.add(Box.createVerticalStrut(15));
+        northPnl.add(Box.createVerticalStrut(3));
         JPanel disc11Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         disc11Pnl.add(Box.createHorizontalStrut(15));
         disc11Pnl.add(Utils.createBoldLabel("To resume a review you interrupted, "));
         disc11Pnl.add(Utils.createLabel("start the application and re-select your original input file; your review session will resume where you stopped it."));
         northPnl.add(disc11Pnl);
+
+        northPnl.add(Box.createVerticalStrut(3));
+        JPanel disc11bPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        disc11bPnl.add(Box.createHorizontalStrut(15));
+        disc11bPnl.add(Utils.createLabel("This mechanism relies on a \".progress\" file being saved in the same folder as the input file; if the file is deleted or corrupted, progress will be lost."));
+        northPnl.add(disc11bPnl);
 
         northPnl.add(Box.createVerticalStrut(15));
         JPanel disc12Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
@@ -189,7 +195,7 @@ public class InputSelectionPanel extends JPanel {
         disc12Pnl.add(Utils.createLabel("You may skip specific results during a review session; just check the 'Flag this line as Skipped' box and use the 'Next Line' button as you normally would."));
         northPnl.add(disc12Pnl);
 
-        northPnl.add(Box.createVerticalStrut(15));
+        northPnl.add(Box.createVerticalStrut(3));
         JPanel disc13aPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         disc13aPnl.add(Box.createHorizontalStrut(15));
         disc13aPnl.add(Utils.createBoldLabel("To re-process skipped results, "));
@@ -209,7 +215,7 @@ public class InputSelectionPanel extends JPanel {
         northPnl.add(disc14Pnl);
 
         // NORTH/5 - more disclaimers
-        northPnl.add(Box.createVerticalStrut(40));
+        northPnl.add(Box.createVerticalStrut(35));
         JPanel disc20Pnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         disc20Pnl.add(Box.createHorizontalStrut(15));
         disc20Pnl.add(Utils.createLabel("This application is provided by the "));

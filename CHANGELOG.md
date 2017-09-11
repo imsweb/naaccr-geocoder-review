@@ -1,6 +1,6 @@
 ## NAACCR Geocoder Review Version History
 
-**Version 0.3**
+**Version 1.0 **
 
  - Now properly handling the cases where the geocoder returns not result.
 

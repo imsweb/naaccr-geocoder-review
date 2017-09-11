@@ -293,8 +293,8 @@ public class Utils {
                     updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
         }
 
-        // special case: if rejected, set some columns to specific values
-        if (status.equals(PROCESSING_STATUS_REJECTED)) {
+        // special case: if no results (rejected or truly no results), set some columns to specific values
+        if (status.equals(PROCESSING_STATUS_REJECTED) || status.equals(PROCESSING_STATUS_NO_RESULTS)) {
             if (headers.contains("naaccrQualCode"))
                 updatedLine[headers.indexOf("naaccrQualCode")] = "99";
             if (headers.contains("naaccrQualType"))
