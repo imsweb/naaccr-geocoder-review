@@ -305,6 +305,15 @@ public class Utils {
                 updatedLine[headers.indexOf("naaccrCertType")] = "Ungeocodable";
         }
 
+        // special case, overwrite MicroMatchStatus (#2)
+        int microMatchStatusIdx = headers.indexOf("MicroMatchStatus");
+        if (microMatchStatusIdx != -1) {
+            if (status.equals(PROCESSING_STATUS_REJECTED) || status.equals(PROCESSING_STATUS_NO_RESULTS))
+                updatedLine[microMatchStatusIdx] = "Non-Match";
+            else if (status.equals(PROCESSING_STATUS_CONFIRMED) || status.equals(PROCESSING_STATUS_UPDATED))
+                updatedLine[microMatchStatusIdx] = "Match";
+        }
+
         // add processing information (add to the end of the line, or replace if the columns already exists)
         updatedLine[session.getVersionColumnIndex()] = session.getVersion();
         updatedLine[session.getProcessingStatusColumnIndex()] = Integer.toString(status);

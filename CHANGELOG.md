@@ -1,6 +1,10 @@
 ## NAACCR Geocoder Review Version History
 
-**Version 1.0 **
+**Version 1.1**
+
+ - Now overwriting MicroMatchStatus in output file.
+
+**Version 1.0**
 
  - Now properly handling the cases where the geocoder returns not result.
 
