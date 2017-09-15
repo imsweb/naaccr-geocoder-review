@@ -10,16 +10,19 @@ The application only supports input CSV files that have been processed by the NA
 
 For each CSV row, the GUI presents the address that was sent to the Geocoder and the corresponding results. The user is allowed to confirm the "best" result from the Geocoder (the first one), or to select a different one. The user can also reject all the results.
 
-There are three possible output for a CSV line:
-1. The line is copied as-is (if the user confirmed the results).
-2. The line is copied as-is with the exception of the following fields (if the user rejected all the results, or there were no results available):
-     -  naaccrQualCode is set to 99
+If the user selects a different Geocoder result in the interface, the corresponding CSV line in the output line will have its columns updated; only the columns mapped to a JSON field will be updated though.
+
+Some fields are hard-coded depending on the action that the user takes in the interface:
+1. If the user rejects all the results, or if the Geocoder returns no results, the following fields are set:
+     - naaccrQualCode is set to 99
      - naaccrQualType is set to "Ungeocodable"
      - naaccrCertCode is set to 9
      - naaccrCertType is set to "Ungeocodable"
-3. The line has most of the columns overwritten (if the user selected a different result); note that some columns are not mapped in the JSON results, those are still copied as-is.
+     - MicroMatchStatus is set to "Non-Match"
+2. If the user confirms the best Geocoder results or select a different one, 
+     - MicroMatchStatus is set to "Match"
 
-Regardless of the output, the application always add the following columns at the end of the line:
+Regardless of the action the users takes in the interface, the application always adds the following columns at the end of the line:
 1. Review App Version (the version of the software that created the output file)
 2. Processing Status
     - 0: user confirmed best result
