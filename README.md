@@ -13,13 +13,13 @@ For each CSV row, the GUI presents the address that was sent to the Geocoder and
 If the user selects a different Geocoder result in the interface, the corresponding CSV line in the output line will have its columns updated; only the columns mapped to a JSON field will be updated though.
 
 Some fields are hard-coded depending on the action that the user takes in the interface:
-1. If the user rejects all the results, or if the Geocoder returns no results, the following fields are set:
+1. If the user rejects all the results or if the Geocoder returns no results:
      - naaccrQualCode is set to 99
      - naaccrQualType is set to "Ungeocodable"
      - naaccrCertCode is set to 9
      - naaccrCertType is set to "Ungeocodable"
      - MicroMatchStatus is set to "Non-Match"
-2. If the user confirms the best Geocoder results or select a different one, 
+2. If the user confirms the best Geocoder results or select a different one:
      - MicroMatchStatus is set to "Match"
 
 Regardless of the action the users takes in the interface, the application always adds the following columns at the end of the line:
