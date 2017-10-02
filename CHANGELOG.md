@@ -1,5 +1,9 @@
 ## NAACCR Geocoder Review Version History
 
+**Version 1.2**
+
+ - Addressed a bug crashing the Standalone GUI when minimizing the application.
+
 **Version 1.1**
 
  - Now overwriting MicroMatchStatus in output file.
