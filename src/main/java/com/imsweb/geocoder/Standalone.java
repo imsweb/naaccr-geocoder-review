@@ -6,6 +6,7 @@ package com.imsweb.geocoder;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.awt.IllegalComponentStateException;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -101,16 +102,19 @@ public class Standalone extends JFrame implements ActionListener {
         this.getContentPane().add(_centerPnl, BorderLayout.CENTER);
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> SwingUtilities.invokeLater(() -> {
+            boolean isLocationException = e instanceof IllegalComponentStateException; // https://bugs.openjdk.java.net/browse/JDK-8179665
+            if (!isLocationException) {
 
-            // copy the full stacktrace to the clipboard, little trick to make tech support possible
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PrintStream ps = new PrintStream(baos);
-            e.printStackTrace(ps);
-            StringSelection data = new StringSelection(new String(baos.toByteArray(), StandardCharsets.UTF_8));
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, data);
+                // copy the full stacktrace to the clipboard, little trick to make tech support possible
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                PrintStream ps = new PrintStream(baos);
+                e.printStackTrace(ps);
+                StringSelection data = new StringSelection(new String(baos.toByteArray(), StandardCharsets.UTF_8));
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, data);
 
-            String msg = "An unexpected error happened, it is recommended to close the application.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
-            JOptionPane.showMessageDialog(Standalone.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                String msg = "An unexpected error happened, it is recommended to close the application.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
+                JOptionPane.showMessageDialog(Standalone.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }));
     }
 
