@@ -14,9 +14,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -83,7 +85,7 @@ public class ProcessingPanel extends JPanel {
 
     //GUI components
     private JButton _nextBtn;
-    private JCheckBox _skipBox, _rejectBox;
+    private JCheckBox _skipBox, _rejectBox, _include2010, _include2000, _include1990;
     private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numRejectedLbl, _numNoResultLbl, _numSkippedLbl, _inputAddressLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
@@ -278,6 +280,36 @@ public class ProcessingPanel extends JPanel {
         pane.setBorder(new LineBorder(Color.GRAY));
         commentPnl.add(pane, BorderLayout.CENTER);
         centerPnl.add(commentPnl, BorderLayout.CENTER);
+
+        //CENTER/SOUTH - census year checkboxes
+        JPanel censusYearPnl = new JPanel();
+        censusYearPnl.setLayout(new BoxLayout(censusYearPnl, BoxLayout.X_AXIS));
+        censusYearPnl.add(new JLabel("Include Census Years: "));
+        _include2010 = new JCheckBox("2010", true);
+        _include2010.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED)
+                _parent.getSession().getIncludedCensusIndexes().add(0);
+            else
+                _parent.getSession().getIncludedCensusIndexes().remove(0);
+        });
+        _include2000 = new JCheckBox("2000", true);
+        _include2010.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED)
+                _parent.getSession().getIncludedCensusIndexes().add(1);
+            else
+                _parent.getSession().getIncludedCensusIndexes().remove(1);
+        });
+        _include1990 = new JCheckBox("1990", true);
+        _include2010.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED)
+                _parent.getSession().getIncludedCensusIndexes().add(2);
+            else
+                _parent.getSession().getIncludedCensusIndexes().remove(2);
+        });
+        censusYearPnl.add(_include2010);
+        censusYearPnl.add(_include2000);
+        censusYearPnl.add(_include1990);
+        centerPnl.add(censusYearPnl, BorderLayout.SOUTH);
 
         // CENTER/EAST - controls
         JPanel controlsPnl = new JPanel(new BorderLayout());
@@ -739,6 +771,14 @@ public class ProcessingPanel extends JPanel {
             if (result != null) {
                 _selectedGeocodeResult = result;
                 _selectionBox.setSelectedItem(result);
+                Set<Integer> includedCensusYears = new HashSet<>();
+                if (_include2010.isSelected())
+                    includedCensusYears.add(0);
+                if (_include2000.isSelected())
+                    includedCensusYears.add(1);
+                if (_include1990.isSelected())
+                    includedCensusYears.add(2);
+                _parent.getSession().setIncludedCensusIndexes(includedCensusYears);
             }
         }
     }

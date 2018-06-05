@@ -5,8 +5,10 @@ package com.imsweb.geocoder.entity;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Session {
 
@@ -55,6 +57,8 @@ public class Session {
 
     private Boolean _skippedMode;
 
+    private Set<Integer> _includedCensusIndexes;
+
     // Serialization keys
     private static final String _KEY_VERSION = "version";
     private static final String _KEY_INPUT_FILE = "input-file";
@@ -76,6 +80,7 @@ public class Session {
     private static final String _KEY_NUM_NO_RESULT_LINES = "num-no-result-lines";
     private static final String _KEY_CURRENT_LINE_NUMBER = "current-line-number";
     private static final String _KEY_SKIPPED_MODE = "skipped-mode";
+    private static final String _KEY_INCLUDED_CENSUS_YEARS = "include-census-years";
 
     public Session() {
         _versionColumnIndex = -1;
@@ -89,6 +94,10 @@ public class Session {
         _currentLineNumber = 0;
         _numNoResultLines = 0;
         _skippedMode = false;
+        _includedCensusIndexes = new HashSet<>();
+        _includedCensusIndexes.add(0);
+        _includedCensusIndexes.add(1);
+        _includedCensusIndexes.add(2);
     }
 
     public String getVersion() {
@@ -251,6 +260,14 @@ public class Session {
         _skippedMode = skippedMode;
     }
 
+    public Set<Integer> getIncludedCensusIndexes() {
+        return _includedCensusIndexes;
+    }
+
+    public void setIncludedCensusIndexes(Set<Integer> includedCensusIndexes) {
+        _includedCensusIndexes = includedCensusIndexes;
+    }
+
     @SuppressWarnings("unchecked")
     public void deserializeFromMap(Map<String, Object> map) {
         setVersion((String)map.get(_KEY_VERSION));
@@ -276,6 +293,7 @@ public class Session {
         setNumNoResultLines((Integer)map.get(_KEY_NUM_NO_RESULT_LINES));
         setCurrentLineNumber((Integer)map.get(_KEY_CURRENT_LINE_NUMBER));
         setSkippedMode((Boolean)map.get(_KEY_SKIPPED_MODE));
+        setIncludedCensusIndexes((Set<Integer>)map.get(_KEY_INCLUDED_CENSUS_YEARS));
     }
 
     public Map<String, Object> serializeToMap() {
@@ -300,6 +318,7 @@ public class Session {
         map.put(_KEY_NUM_NO_RESULT_LINES, getNumNoResultLines());
         map.put(_KEY_CURRENT_LINE_NUMBER, getCurrentLineNumber());
         map.put(_KEY_SKIPPED_MODE, getSkippedMode());
+        map.put(_KEY_INCLUDED_CENSUS_YEARS, getIncludedCensusIndexes());
         return map;
     }
 }

@@ -292,8 +292,8 @@ public class Utils {
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
             // update all "censusValue" values
-            for (Map<String, String> map : selectedResult.getCensusValues())
-                for (Map.Entry<String, String> entry : map.entrySet())
+            for (Integer index : session.getIncludedCensusIndexes())
+                for (Map.Entry<String, String> entry : selectedResult.getCensusValues().get(index).entrySet())
                     if (headers.contains(entry.getKey()))
                         updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
             // update all "referenceFeature" values
