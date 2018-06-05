@@ -3,6 +3,8 @@
  */
 package com.imsweb.geocoder.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class GeocodeResult {
@@ -11,7 +13,7 @@ public class GeocodeResult {
 
     private Map<String, String> _outputGeocode;
 
-    private Map<String, String> _censusValue;
+    private List<Map<String, String>> _censusValue = new ArrayList<>();
 
     private Map<String, String> _referenceFeature;
 
@@ -35,12 +37,13 @@ public class GeocodeResult {
         _outputGeocode = outputGeocode;
     }
 
-    public Map<String, String> getCensusValue() {
+    public List<Map<String, String>> getCensusValues() {
         return _censusValue;
     }
 
-    public void setCensusValue(Map<String, String> censusValue) {
-        _censusValue = censusValue;
+    public void addCensusValue(Map<String, String> censusValue) {
+        if (censusValue != null)
+            _censusValue.add(censusValue);
     }
 
     public Map<String, String> getReferenceFeature() {

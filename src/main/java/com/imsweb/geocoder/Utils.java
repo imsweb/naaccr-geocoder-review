@@ -152,9 +152,10 @@ public class Utils {
             for (Map.Entry<String, String> entry : geocoderResult.getOutputGeocode().entrySet())
                 if (!JSON_IGNORED.contains(entry.getKey()))
                     jsonFields.add(FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
-            for (Map.Entry<String, String> entry : geocoderResult.getCensusValue().entrySet())
-                if (!JSON_IGNORED.contains(entry.getKey()))
-                    jsonFields.add(FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
+            for (Map<String, String> map : geocoderResult.getCensusValues())
+                for (Map.Entry<String, String> entry : map.entrySet())
+                    if (!JSON_IGNORED.contains(entry.getKey()))
+                        jsonFields.add(FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
             for (Map.Entry<String, String> entry : geocoderResult.getReferenceFeature().entrySet())
                 if (!JSON_IGNORED.contains(entry.getKey()))
                     jsonFields.add(FIELD_TYPE_REFERENCE_FEATURE + "." + entry.getKey());
@@ -236,7 +237,13 @@ public class Utils {
                             result.setOutputGeocode(simpleJsonToMap(entry.getValue()));
                             break;
                         case SUBHEADER_CENSUS_VALUES:
-                            result.setCensusValue(simpleJsonToMap(entry.getValue().get(0).get("CensusValue1")));
+                            JsonNode node = entry.getValue().get(0);
+                            if (node.get("CensusValue1") != null)
+                                result.addCensusValue(simpleJsonToMap(node.get("CensusValue1")));
+                            if (node.get("CensusValue2") != null)
+                                result.addCensusValue(simpleJsonToMap(node.get("CensusValue2")));
+                            if (node.get("CensusValue3") != null)
+                                result.addCensusValue(simpleJsonToMap(node.get("CensusValue3")));
                             break;
                         case SUBHEADER_REFERENCE_FEATURE:
                             result.setReferenceFeature(simpleJsonToMap(entry.getValue()));
@@ -268,6 +275,7 @@ public class Utils {
         return result;
     }
 
+    //TODO change "update all censusValue" based on whether they want to include all Census Years or just some - right now default is all.  
     public static String[] getResultCsvLine(Session session, String[] originalLine, GeocodeResult selectedResult, Integer status, String comment) {
         int originalLineLength = originalLine.length;
 
@@ -284,9 +292,10 @@ public class Utils {
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
             // update all "censusValue" values
-            for (Map.Entry<String, String> entry : selectedResult.getCensusValue().entrySet())
-                if (headers.contains(entry.getKey()))
-                    updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
+            for (Map<String, String> map : selectedResult.getCensusValues())
+                for (Map.Entry<String, String> entry : map.entrySet())
+                    if (headers.contains(entry.getKey()))
+                        updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
             // update all "referenceFeature" values
             for (Map.Entry<String, String> entry : selectedResult.getReferenceFeature().entrySet())
                 if (headers.contains(entry.getKey()))

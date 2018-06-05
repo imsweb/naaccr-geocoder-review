@@ -107,7 +107,7 @@ public class UtilsTest {
         Assert.assertEquals("LOS ANGELES", testResults.getInputCity());
         Assert.assertEquals("441", testResults.getParsedInputFields().get("Number"));
         Assert.assertEquals("34.0596874561221", testResults.getResults().get(0).getOutputGeocode().get("Latitude"));
-        Assert.assertEquals("193.0193", testResults.getResults().get(0).getCensusValue().get("CensusTimeTaken"));
+        Assert.assertEquals("193.0193", testResults.getResults().get(0).getCensusValues().get(0).get("CensusTimeTaken"));
         Assert.assertEquals("SOURCE_NAVTEQ_STREETS_2012", testResults.getResults().get(0).getReferenceFeature().get("Source"));
 
     }
@@ -132,7 +132,7 @@ public class UtilsTest {
     //        Map<String, String> censusValue = new HashMap<>();
     //        censusValue.put("CensusValueHeader1", "census1");
     //        censusValue.put("CensusValueHeader2", "census2");
-    //        geocodeResult.setCensusValue(censusValue);
+    //        geocodeResult.addCensusValue(censusValue);
     //
     //        Map<String, String> referenceFeature = new HashMap<>();
     //        referenceFeature.put("ReferenceFeatureHeader1", "ref1");
@@ -195,9 +195,10 @@ public class UtilsTest {
                 for (Map.Entry<String, String> entry : result.getOutputGeocode().entrySet())
                     if (!Utils.JSON_IGNORED.contains(entry.getKey()))
                         fields.add(Utils.FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
-                for (Map.Entry<String, String> entry : result.getCensusValue().entrySet())
-                    if (!Utils.JSON_IGNORED.contains(entry.getKey()))
-                        fields.add(Utils.FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
+                for (Map<String, String> map : result.getCensusValues())
+                    for (Map.Entry<String, String> entry : map.entrySet())
+                        if (!Utils.JSON_IGNORED.contains(entry.getKey()))
+                            fields.add(Utils.FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
                 for (Map.Entry<String, String> entry : result.getReferenceFeature().entrySet())
                     if (!Utils.JSON_IGNORED.contains(entry.getKey()))
                         fields.add(Utils.FIELD_TYPE_REFERENCE_FEATURE + "." + entry.getKey());

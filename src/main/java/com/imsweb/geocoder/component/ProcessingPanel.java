@@ -490,17 +490,24 @@ public class ProcessingPanel extends JPanel {
                 }
         );
         data.add(createSeparationRow("Census Value", results.size()));
-        _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
-                    String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
-                    if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
-                        Vector<String> row = new Vector<>(results.size() + 1);
-                        row.add("    " + fieldName);
-                        results.forEach(r -> row.add(r.getCensusValue().get(fieldName)));
-                        if (!isEmptyRow(row))
-                            data.add(row);
+        //Iterate three times to get all three census years
+        for (int i = 0; i < 3; i++) {
+            int censusResultIndex = i;
+            _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
+                        String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
+                        if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
+                            Vector<String> row = new Vector<>(results.size() + 1);
+                            row.add("    " + fieldName);
+                            results.forEach(r -> {
+                                if (censusResultIndex < r.getCensusValues().size())
+                                    row.add(r.getCensusValues().get(censusResultIndex).get(fieldName));
+                            });
+                            if (!isEmptyRow(row))
+                                data.add(row);
+                        }
                     }
-                }
-        );
+            );
+        }
         data.add(createSeparationRow("Reference Feature", results.size()));
         _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".")).forEach(f -> {
                     String fieldName = f.replace(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".", "");
