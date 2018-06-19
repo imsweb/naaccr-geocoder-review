@@ -14,8 +14,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -266,7 +268,6 @@ public class ProcessingPanel extends JPanel {
         selectionDisclaimer2Pnl.setBorder(new EmptyBorder(0, 5, 0, 0));
         selectionDisclaimer2Pnl.add(Utils.createItalicLabel("You may skip a line to process it later, or reject it if you don't agree with any of the results."));
         selectionPnl.add(selectionDisclaimer2Pnl);
-        //selectionPnl.add(Box.createVerticalGlue());
         centerPnl.add(selectionPnl, BorderLayout.WEST);
 
         // CENTER/CENTER - comment
@@ -288,23 +289,23 @@ public class ProcessingPanel extends JPanel {
         _include2010 = new JCheckBox("2010", true);
         _include2010.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED)
-                _parent.getSession().getIncludedCensusIndexes().add(0);
+                _parent.getSession().getIncludedCensusYears().add(Utils.CENSUS_YEAR_2010);
             else
-                _parent.getSession().getIncludedCensusIndexes().remove(0);
+                _parent.getSession().getIncludedCensusYears().remove(Utils.CENSUS_YEAR_2010);
         });
         _include2000 = new JCheckBox("2000", true);
         _include2010.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED)
-                _parent.getSession().getIncludedCensusIndexes().add(1);
+                _parent.getSession().getIncludedCensusYears().add(Utils.CENSUS_YEAR_2000);
             else
-                _parent.getSession().getIncludedCensusIndexes().remove(1);
+                _parent.getSession().getIncludedCensusYears().remove(Utils.CENSUS_YEAR_2000);
         });
         _include1990 = new JCheckBox("1990", true);
         _include2010.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED)
-                _parent.getSession().getIncludedCensusIndexes().add(2);
+                _parent.getSession().getIncludedCensusYears().add(Utils.CENSUS_YEAR_1990);
             else
-                _parent.getSession().getIncludedCensusIndexes().remove(2);
+                _parent.getSession().getIncludedCensusYears().remove(Utils.CENSUS_YEAR_1990);
         });
         censusYearPnl.add(_include2010);
         censusYearPnl.add(_include2000);
@@ -523,16 +524,16 @@ public class ProcessingPanel extends JPanel {
         );
         data.add(createSeparationRow("Census Value", results.size()));
         //Iterate three times to get all three census years
-        for (int i = 0; i < 3; i++) {
-            int censusResultIndex = i;
+
+        for (String censusYear : Arrays.asList(Utils.CENSUS_YEAR_2010, Utils.CENSUS_YEAR_2000, Utils.CENSUS_YEAR_1990)) {
             _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
                         String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
                         if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
                             Vector<String> row = new Vector<>(results.size() + 1);
                             row.add("    " + fieldName);
                             results.forEach(r -> {
-                                if (censusResultIndex < r.getCensusValues().size())
-                                    row.add(r.getCensusValues().get(censusResultIndex).get(fieldName));
+                                Map<String, String> censusValues = r.getCensusValues().get(censusYear);
+                                row.add(censusValues != null ? censusValues.get(fieldName) : "");
                             });
                             if (!isEmptyRow(row))
                                 data.add(row);
@@ -771,14 +772,14 @@ public class ProcessingPanel extends JPanel {
             if (result != null) {
                 _selectedGeocodeResult = result;
                 _selectionBox.setSelectedItem(result);
-                Set<Integer> includedCensusYears = new HashSet<>();
+                Set<String> includedCensusYears = new HashSet<>();
                 if (_include2010.isSelected())
-                    includedCensusYears.add(0);
+                    includedCensusYears.add(Utils.CENSUS_YEAR_2010);
                 if (_include2000.isSelected())
-                    includedCensusYears.add(1);
+                    includedCensusYears.add(Utils.CENSUS_YEAR_2000);
                 if (_include1990.isSelected())
-                    includedCensusYears.add(2);
-                _parent.getSession().setIncludedCensusIndexes(includedCensusYears);
+                    includedCensusYears.add(Utils.CENSUS_YEAR_1990);
+                _parent.getSession().setIncludedCensusYears(includedCensusYears);
             }
         }
     }

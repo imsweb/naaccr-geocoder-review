@@ -101,6 +101,14 @@ public class Utils {
 
     public static final Integer NUM_EXTRA_OUTPUT_COLUMNS = 4;
 
+    // the JSON property for the census year
+    public static final String JSON_CENSUS_YEAR = "CensusYear";
+
+    // the possible census years
+    public static final String CENSUS_YEAR_1990 = "NineteenNinety";
+    public static final String CENSUS_YEAR_2000 = "TwoThousand";
+    public static final String CENSUS_YEAR_2010 = "TwoThousandTen";
+
     public static Reader createReader(File file) throws IOException {
         InputStream is = new FileInputStream(file);
         if (file.getName().endsWith(".gz"))
@@ -152,7 +160,7 @@ public class Utils {
             for (Map.Entry<String, String> entry : geocoderResult.getOutputGeocode().entrySet())
                 if (!JSON_IGNORED.contains(entry.getKey()))
                     jsonFields.add(FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
-            for (Map.Entry<String, String> entry : geocoderResult.getCensusValues().get(0).entrySet())
+            for (Map.Entry<String, String> entry : (new ArrayList<>(geocoderResult.getCensusValues().values()).get(0).entrySet()))  //TODO this is ugly - is there a better way?
                 if (!JSON_IGNORED.contains(entry.getKey()))
                     jsonFields.add(FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
             for (Map.Entry<String, String> entry : geocoderResult.getReferenceFeature().entrySet())
@@ -236,13 +244,14 @@ public class Utils {
                             result.setOutputGeocode(simpleJsonToMap(entry.getValue()));
                             break;
                         case SUBHEADER_CENSUS_VALUES:
-                            JsonNode node = entry.getValue().get(0);
-                            if (node.get("CensusValue1") != null)
-                                result.addCensusValue(simpleJsonToMap(node.get("CensusValue1")));
-                            if (node.get("CensusValue2") != null)
-                                result.addCensusValue(simpleJsonToMap(node.get("CensusValue2")));
-                            if (node.get("CensusValue3") != null)
-                                result.addCensusValue(simpleJsonToMap(node.get("CensusValue3")));
+                            JsonNode censusNode = entry.getValue().get(0);
+                            for (int i = 1; i < 4; i++) {
+                                JsonNode yearNode = censusNode.get("CensusValue" + i);
+                                if (yearNode != null) {
+                                    Map<String, String> jsonMap = simpleJsonToMap(yearNode);
+                                    result.addCensusValue(jsonMap.get(JSON_CENSUS_YEAR), jsonMap);
+                                }
+                            }
                             break;
                         case SUBHEADER_REFERENCE_FEATURE:
                             result.setReferenceFeature(simpleJsonToMap(entry.getValue()));
@@ -274,7 +283,6 @@ public class Utils {
         return result;
     }
 
-    //TODO change "update all censusValue" based on whether they want to include all Census Years or just some - right now default is all.  
     public static String[] getResultCsvLine(Session session, String[] originalLine, GeocodeResult selectedResult, Integer status, String comment) {
         int originalLineLength = originalLine.length;
 
@@ -291,9 +299,9 @@ public class Utils {
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
             // update all "censusValue" values - input headers are repeated with year suffix so JSON keys need to be adjusted
-            for (Integer index : session.getIncludedCensusIndexes())
-                for (Map.Entry<String, String> entry : selectedResult.getCensusValues().get(index).entrySet()) {
-                    String adjustedHeader = entry.getKey() + (index == 0 ? "2010" : index == 1 ? "2000" : "1990");
+            for (String censusYear : session.getIncludedCensusYears())
+                for (Map.Entry<String, String> entry : selectedResult.getCensusValues().get(censusYear).entrySet()) {
+                    String adjustedHeader = entry.getKey() + getYearNumber(censusYear);
                     if (headers.contains(adjustedHeader))
                         updatedLine[headers.indexOf(adjustedHeader)] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
                 }
@@ -334,6 +342,19 @@ public class Utils {
         return updatedLine;
     }
 
+    private static String getYearNumber(String yearName) {
+        switch (yearName) {
+            case CENSUS_YEAR_2010:
+                return "2010";
+            case CENSUS_YEAR_2000:
+                return "2010";
+            case CENSUS_YEAR_1990:
+                return "2010";
+            default:
+                return null;
+        }
+    }
+
     public static String addReviewedSuffix(String filename) {
         int idx = filename.indexOf('.');
         if (idx == -1)
@@ -353,41 +374,17 @@ public class Utils {
 
     @SuppressWarnings("unchecked")
     public static void readSessionFromProgressFile(Session session, File progressFile) throws IOException {
-        FileInputStream fis = null;
-        ObjectInputStream ois = null;
-
-        try {
-            fis = new FileInputStream(progressFile);
-            ois = new ObjectInputStream(fis);
-
+        try (FileInputStream fis = new FileInputStream(progressFile); ObjectInputStream ois = new ObjectInputStream(fis)) {
             session.deserializeFromMap((Map<String, Object>)ois.readObject());
         }
         catch (ClassNotFoundException e) {
             throw new IOException("Unable to find required class", e);
         }
-        finally {
-            if (ois != null)
-                ois.close();
-            if (fis != null)
-                fis.close();
-        }
     }
 
     public static void writeSessionToProgressFile(Session session, File progressFile) throws IOException {
-        FileOutputStream fos = null;
-        ObjectOutputStream oos = null;
-
-        try {
-            fos = new FileOutputStream(progressFile);
-            oos = new ObjectOutputStream(fos);
-
+        try (FileOutputStream fos = new FileOutputStream(progressFile); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(session.serializeToMap());
-        }
-        finally {
-            if (oos != null)
-                oos.close();
-            if (fos != null)
-                fos.close();
         }
     }
 

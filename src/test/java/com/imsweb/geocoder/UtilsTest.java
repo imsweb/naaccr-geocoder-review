@@ -107,7 +107,7 @@ public class UtilsTest {
         Assert.assertEquals("LOS ANGELES", testResults.getInputCity());
         Assert.assertEquals("441", testResults.getParsedInputFields().get("Number"));
         Assert.assertEquals("34.0596874561221", testResults.getResults().get(0).getOutputGeocode().get("Latitude"));
-        Assert.assertEquals("193.0193", testResults.getResults().get(0).getCensusValues().get(0).get("CensusTimeTaken"));
+        Assert.assertEquals("193.0193", testResults.getResults().get(0).getCensusValues().get("TwoThousandTen").get("CensusTimeTaken"));
         Assert.assertEquals("SOURCE_NAVTEQ_STREETS_2012", testResults.getResults().get(0).getReferenceFeature().get("Source"));
 
     }
@@ -195,8 +195,7 @@ public class UtilsTest {
                 for (Map.Entry<String, String> entry : result.getOutputGeocode().entrySet())
                     if (!Utils.JSON_IGNORED.contains(entry.getKey()))
                         fields.add(Utils.FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
-                for (Map<String, String> map : result.getCensusValues())
-                    for (Map.Entry<String, String> entry : map.entrySet())
+                for (Map.Entry<String, String> entry : (new ArrayList<>(result.getCensusValues().values()).get(0).entrySet()))
                         if (!Utils.JSON_IGNORED.contains(entry.getKey()))
                             fields.add(Utils.FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
                 for (Map.Entry<String, String> entry : result.getReferenceFeature().entrySet())
