@@ -152,10 +152,9 @@ public class Utils {
             for (Map.Entry<String, String> entry : geocoderResult.getOutputGeocode().entrySet())
                 if (!JSON_IGNORED.contains(entry.getKey()))
                     jsonFields.add(FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
-            for (Map<String, String> map : geocoderResult.getCensusValues())
-                for (Map.Entry<String, String> entry : map.entrySet())
-                    if (!JSON_IGNORED.contains(entry.getKey()))
-                        jsonFields.add(FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
+            for (Map.Entry<String, String> entry : geocoderResult.getCensusValues().get(0).entrySet())
+                if (!JSON_IGNORED.contains(entry.getKey()))
+                    jsonFields.add(FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
             for (Map.Entry<String, String> entry : geocoderResult.getReferenceFeature().entrySet())
                 if (!JSON_IGNORED.contains(entry.getKey()))
                     jsonFields.add(FIELD_TYPE_REFERENCE_FEATURE + "." + entry.getKey());
@@ -291,11 +290,13 @@ public class Utils {
             for (Map.Entry<String, String> entry : selectedResult.getOutputGeocode().entrySet())
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
-            // update all "censusValue" values
+            // update all "censusValue" values - input headers are repeated with year suffix so JSON keys need to be adjusted
             for (Integer index : session.getIncludedCensusIndexes())
-                for (Map.Entry<String, String> entry : selectedResult.getCensusValues().get(index).entrySet())
-                    if (headers.contains(entry.getKey()))
-                        updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
+                for (Map.Entry<String, String> entry : selectedResult.getCensusValues().get(index).entrySet()) {
+                    String adjustedHeader = entry.getKey() + (index == 0 ? "2010" : index == 1 ? "2000" : "1990");
+                    if (headers.contains(adjustedHeader))
+                        updatedLine[headers.indexOf(adjustedHeader)] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
+                }
             // update all "referenceFeature" values
             for (Map.Entry<String, String> entry : selectedResult.getReferenceFeature().entrySet())
                 if (headers.contains(entry.getKey()))
