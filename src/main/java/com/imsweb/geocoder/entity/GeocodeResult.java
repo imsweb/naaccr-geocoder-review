@@ -3,6 +3,7 @@
  */
 package com.imsweb.geocoder.entity;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class GeocodeResult {
@@ -11,7 +12,7 @@ public class GeocodeResult {
 
     private Map<String, String> _outputGeocode;
 
-    private Map<String, String> _censusValue;
+    private Map<String, Map<String, String>> _censusValue = new HashMap<>();
 
     private Map<String, String> _referenceFeature;
 
@@ -35,12 +36,13 @@ public class GeocodeResult {
         _outputGeocode = outputGeocode;
     }
 
-    public Map<String, String> getCensusValue() {
+    public Map<String, Map<String, String>> getCensusValues() {
         return _censusValue;
     }
 
-    public void setCensusValue(Map<String, String> censusValue) {
-        _censusValue = censusValue;
+    public void addCensusValue(String censusYear, Map<String, String> censusValue) {
+        if (censusValue != null)
+            _censusValue.put(censusYear, censusValue);
     }
 
     public Map<String, String> getReferenceFeature() {

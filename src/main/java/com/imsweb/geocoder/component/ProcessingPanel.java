@@ -6,21 +6,27 @@ package com.imsweb.geocoder.component;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Vector;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -52,6 +58,7 @@ import javax.swing.table.TableColumnModel;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
+import com.imsweb.geocoder.PenaltyCodeUtils;
 import com.imsweb.geocoder.Standalone;
 import com.imsweb.geocoder.Utils;
 import com.imsweb.geocoder.entity.GeocodeResult;
@@ -83,8 +90,8 @@ public class ProcessingPanel extends JPanel {
 
     //GUI components
     private JButton _nextBtn;
-    private JCheckBox _skipBox, _rejectBox;
-    private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numRejectedLbl, _numNoResultLbl, _numSkippedLbl, _inputAddressLbl;
+    private JCheckBox _skipBox, _rejectBox, _include2010, _include2000, _include1990;
+    private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numRejectedLbl, _numNoResultLbl, _numSkippedLbl, _inputAddressLbl, _penaltyCodeLbl, _penaltyCodeSummLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
     private JTextArea _commentArea;
@@ -264,7 +271,6 @@ public class ProcessingPanel extends JPanel {
         selectionDisclaimer2Pnl.setBorder(new EmptyBorder(0, 5, 0, 0));
         selectionDisclaimer2Pnl.add(Utils.createItalicLabel("You may skip a line to process it later, or reject it if you don't agree with any of the results."));
         selectionPnl.add(selectionDisclaimer2Pnl);
-        //selectionPnl.add(Box.createVerticalGlue());
         centerPnl.add(selectionPnl, BorderLayout.WEST);
 
         // CENTER/CENTER - comment
@@ -278,6 +284,58 @@ public class ProcessingPanel extends JPanel {
         pane.setBorder(new LineBorder(Color.GRAY));
         commentPnl.add(pane, BorderLayout.CENTER);
         centerPnl.add(commentPnl, BorderLayout.CENTER);
+
+        //CENTER/SOUTH - census year checkboxes and penalty codes
+        JPanel censusAndPenaltyPnl = new JPanel();
+        censusAndPenaltyPnl.setLayout(new BoxLayout(censusAndPenaltyPnl, BoxLayout.X_AXIS));
+        censusAndPenaltyPnl.add(new JLabel("Include Census Years: "));
+        _include2010 = new JCheckBox("2010", true);
+        _include2000 = new JCheckBox("2000", true);
+        _include1990 = new JCheckBox("1990", true);
+        censusAndPenaltyPnl.add(_include2010);
+        censusAndPenaltyPnl.add(_include2000);
+        censusAndPenaltyPnl.add(_include1990);
+
+        censusAndPenaltyPnl.add(Box.createRigidArea(new Dimension(30, 0)));
+        censusAndPenaltyPnl.add(Utils.createBoldLabel("Penalty Code:"));
+        censusAndPenaltyPnl.add(Box.createRigidArea(new Dimension(5, 0)));
+        _penaltyCodeLbl = Utils.createLabel("");
+        _penaltyCodeLbl.setForeground(Color.BLUE);
+        _penaltyCodeLbl.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                JPanel dialogPnl = new JPanel();
+                dialogPnl.add(Utils.createLabel(PenaltyCodeUtils.getPenaltyCodeTranslations(_penaltyCodeLbl.getText())));
+                dialogPnl.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+                JDialog dialog = new JDialog();
+                dialog.setTitle("Penalty Codes");
+                dialog.add(dialogPnl);
+                dialog.pack();
+                dialog.setVisible(true);
+                dialog.setLocationRelativeTo(null);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                pnl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                pnl.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+        });
+        censusAndPenaltyPnl.add(_penaltyCodeLbl);
+
+        censusAndPenaltyPnl.add(Box.createRigidArea(new Dimension(15, 0)));
+        censusAndPenaltyPnl.add(Utils.createBoldLabel("Penalty Code Summary:"));
+        censusAndPenaltyPnl.add(Box.createRigidArea(new Dimension(5, 0)));
+        _penaltyCodeSummLbl = Utils.createLabel("");
+        censusAndPenaltyPnl.add(_penaltyCodeSummLbl);
+
+        centerPnl.add(censusAndPenaltyPnl, BorderLayout.SOUTH);
 
         // CENTER/EAST - controls
         JPanel controlsPnl = new JPanel(new BorderLayout());
@@ -295,6 +353,13 @@ public class ProcessingPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+            if (!_include2010.isSelected())
+                _selectedGeocodeResult.getCensusValues().remove(Utils.CENSUS_YEAR_2010);
+            if (!_include2000.isSelected())
+                _selectedGeocodeResult.getCensusValues().remove(Utils.CENSUS_YEAR_2000);
+            if (!_include1990.isSelected())
+                _selectedGeocodeResult.getCensusValues().remove(Utils.CENSUS_YEAR_1990);
 
             if (_skipBox.isSelected())
                 writeCurrentLineAndReadNextOne(PROCESSING_STATUS_SKIPPED);
@@ -420,6 +485,8 @@ public class ProcessingPanel extends JPanel {
                 _numRejectedLbl.setText(_parent.getSession().getNumRejectedLines().toString());
                 _numNoResultLbl.setText(_parent.getSession().getNumNoResultLines().toString());
                 _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
+                _penaltyCodeLbl.setText(_currentLine[_parent.getSession().getInputCsvHeaders().indexOf("PenaltyCode")]);
+                _penaltyCodeSummLbl.setText(_currentLine[_parent.getSession().getInputCsvHeaders().indexOf("PenaltyCodeSummary")]);
 
                 StringBuilder addressText = new StringBuilder();
                 addressText.append("<html><b>");
@@ -490,17 +557,24 @@ public class ProcessingPanel extends JPanel {
                 }
         );
         data.add(createSeparationRow("Census Value", results.size()));
-        _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
-                    String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
-                    if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
-                        Vector<String> row = new Vector<>(results.size() + 1);
-                        row.add("    " + fieldName);
-                        results.forEach(r -> row.add(r.getCensusValue().get(fieldName)));
-                        if (!isEmptyRow(row))
-                            data.add(row);
+        //Iterate three times to get all three census years
+
+        for (String censusYear : Arrays.asList(Utils.CENSUS_YEAR_2010, Utils.CENSUS_YEAR_2000, Utils.CENSUS_YEAR_1990)) {
+            _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_CENSUS_VALUE + ".")).forEach(f -> {
+                        String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
+                        if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
+                            Vector<String> row = new Vector<>(results.size() + 1);
+                            row.add("    " + fieldName);
+                            results.forEach(r -> {
+                                Map<String, String> censusValues = r.getCensusValues().get(censusYear);
+                                row.add(censusValues != null ? censusValues.get(fieldName) : "");
+                            });
+                            if (!isEmptyRow(row))
+                                data.add(row);
+                        }
                     }
-                }
-        );
+            );
+        }
         data.add(createSeparationRow("Reference Feature", results.size()));
         _parent.getSession().getInputJsonFields().stream().filter(f -> f.startsWith(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".")).forEach(f -> {
                     String fieldName = f.replace(Utils.FIELD_TYPE_REFERENCE_FEATURE + ".", "");
