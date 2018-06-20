@@ -298,13 +298,16 @@ public class Utils {
             for (Map.Entry<String, String> entry : selectedResult.getOutputGeocode().entrySet())
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
-            // update all "censusValue" values - input headers are repeated with year suffix so JSON keys need to be adjusted
-            for (String censusYear : session.getIncludedCensusYears())
-                for (Map.Entry<String, String> entry : selectedResult.getCensusValues().get(censusYear).entrySet()) {
-                    String adjustedHeader = entry.getKey() + getYearNumber(censusYear);
-                    if (headers.contains(adjustedHeader))
-                        updatedLine[headers.indexOf(adjustedHeader)] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
-                }
+            // update all "censusValue" values - input headers are repeated with year suffix so JSON keys need to be adjusted           
+            for (String censusYear : Arrays.asList(Utils.CENSUS_YEAR_2010, Utils.CENSUS_YEAR_2000, Utils.CENSUS_YEAR_1990)) {
+                Map<String, String> censusData = selectedResult.getCensusValues().get(censusYear);
+                if (censusData != null)
+                    for (Map.Entry<String, String> entry : censusData.entrySet()) {
+                        String adjustedHeader = entry.getKey() + getYearNumber(censusYear);
+                        if (headers.contains(adjustedHeader))
+                            updatedLine[headers.indexOf(adjustedHeader)] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
+                    }
+            }
             // update all "referenceFeature" values
             for (Map.Entry<String, String> entry : selectedResult.getReferenceFeature().entrySet())
                 if (headers.contains(entry.getKey()))
@@ -347,9 +350,9 @@ public class Utils {
             case CENSUS_YEAR_2010:
                 return "2010";
             case CENSUS_YEAR_2000:
-                return "2010";
+                return "2000";
             case CENSUS_YEAR_1990:
-                return "2010";
+                return "1990";
             default:
                 return null;
         }

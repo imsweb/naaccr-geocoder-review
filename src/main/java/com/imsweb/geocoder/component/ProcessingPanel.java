@@ -19,12 +19,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -470,26 +468,8 @@ public class ProcessingPanel extends JPanel {
         censusAndPenaltyPnl.setLayout(new BoxLayout(censusAndPenaltyPnl, BoxLayout.X_AXIS));
         censusAndPenaltyPnl.add(new JLabel("Include Census Years: "));
         _include2010 = new JCheckBox("2010", true);
-        _include2010.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED)
-                _parent.getSession().getIncludedCensusYears().add(Utils.CENSUS_YEAR_2010);
-            else
-                _parent.getSession().getIncludedCensusYears().remove(Utils.CENSUS_YEAR_2010);
-        });
         _include2000 = new JCheckBox("2000", true);
-        _include2010.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED)
-                _parent.getSession().getIncludedCensusYears().add(Utils.CENSUS_YEAR_2000);
-            else
-                _parent.getSession().getIncludedCensusYears().remove(Utils.CENSUS_YEAR_2000);
-        });
         _include1990 = new JCheckBox("1990", true);
-        _include2010.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED)
-                _parent.getSession().getIncludedCensusYears().add(Utils.CENSUS_YEAR_1990);
-            else
-                _parent.getSession().getIncludedCensusYears().remove(Utils.CENSUS_YEAR_1990);
-        });
         censusAndPenaltyPnl.add(_include2010);
         censusAndPenaltyPnl.add(_include2000);
         censusAndPenaltyPnl.add(_include1990);
@@ -524,7 +504,6 @@ public class ProcessingPanel extends JPanel {
             public void mouseExited(MouseEvent e) {
                 pnl.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             }
-            
         });
         censusAndPenaltyPnl.add(_penaltyCodeLbl);
 
@@ -552,6 +531,13 @@ public class ProcessingPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+            if (!_include2010.isSelected())
+                _selectedGeocodeResult.getCensusValues().remove(Utils.CENSUS_YEAR_2010);
+            if (!_include2000.isSelected())
+                _selectedGeocodeResult.getCensusValues().remove(Utils.CENSUS_YEAR_2000);
+            if (!_include1990.isSelected())
+                _selectedGeocodeResult.getCensusValues().remove(Utils.CENSUS_YEAR_1990);
 
             if (_skipBox.isSelected())
                 writeCurrentLineAndReadNextOne(PROCESSING_STATUS_SKIPPED);
@@ -1009,14 +995,6 @@ public class ProcessingPanel extends JPanel {
             if (result != null) {
                 _selectedGeocodeResult = result;
                 _selectionBox.setSelectedItem(result);
-                Set<String> includedCensusYears = new HashSet<>();
-                if (_include2010.isSelected())
-                    includedCensusYears.add(Utils.CENSUS_YEAR_2010);
-                if (_include2000.isSelected())
-                    includedCensusYears.add(Utils.CENSUS_YEAR_2000);
-                if (_include1990.isSelected())
-                    includedCensusYears.add(Utils.CENSUS_YEAR_1990);
-                _parent.getSession().setIncludedCensusYears(includedCensusYears);
             }
         }
     }
