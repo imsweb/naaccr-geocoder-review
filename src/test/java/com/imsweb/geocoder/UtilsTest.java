@@ -88,6 +88,16 @@ public class UtilsTest {
                 + "\t\t\"CensusValues10\" :\n"
                 + "\t\t[\n"
                 + "\t\t\t{\n"
+                + "\t\t\t\"CensusValue3\" :\n"
+                + "\t\t\t{\n"
+                + "\t\t\t\t\"CensusYear\" : \"NineteenNinety\",\n"
+                + "\t\t\t\t\"CensusTimeTaken\" : \"100.01\"\n"
+                + "\t\t\t\t},\n"
+                + "\t\t\t\"CensusValue2\" :\n"
+                + "\t\t\t{\n"
+                + "\t\t\t\t\"CensusYear\" : \"TwoThousand\",\n"
+                + "\t\t\t\t\"CensusTimeTaken\" : \"123.03\"\n"
+                + "\t\t\t\t},\n"
                 + "\t\t\t\"CensusValue1\" :\n"
                 + "\t\t\t{\n"
                 + "\t\t\t\t\"CensusYear\" : \"TwoThousandTen\",\n"
@@ -108,6 +118,8 @@ public class UtilsTest {
         Assert.assertEquals("441", testResults.getParsedInputFields().get("Number"));
         Assert.assertEquals("34.0596874561221", testResults.getResults().get(0).getOutputGeocode().get("Latitude"));
         Assert.assertEquals("193.0193", testResults.getResults().get(0).getCensusValues().get("TwoThousandTen").get("CensusTimeTaken"));
+        Assert.assertEquals("123.03", testResults.getResults().get(0).getCensusValues().get("TwoThousand").get("CensusTimeTaken"));
+        Assert.assertEquals("100.01", testResults.getResults().get(0).getCensusValues().get("NineteenNinety").get("CensusTimeTaken"));
         Assert.assertEquals("SOURCE_NAVTEQ_STREETS_2012", testResults.getResults().get(0).getReferenceFeature().get("Source"));
 
     }
@@ -195,9 +207,9 @@ public class UtilsTest {
                 for (Map.Entry<String, String> entry : result.getOutputGeocode().entrySet())
                     if (!Utils.JSON_IGNORED.contains(entry.getKey()))
                         fields.add(Utils.FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
-                for (Map.Entry<String, String> entry : (new ArrayList<>(result.getCensusValues().values()).get(0).entrySet()))
-                        if (!Utils.JSON_IGNORED.contains(entry.getKey()))
-                            fields.add(Utils.FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
+                for (Map.Entry<String, String> entry : result.getCensusValues().get(Utils.CENSUS_YEAR_2010).entrySet())
+                    if (!Utils.JSON_IGNORED.contains(entry.getKey()))
+                        fields.add(Utils.FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
                 for (Map.Entry<String, String> entry : result.getReferenceFeature().entrySet())
                     if (!Utils.JSON_IGNORED.contains(entry.getKey()))
                         fields.add(Utils.FIELD_TYPE_REFERENCE_FEATURE + "." + entry.getKey());

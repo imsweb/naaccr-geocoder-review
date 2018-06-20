@@ -160,7 +160,7 @@ public class Utils {
             for (Map.Entry<String, String> entry : geocoderResult.getOutputGeocode().entrySet())
                 if (!JSON_IGNORED.contains(entry.getKey()))
                     jsonFields.add(FIELD_TYPE_OUTPUT_GEOCODES + "." + entry.getKey());
-            for (Map.Entry<String, String> entry : (new ArrayList<>(geocoderResult.getCensusValues().values()).get(0).entrySet()))  //TODO this is ugly - is there a better way?
+            for (Map.Entry<String, String> entry : geocoderResult.getCensusValues().get(Utils.CENSUS_YEAR_2010).entrySet())
                 if (!JSON_IGNORED.contains(entry.getKey()))
                     jsonFields.add(FIELD_TYPE_CENSUS_VALUE + "." + entry.getKey());
             for (Map.Entry<String, String> entry : geocoderResult.getReferenceFeature().entrySet())

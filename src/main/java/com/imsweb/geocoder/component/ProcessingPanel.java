@@ -6,6 +6,7 @@ package com.imsweb.geocoder.component;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ItemEvent;
@@ -25,6 +26,7 @@ import java.util.Vector;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -88,7 +90,7 @@ public class ProcessingPanel extends JPanel {
     //GUI components
     private JButton _nextBtn;
     private JCheckBox _skipBox, _rejectBox, _include2010, _include2000, _include1990;
-    private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numRejectedLbl, _numNoResultLbl, _numSkippedLbl, _inputAddressLbl;
+    private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numRejectedLbl, _numNoResultLbl, _numSkippedLbl, _inputAddressLbl, _penaltyCodeLbl, _penaltyCodeSummLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
     private JTextArea _commentArea;
@@ -282,10 +284,10 @@ public class ProcessingPanel extends JPanel {
         commentPnl.add(pane, BorderLayout.CENTER);
         centerPnl.add(commentPnl, BorderLayout.CENTER);
 
-        //CENTER/SOUTH - census year checkboxes
-        JPanel censusYearPnl = new JPanel();
-        censusYearPnl.setLayout(new BoxLayout(censusYearPnl, BoxLayout.X_AXIS));
-        censusYearPnl.add(new JLabel("Include Census Years: "));
+        //CENTER/SOUTH - census year checkboxes and penalty codes
+        JPanel censusAndPenaltyPnl = new JPanel();
+        censusAndPenaltyPnl.setLayout(new BoxLayout(censusAndPenaltyPnl, BoxLayout.X_AXIS));
+        censusAndPenaltyPnl.add(new JLabel("Include Census Years: "));
         _include2010 = new JCheckBox("2010", true);
         _include2010.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED)
@@ -307,10 +309,23 @@ public class ProcessingPanel extends JPanel {
             else
                 _parent.getSession().getIncludedCensusYears().remove(Utils.CENSUS_YEAR_1990);
         });
-        censusYearPnl.add(_include2010);
-        censusYearPnl.add(_include2000);
-        censusYearPnl.add(_include1990);
-        centerPnl.add(censusYearPnl, BorderLayout.SOUTH);
+        censusAndPenaltyPnl.add(_include2010);
+        censusAndPenaltyPnl.add(_include2000);
+        censusAndPenaltyPnl.add(_include1990);
+
+        censusAndPenaltyPnl.add(Box.createRigidArea(new Dimension(30, 0)));
+        censusAndPenaltyPnl.add(Utils.createBoldLabel("Penalty Code:"));
+        censusAndPenaltyPnl.add(Box.createRigidArea(new Dimension(5, 0)));
+        _penaltyCodeLbl = Utils.createLabel("");
+        censusAndPenaltyPnl.add(_penaltyCodeLbl);
+
+        censusAndPenaltyPnl.add(Box.createRigidArea(new Dimension(15, 0)));
+        censusAndPenaltyPnl.add(Utils.createBoldLabel("Penalty Code Summary:"));
+        censusAndPenaltyPnl.add(Box.createRigidArea(new Dimension(5, 0)));
+        _penaltyCodeSummLbl = Utils.createLabel("");
+        censusAndPenaltyPnl.add(_penaltyCodeSummLbl);
+
+        centerPnl.add(censusAndPenaltyPnl, BorderLayout.SOUTH);
 
         // CENTER/EAST - controls
         JPanel controlsPnl = new JPanel(new BorderLayout());
@@ -453,6 +468,8 @@ public class ProcessingPanel extends JPanel {
                 _numRejectedLbl.setText(_parent.getSession().getNumRejectedLines().toString());
                 _numNoResultLbl.setText(_parent.getSession().getNumNoResultLines().toString());
                 _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
+                _penaltyCodeLbl.setText(_currentLine[_parent.getSession().getInputCsvHeaders().indexOf("PenaltyCode")]);
+                _penaltyCodeSummLbl.setText(_currentLine[_parent.getSession().getInputCsvHeaders().indexOf("PenaltyCodeSummary")]);
 
                 StringBuilder addressText = new StringBuilder();
                 addressText.append("<html><b>");
