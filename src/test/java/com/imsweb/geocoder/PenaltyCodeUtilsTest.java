@@ -22,12 +22,12 @@ public class PenaltyCodeUtilsTest {
         translations.append("M").append(" = ").append("< 10m").append("<br/>");
         translations.append("A").append(" = ").append("30% within 10m and at least 1 outlier over 5km exists").append("<br/>");
         translations.append("M").append(" = ").append("All blocks match").append("<br/>");
-        translations.append("M").append(" = ").append("All tracts match").append("<br/>");
+        translations.append("Q").append(" = ").append("Unknown Code").append("<br/>");
         translations.append("M").append(" = ").append("All counties match").append("<br/>");
         translations.append("E").append(" = ").append("14 Reference matches").append("<br/>");
         translations.append("<br/></html>");
 
-        Assert.assertEquals(translations.toString(), PenaltyCodeUtils.getPenaltyCodeTranslations("M123F456MAMMME"));
+        Assert.assertEquals(translations.toString(), PenaltyCodeUtils.getPenaltyCodeTranslations("M123F456MAMQME"));
     }
 
 }

@@ -11,6 +11,7 @@ import java.util.Map;
 public class PenaltyCodeUtils {
 
     private static List<Map<Character, String>> _penaltyCodeLookups = new ArrayList<>();
+    private static Map<Character, String> _penaltyCodeSummaryLookups = new HashMap<>();
 
     static {
         Character penaltyCodeKeyName = 'N';
@@ -186,15 +187,34 @@ public class PenaltyCodeUtils {
         penaltyCode14.put('E', "14 Reference matches");
         penaltyCode14.put('F', "Error");
         _penaltyCodeLookups.add(penaltyCode14);
+
+        _penaltyCodeSummaryLookups.put('M', "Match");
+        _penaltyCodeSummaryLookups.put('F', "No match");
+        _penaltyCodeSummaryLookups.put('R', "Review");
+
     }
 
     public static String getPenaltyCodeTranslations(String penaltyCode) {
         StringBuilder penaltyTranslations = new StringBuilder("<html><b>Penalty Code Translations:</b><br/><br/>");
 
-        for (int i = 0; i < _penaltyCodeLookups.size(); i++) {
+        for (int i = 0; i < penaltyCode.length(); i++) {
             char key = penaltyCode.charAt(i);
-            penaltyTranslations.append(key).append(" = ").append(_penaltyCodeLookups.get(i).get(key)).append("<br/>");
+            String lookup = _penaltyCodeLookups.get(i).get(key);
+            penaltyTranslations.append(key).append(" = ").append(lookup == null ? "Unknown Code" : lookup).append("<br/>");
         }
+        penaltyTranslations.append("<br/></html>");
+        return penaltyTranslations.toString();
+    }
+
+    public static String getPenaltyCodeSummaryTranslations(String penaltySummCode) {
+        StringBuilder penaltyTranslations = new StringBuilder("<html><b>Penalty Summary Code Translations:</b><br/><br/>");
+
+        for (int i = 0; i < penaltySummCode.length(); i++) {
+            char key = penaltySummCode.charAt(i);
+            String lookup = _penaltyCodeSummaryLookups.get(key);
+            penaltyTranslations.append(key).append(" = ").append(lookup == null ? "Unknown Code" : lookup).append("<br/>");
+        }
+
         penaltyTranslations.append("<br/></html>");
         return penaltyTranslations.toString();
     }
