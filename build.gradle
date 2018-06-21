@@ -4,7 +4,7 @@ plugins {
     id 'java'
     id 'checkstyle'
     id 'findbugs'
-    id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 
 group = 'com.imsweb'
@@ -23,6 +23,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-core:2.4.4'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.4'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.4.4'
+    compile 'com.imsweb:seerutils-gui:1.10'
     testCompile 'junit:junit:4.12'
 }
 
@@ -79,5 +80,5 @@ findbugs {
 
 // Gradle wrapper, this allows to build the project without having to install Gradle...
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = '4.6'
 }
