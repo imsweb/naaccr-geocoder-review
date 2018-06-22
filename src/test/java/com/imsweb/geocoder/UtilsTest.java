@@ -52,14 +52,19 @@ public class UtilsTest {
         Assert.assertTrue(headers.contains("Version"));
         Assert.assertFalse(mappings.containsValue("version"));
 
-        // all JSON fields should be mapped (not sure why the CensusTimeTaken isn't...)
+        //Census year isn't mapped - the CSV column CensusYear refers to the number of years (None, Multiple, etc.) but the JSON fields refer to the year (NineteenNinety, etc.)
+        Assert.assertFalse(mappings.containsValue("censusValue.CensusYear"));
+        jsonFields.remove("censusValue.CensusYear");
+
+        // all other JSON fields should be mapped (not sure why the CensusTimeTaken isn't...)
+        jsonFields.remove("censusValue.CensusTimeTaken");
         for (String jsonField : jsonFields)
-            if (!"censusValue.CensusTimeTaken".equals(jsonField))
-                Assert.assertNotNull(jsonField, mappings.get(jsonField));
+            //censusValue fields have the year appended
+            Assert.assertNotNull(jsonField, mappings.get(jsonField + (jsonField.startsWith("censusValue") ? "2010" : "")));
 
         // test a specific example for each section
         Assert.assertEquals("Latitude", mappings.get("outputGeocode.Latitude"));
-        Assert.assertEquals("CensusYear", mappings.get("censusValue.CensusYear"));
+        Assert.assertEquals("CensusBlock", mappings.get("censusValue.CensusBlock2010"));
         Assert.assertEquals("FName", mappings.get("referenceFeature.Name"));
     }
 
