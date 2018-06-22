@@ -200,12 +200,26 @@ public class Utils {
             String fieldSection = jsonField.substring(0, idx);
             String fieldName = jsonField.substring(idx + 1);
 
-            String matchingHeader = null;
-            for (String header : headers)
-                if ((FIELD_TYPE_REFERENCE_FEATURE.equals(fieldSection) && ("F" + fieldName).equalsIgnoreCase(header)) || fieldName.equalsIgnoreCase(header))
-                    matchingHeader = header;
-
-            mappings.put(jsonField, matchingHeader);
+            //Census value CSV columns have the year appended to the header
+            if (FIELD_TYPE_CENSUS_VALUE.equals(fieldSection)) {
+                for (String header : headers) {
+                    if (header.startsWith(fieldName) && header.length() > 4 && fieldName.equals(header.substring(0, header.length() - 4))) {
+                        String year = header.substring(header.length() - 4);
+                        mappings.put(jsonField + year, header);
+                    }
+                    //Special case: CensusYear is similar to other JSON fields but does not map. 
+                    //Special case: naaccrCertCode and naaccrCertType are repeated fields in JSON but only have 1 CSV column - the repeated values always match so we just take it from the 2010 census 
+                    else if (fieldName.equals(header) && !header.equals("CensusYear"))
+                        mappings.put(jsonField + "2010", header);
+                }
+            }
+            else {
+                String matchingHeader = null;
+                for (String header : headers)
+                    if (!header.equals("CensusYear") && (FIELD_TYPE_REFERENCE_FEATURE.equals(fieldSection) && ("F" + fieldName).equalsIgnoreCase(header)) || fieldName.equalsIgnoreCase(header))
+                        matchingHeader = header;
+                mappings.put(jsonField, matchingHeader);
+            }
         }
 
         return mappings;
@@ -308,6 +322,9 @@ public class Utils {
                             updatedLine[headers.indexOf(adjustedHeader)] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
                     }
             }
+            //Special case: naaccrCertType and naaccrCertCode are repeated in JSON but only have 1 CSV column - we use the most recent value (currently 2010)
+            updatedLine[headers.indexOf("naaccrCertType")] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : selectedResult.getCensusValues().get(Utils.CENSUS_YEAR_2010).get("naaccrCertType");
+            updatedLine[headers.indexOf("naaccrCertCode")] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : selectedResult.getCensusValues().get(Utils.CENSUS_YEAR_2010).get("naaccrCertCode");
             // update all "referenceFeature" values
             for (Map.Entry<String, String> entry : selectedResult.getReferenceFeature().entrySet())
                 if (headers.contains(entry.getKey()))
@@ -345,7 +362,7 @@ public class Utils {
         return updatedLine;
     }
 
-    private static String getYearNumber(String yearName) {
+    public static String getYearNumber(String yearName) {
         switch (yearName) {
             case CENSUS_YEAR_2010:
                 return "2010";
