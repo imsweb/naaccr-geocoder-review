@@ -526,7 +526,7 @@ public class ProcessingPanel extends JPanel {
                         String fieldName = f.replace(Utils.FIELD_TYPE_CENSUS_VALUE + ".", "");
                         if (!Utils.JSON_IGNORED_GUI_ONLY.contains(fieldName)) {
                             Vector<String> row = new Vector<>(results.size() + 1);
-                            row.add("    " + fieldName);
+                            row.add("    " + fieldName + Utils.getYearNumber(censusYear));
                             results.forEach(r -> {
                                 Map<String, String> censusValues = r.getCensusValues().get(censusYear);
                                 row.add(censusValues != null ? censusValues.get(fieldName) : "");
