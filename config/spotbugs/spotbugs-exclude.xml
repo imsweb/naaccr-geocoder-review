@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <Match>
+        <Bug code="Dm,ODR,SQL,EI2"/>
+    </Match>
+    <Match>
+        <Class name="~.*\.*(Test|Lab).*"/> <!-- not worth the effort -->
+    </Match>
+    <Match>
+        <Bug code="RCN,NP"/> <!-- known bug in spotbugs... -->
+    </Match>
+</FindBugsFilter>

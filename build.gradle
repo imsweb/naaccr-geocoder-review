@@ -1,34 +1,43 @@
-import org.gradle.internal.jvm.Jvm
-
 plugins {
     id 'java'
     id 'checkstyle'
-    id 'findbugs'
+    id 'com.github.spotbugs' version '1.6.5'
     id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 
 group = 'com.imsweb'
 version = file('VERSION').text
 description = 'A simple interface to review Geocoder results and select best result among several.'
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
-println "Starting build using ${Jvm.current()}"
+println "Starting build using JDK ${Runtime.version().feature()}"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile 'au.com.bytecode:opencsv:2.4'
-    compile 'commons-io:commons-io:2.5'
-    compile 'com.fasterxml.jackson.core:jackson-core:2.4.4'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.4'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.4'
-    compile 'com.imsweb:seerutils-gui:1.10'
-    testCompile 'junit:junit:4.12'
+    implementation 'au.com.bytecode:opencsv:2.4'
+    implementation 'commons-io:commons-io:2.5'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.4.4'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.4.4'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.4.4'
+    implementation 'com.imsweb:seerutils-gui:1.13'
+
+    testImplementation 'junit:junit:4.12'
 }
 
-// enforce UTF-8 for all compilation tasks
-[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+// enforce UTF-8, display the compilation warnings
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+}
+
+// this sucks, but they made the Javadoc way too stritct in Java 8 and it's not worth my time fixing it!
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
 
 // customize the manifest
 jar {
@@ -50,11 +59,6 @@ jar {
     }
 }
 
-// this sucks, but they made the Javadoc way too stritct in Java 8 and it's not worth my time fixing it!
-tasks.withType(Javadoc) {
-    options.addStringOption('Xdoclint:none', '-quiet')
-}
-
 // rename some files in the fat jar
 shadowJar {
     from ('VERSION') {
@@ -68,17 +72,18 @@ shadowJar {
 // checkstyle plugin settings
 checkstyle {
     ignoreFailures = true
-    configFile = file('config/checkstyle/checkstyle.xml')
+    configFile = project(':').file('config/checkstyle/checkstyle.xml')
+    configProperties = ['suppressionFile' : project(':').file('config/checkstyle/checkstlye-exclude.xml')]
 }
 
-// findbugs plugin settings
-findbugs {
+// spotbugs plugin settings
+spotbugs {
     ignoreFailures = true
-    effort = 'max'
-    excludeFilter = file('config/findbugs/findbugs-exclude.xml')
+    excludeFilter =  project(':').file("config/spotbugs/spotbugs-exclude.xml")
 }
 
 // Gradle wrapper, this allows to build the project without having to install Gradle...
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.6'
+wrapper() {
+    gradleVersion = '5.1'
+    distributionType = Wrapper.DistributionType.ALL
 }

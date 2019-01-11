@@ -62,7 +62,7 @@ import com.imsweb.geocoder.Utils;
 import com.imsweb.geocoder.entity.GeocodeResult;
 import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
-import com.imsweb.shared.gui.SeerHelpButton;
+import com.imsweb.seerutilsgui.SeerHelpButton;
 
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_CONFIRMED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_NO_RESULTS;
