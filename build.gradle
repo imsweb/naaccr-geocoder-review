@@ -73,7 +73,6 @@ shadowJar {
 checkstyle {
     ignoreFailures = true
     configFile = project(':').file('config/checkstyle/checkstyle.xml')
-    configProperties = ['suppressionFile' : project(':').file('config/checkstyle/checkstlye-exclude.xml')]
 }
 
 // spotbugs plugin settings

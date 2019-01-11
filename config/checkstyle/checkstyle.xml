@@ -158,8 +158,5 @@
         </module>
         <module name="HiddenField"/>
     </module>
-    <module name="SuppressionFilter">
-        <property name="file" value="${suppressionFile}"/>
-    </module>
     <module name="Translation"/>
 </module>
