@@ -112,6 +112,8 @@ public class Standalone extends JFrame implements ActionListener {
                 StringSelection data = new StringSelection(new String(baos.toByteArray(), StandardCharsets.UTF_8));
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, data);
 
+                e.printStackTrace();
+
                 String msg = "An unexpected error happened, it is recommended to close the application.\n\n   Error: " + (e.getMessage() == null ? "null access" : e.getMessage());
                 JOptionPane.showMessageDialog(Standalone.this, msg, "Error", JOptionPane.ERROR_MESSAGE);
             }

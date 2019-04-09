@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>true</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>lib\naaccr-geocoder-review.jar</jar>
+  <outfile>NAACCR Geocoder Review.exe</outfile>
+  <errTitle>Please download the latest version of Java</errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://jdk.java.net/</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <jre>
+    <path>jre</path>
+    <bundledJre64Bit>true</bundledJre64Bit>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
+    <minVersion></minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>64/32</runtimeBits>
+  </jre>
+  <versionInfo>
+    <fileVersion>0.0.0.0</fileVersion>
+    <txtFileVersion>n/a</txtFileVersion>
+    <fileDescription>NAACCR Geocoder Review</fileDescription>
+    <copyright>North American Association of Central Cancer Registries</copyright>
+    <productVersion>0.0.0.0</productVersion>
+    <txtProductVersion>n/a</txtProductVersion>
+    <productName>NAACCR Geocoder Review</productName>
+    <companyName>Information Management Services, Inc.</companyName>
+    <internalName>NAACCR Geocoder Review</internalName>
+    <originalFilename>NAACCR Geocoder Review.exe</originalFilename>
+    <trademarks></trademarks>
+    <language>ENGLISH_US</language>
+  </versionInfo>
+</launch4jConfig>

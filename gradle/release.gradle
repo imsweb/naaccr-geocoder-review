@@ -1,0 +1,52 @@
+// this Gradle file is used to release a Standlone GUI version of the library.
+
+task createLauncherJar(type: Jar) {
+    group = 'distribution'
+    archiveName = 'naaccr-geocoder-review.jar'
+    destinationDir = file('build/dist/lib')
+    manifest {
+        attributes('Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Implementation-Vendor': 'Information Management Services Inc.',
+                'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')',
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Main-Class': 'com.imsweb.geocoder.Standalone',
+                'Class-Path': (configurations.runtimeClasspath.collect { it.getName() } + List.of("${project.name}-${version}.jar")).join(' '))
+    }
+}
+
+task assembleDistribution(dependsOn: ['assemble', 'createLauncherJar']) {
+    group = 'distribution'
+    doLast {
+
+        // dependencies
+        copy {
+            from "build/libs/${project.name}-${version}.jar"
+            from configurations.runtimeClasspath
+            into 'build/dist/lib'
+        }
+
+        // JRE
+        copy {
+            from 'jre/jre-12'
+            into 'build/dist/jre'
+        }
+
+        // EXE launcher and readme file
+        copy {
+            from file('config/launch4j/NAACCR Geocoder Review.exe')
+            from file('config/readme.txt')
+            into 'build/dist'
+        }
+    }
+}
+
+task createDistribution(type: Zip, dependsOn: 'assembleDistribution') {
+    group = 'distribution'
+    archiveName = "naaccr-geocoder-review-${version}.zip"
+    destinationDir = file('build')
+    from 'build/dist'
+    into "naaccr-geocoder-review-${version}"
+}

@@ -1,1 +1,2 @@
-rootProject.name = 'naaccr-geocoder-review'
+// this used to be called "naaccr-geocoder-review" but I wanted to give it a different name than the launcher JAR...
+rootProject.name = 'naaccr-geocoder-review-utils'

@@ -445,10 +445,24 @@ public class ProcessingPanel extends JPanel {
                 _numRejectedLbl.setText(_parent.getSession().getNumRejectedLines().toString());
                 _numNoResultLbl.setText(_parent.getSession().getNumNoResultLines().toString());
                 _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
-                _penaltyCodeLbl.setText(_currentLine[_parent.getSession().getInputCsvHeaders().indexOf("PenaltyCode")]);
-                _penaltyCodeHlp.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeTranslations(_penaltyCodeLbl.getText()));
-                _penaltyCodeSummLbl.setText(_currentLine[_parent.getSession().getInputCsvHeaders().indexOf("PenaltyCodeSummary")]);
-                _penaltySummHelp.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeSummaryTranslations(_penaltyCodeSummLbl.getText()));
+                int idx = _parent.getSession().getInputCsvHeaders().indexOf("PenaltyCode");
+                if (idx != -1) {
+                    _penaltyCodeLbl.setText(_currentLine[idx]);
+                    _penaltyCodeHlp.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeTranslations(_penaltyCodeLbl.getText()));
+                }
+                else {
+                    _penaltyCodeLbl.setText("N/A");
+                    _penaltyCodeHlp.getDialog().getEditorPane().setText("No Penalty Code available");
+                }
+                idx = _parent.getSession().getInputCsvHeaders().indexOf("PenaltyCodeSummary");
+                if (idx != -1) {
+                    _penaltyCodeSummLbl.setText(_currentLine[idx]);
+                    _penaltySummHelp.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeSummaryTranslations(_penaltyCodeSummLbl.getText()));
+                }
+                else {
+                    _penaltyCodeSummLbl.setText("N/A");
+                    _penaltySummHelp.getDialog().getEditorPane().setText("No Penalty Code Summary available");
+                }
 
                 StringBuilder addressText = new StringBuilder();
                 addressText.append("<html><b>");

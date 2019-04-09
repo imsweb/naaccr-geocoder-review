@@ -8,8 +8,8 @@ plugins {
 group = 'com.imsweb'
 version = file('VERSION').text
 description = 'A simple interface to review Geocoder results and select best result among several.'
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_12
+targetCompatibility = JavaVersion.VERSION_12
 
 println "Starting build using JDK ${Runtime.version().feature()}"
 
@@ -34,7 +34,7 @@ tasks.withType(JavaCompile) {
     options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
 }
 
-// this sucks, but they made the Javadoc way too stritct in Java 8 and it's not worth my time fixing it!
+// the Javadoc was made way too strict in Java 8 and it's not worth the time fixing everything!
 tasks.withType(Javadoc) {
     options.addStringOption('Xdoclint:none', '-quiet')
 }
@@ -49,18 +49,8 @@ jar {
                 'Built-By': System.getProperty('user.name'),
                 'Built-Date': new Date(),
                 'Built-JDK': System.getProperty('java.version'),
-                'Main-Class': 'com.imsweb.geocoder.Standalone')
+                'Automatic-Module-Name': 'com.imsweb.geocoder')
     }
-    from ('VERSION') {
-        rename 'VERSION', 'NAACCR-GEOCODER-REVIEW-VERSION'
-    }
-    from ('LICENSE') {
-        rename 'LICENSE', 'NAACCR-GEOCODER-REVIEW-LICENSE'
-    }
-}
-
-// rename some files in the fat jar
-shadowJar {
     from ('VERSION') {
         rename 'VERSION', 'NAACCR-GEOCODER-REVIEW-VERSION'
     }
@@ -80,6 +70,8 @@ spotbugs {
     ignoreFailures = true
     excludeFilter =  project(':').file("config/spotbugs/spotbugs-exclude.xml")
 }
+
+apply from: 'gradle/release.gradle'
 
 // Gradle wrapper, this allows to build the project without having to install Gradle...
 wrapper() {
