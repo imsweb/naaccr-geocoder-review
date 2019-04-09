@@ -1,5 +1,10 @@
 ## NAACCR Geocoder Review Version History
 
+**Version 2.0 (not released yet)**
+
+- The application is now distributed as a ZIP file instead of an executable JAR.
+- Added a Java 12 embedded Java Runtime Environment based on the free openJDK.
+
 **Version 1.2**
 
 - Added Penalty Code and Census Data variables to interface
