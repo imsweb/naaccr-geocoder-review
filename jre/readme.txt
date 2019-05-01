@@ -1,5 +1,5 @@
 Verifying the used modules (from unzipped distribution):
-C:\jdk\jdk-12\bin\jdeps --list-deps -cp lib\*.jar lib\naaccr-geocoder-review.jar
+C:\jdk\jdk-12.0.1\bin\jdeps --list-deps -cp lib\*.jar lib\naaccr-geocoder-review.jar
 
    java.base
    java.datatransfer
@@ -8,7 +8,7 @@ C:\jdk\jdk-12\bin\jdeps --list-deps -cp lib\*.jar lib\naaccr-geocoder-review.jar
    java.xml
 
 Creating runtime image (from jre folder):
-C:\jdk\jdk-12\bin\jlink --module-path C:\Users\Fabian\dev\jdk\jdk-12\jmods --add-modules java.datatransfer,java.desktop,java.sql,java.xml --output jre-12 --no-header-files --no-man-pages --strip-debug --compress=2
+C:\jdk\jdk-12.0.1\bin\jlink --module-path C:\Users\Fabian\dev\jdk\jdk-12.0.1\jmods --add-modules java.datatransfer,java.desktop,java.sql,java.xml --output jre-12 --no-header-files --no-man-pages --strip-debug --compress=2
 
 The "--no-header-files" and "no-man-pages" are very safe to use.
 The "--strip-debug" option is safe, but keep in mind that it might prevent debugging via the IDE.
