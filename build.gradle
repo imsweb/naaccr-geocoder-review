@@ -1,15 +1,14 @@
 plugins {
     id 'java'
     id 'checkstyle'
-    id 'com.github.spotbugs' version '1.6.5'
-    id 'com.github.johnrengelman.shadow' version '2.0.4'
+    id 'com.github.spotbugs' version '1.6.6'
 }
 
 group = 'com.imsweb'
 version = file('VERSION').text
 description = 'A simple interface to review Geocoder results and select best result among several.'
-sourceCompatibility = JavaVersion.VERSION_12
-targetCompatibility = JavaVersion.VERSION_12
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 println "Starting build using JDK ${Runtime.version().feature()}"
 
@@ -51,10 +50,10 @@ jar {
                 'Built-JDK': System.getProperty('java.version'),
                 'Automatic-Module-Name': 'com.imsweb.geocoder')
     }
-    from ('VERSION') {
+    from('VERSION') {
         rename 'VERSION', 'NAACCR-GEOCODER-REVIEW-VERSION'
     }
-    from ('LICENSE') {
+    from('LICENSE') {
         rename 'LICENSE', 'NAACCR-GEOCODER-REVIEW-LICENSE'
     }
 }
@@ -68,7 +67,7 @@ checkstyle {
 // spotbugs plugin settings
 spotbugs {
     ignoreFailures = true
-    excludeFilter =  project(':').file("config/spotbugs/spotbugs-exclude.xml")
+    excludeFilter = project(':').file("config/spotbugs/spotbugs-exclude.xml")
 }
 
 apply from: 'gradle/release.gradle'
