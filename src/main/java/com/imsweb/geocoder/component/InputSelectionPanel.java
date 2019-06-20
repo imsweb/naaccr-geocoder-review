@@ -120,7 +120,7 @@ public class InputSelectionPanel extends JPanel {
                     if (!progressFile.exists()) {
                         JDialog progressDlg = Utils.createProgressDialog(_parent, _worker, "Analyzing the input file. This may be slow...");
                         SwingUtilities.invokeLater(() -> progressDlg.setVisible(true));
-                        _worker = new SwingWorker<Void, Void>() {
+                        _worker = new SwingWorker<>() {
                             @Override
                             protected Void doInBackground() throws Exception {
                                 try {

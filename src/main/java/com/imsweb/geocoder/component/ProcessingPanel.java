@@ -117,7 +117,7 @@ public class ProcessingPanel extends JPanel {
 
             // if we are using an in-progress output file, skip to where we left off
             if (session.getCurrentLineNumber() > 0) {
-                SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                SwingWorker<Void, Void> worker = new SwingWorker<>() {
                     @Override
                     protected Void doInBackground() throws Exception {
                         for (int i = 1; i < session.getCurrentLineNumber(); i++)

@@ -90,7 +90,7 @@ public class SummaryPanel extends JPanel {
         constraints.gridx = 1;
         constraints.anchor = GridBagConstraints.WEST;
         float percentage = (float)_parent.getSession().getNumConfirmedLines() / numResultLines * 100;
-        summaryPnl.add(new JLabel(Integer.toString(session.getNumConfirmedLines()) + " (" + String.format("%.1f", percentage) + "%)"), constraints);
+        summaryPnl.add(new JLabel(session.getNumConfirmedLines() + " (" + String.format("%.1f", percentage) + "%)"), constraints);
 
         constraints.gridy++;
         constraints.gridx = 0;
@@ -99,7 +99,7 @@ public class SummaryPanel extends JPanel {
         constraints.gridx = 1;
         constraints.anchor = GridBagConstraints.WEST;
         percentage = (float)_parent.getSession().getNumModifiedLines() / numResultLines * 100;
-        summaryPnl.add(new JLabel(Integer.toString(session.getNumModifiedLines()) + " (" + String.format("%.1f", percentage) + "%)"), constraints);
+        summaryPnl.add(new JLabel(session.getNumModifiedLines() + " (" + String.format("%.1f", percentage) + "%)"), constraints);
 
         constraints.gridy++;
         constraints.gridx = 0;
@@ -108,7 +108,7 @@ public class SummaryPanel extends JPanel {
         constraints.gridx = 1;
         constraints.anchor = GridBagConstraints.WEST;
         percentage = (float)_parent.getSession().getNumRejectedLines() / numResultLines * 100;
-        summaryPnl.add(new JLabel(Integer.toString(session.getNumRejectedLines()) + " (" + String.format("%.1f", percentage) + "%)"), constraints);
+        summaryPnl.add(new JLabel(session.getNumRejectedLines() + " (" + String.format("%.1f", percentage) + "%)"), constraints);
 
         constraints.gridy++;
         constraints.gridx = 0;
@@ -117,7 +117,7 @@ public class SummaryPanel extends JPanel {
         constraints.gridx = 1;
         constraints.anchor = GridBagConstraints.WEST;
         percentage = (float)_parent.getSession().getNumNoResultLines() / numResultLines * 100;
-        summaryPnl.add(new JLabel(Integer.toString(session.getNumNoResultLines()) + " (" + String.format("%.1f", percentage) + "%)"), constraints);
+        summaryPnl.add(new JLabel(session.getNumNoResultLines() + " (" + String.format("%.1f", percentage) + "%)"), constraints);
 
         constraints.gridy++;
         constraints.gridx = 0;
@@ -126,7 +126,7 @@ public class SummaryPanel extends JPanel {
         constraints.gridx = 1;
         constraints.anchor = GridBagConstraints.WEST;
         percentage = (float)_parent.getSession().getNumSkippedLines() / numResultLines * 100;
-        summaryPnl.add(new JLabel(Integer.toString(session.getNumSkippedLines()) + " (" + String.format("%.1f", percentage) + "%)"), constraints);
+        summaryPnl.add(new JLabel(session.getNumSkippedLines() + " (" + String.format("%.1f", percentage) + "%)"), constraints);
 
         JPanel wrapperPnl = new JPanel(new BorderLayout());
         wrapperPnl.setBorder(new EmptyBorder(5, 25, 5, 0));
