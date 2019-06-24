@@ -62,9 +62,11 @@ import com.imsweb.geocoder.Utils;
 import com.imsweb.geocoder.entity.GeocodeResult;
 import com.imsweb.geocoder.entity.GeocodeResults;
 import com.imsweb.geocoder.entity.Session;
+import com.imsweb.seerutilsgui.SeerGuiUtils;
 import com.imsweb.seerutilsgui.SeerHelpButton;
 
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_CONFIRMED;
+import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_NOT_APPLICABLE;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_NO_RESULTS;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_REJECTED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_SKIPPED;
@@ -89,9 +91,10 @@ public class ProcessingPanel extends JPanel {
 
     //GUI components
     private JButton _nextBtn;
-    private SeerHelpButton _penaltyCodeHlp, _penaltySummHelp;
-    private JCheckBox _skipBox, _rejectBox;
+    private SeerHelpButton _penaltyCodeHlp, _penaltySummHelp, _penaltyCodeInfo;
+    private JCheckBox _skipBox, _rejectBox, _matchSkipBox;
     private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numRejectedLbl, _numNoResultLbl, _numSkippedLbl, _inputAddressLbl, _penaltyCodeLbl, _penaltyCodeSummLbl;
+    private JLabel _microMatchLbl;
     private JTable _resultsTbl;
     private JComboBox<GeocodeResult> _selectionBox;
     private JTextArea _commentArea;
@@ -239,6 +242,16 @@ public class ProcessingPanel extends JPanel {
         // CENTER/WEST - current selection
         JPanel selectionPnl = new JPanel();
         selectionPnl.setLayout(new BoxLayout(selectionPnl, BoxLayout.Y_AXIS));
+        
+        JPanel matchStatusPnl = SeerGuiUtils.createPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
+        matchStatusPnl.add(SeerGuiUtils.createLabel("MicroMatchStatus:"));
+        _microMatchLbl = SeerGuiUtils.createLabel(null);
+        matchStatusPnl.add(_microMatchLbl);
+        matchStatusPnl.add(Box.createHorizontalStrut(10));
+        _matchSkipBox = new JCheckBox("Check to only show matches that require review");
+        matchStatusPnl.add(_matchSkipBox);
+        selectionPnl.add(matchStatusPnl);
+        
         JPanel currentSelectionPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         currentSelectionPnl.add(Utils.createLabel("Current selection: "));
         _selectionBox = new JComboBox<>();
@@ -288,6 +301,10 @@ public class ProcessingPanel extends JPanel {
         //CENTER/SOUTH - census year checkboxes and penalty codes
         JPanel penaltyCodesPnl = new JPanel();
         penaltyCodesPnl.setLayout(new BoxLayout(penaltyCodesPnl, BoxLayout.X_AXIS));
+        _penaltyCodeInfo = new SeerHelpButton(_parent, penaltyCodesPnl, "penalty-code-info", "Penalty Code Information", false, "");
+        _penaltyCodeInfo.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeInformation());
+        penaltyCodesPnl.add(_penaltyCodeInfo);
+        
         penaltyCodesPnl.add(Utils.createBoldLabel("Penalty Code:"));
         penaltyCodesPnl.add(Box.createRigidArea(new Dimension(5, 0)));
         _penaltyCodeLbl = Utils.createLabel("");
@@ -398,8 +415,8 @@ public class ProcessingPanel extends JPanel {
         return pnl;
     }
 
-    private String[] getNextSkippedCsvLinee(int numExpectedValues) {
-        SkippedModeSwingWorker worker = new SkippedModeSwingWorker(numExpectedValues);
+    private String[] getNextSkippedCsvLine(int numExpectedValues, boolean skippedMode, boolean needsReviewMode) {
+        SkippingLinesSwingWorker worker = new SkippingLinesSwingWorker(numExpectedValues, skippedMode, needsReviewMode);
         JDialog progressDlg = Utils.createProgressDialog(_parent, worker, "Getting the next skipped result. This may be slow...");
         worker.addPropertyChangeListener(evt -> {
             if (evt.getNewValue() instanceof SwingWorker.StateValue && (SwingWorker.StateValue.DONE.equals(evt.getNewValue())))
@@ -420,8 +437,8 @@ public class ProcessingPanel extends JPanel {
         try {
             // Get the next line- if we are in skip mode, get the next skipped line
             String[] csvLine;
-            if (skippedMode)
-                csvLine = getNextSkippedCsvLinee(numExpectedValues);
+            if (skippedMode || _matchSkipBox.isSelected())
+                csvLine = getNextSkippedCsvLine(numExpectedValues, skippedMode, _matchSkipBox.isSelected());
             else {
                 csvLine = Utils.readNextCsvLine(_inputReader);
                 _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + 1);
@@ -463,6 +480,9 @@ public class ProcessingPanel extends JPanel {
                     _penaltyCodeSummLbl.setText("N/A");
                     _penaltySummHelp.getDialog().getEditorPane().setText("No Penalty Code Summary available");
                 }
+                idx = _parent.getSession().getInputCsvHeaders().indexOf("MicroMatchStatus");
+                if (idx != -1)
+                    _microMatchLbl.setText(_currentLine[idx]);
 
                 StringBuilder addressText = new StringBuilder();
                 addressText.append("<html><b>");
@@ -655,7 +675,7 @@ public class ProcessingPanel extends JPanel {
             _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
         else if (PROCESSING_STATUS_REJECTED.equals(status))
             _parent.getSession().setNumRejectedLines(_parent.getSession().getNumRejectedLines() + 1);
-        else
+        else if (!PROCESSING_STATUS_NOT_APPLICABLE.equals(status))
             throw new RuntimeException("Unknown status: " + status);
     }
 
@@ -789,15 +809,19 @@ public class ProcessingPanel extends JPanel {
     /**
      * SwingWorker for getting the next line in skipped mode
      */
-    class SkippedModeSwingWorker extends SwingWorker<String[], Void> {
+    class SkippingLinesSwingWorker extends SwingWorker<String[], Void> {
 
         private String[] _result;
 
         private int _numExpectedValues;
+        
+        private boolean _skippedMode, _needsReviewMode;
 
-        public SkippedModeSwingWorker(int numExpectedValues) {
+        public SkippingLinesSwingWorker(int numExpectedValues, boolean skippedMode, boolean needsReviewMode) {
             _numExpectedValues = numExpectedValues;
             _result = null;
+            _skippedMode = skippedMode;
+            _needsReviewMode = needsReviewMode;
         }
 
         @Override
@@ -805,11 +829,25 @@ public class ProcessingPanel extends JPanel {
             String[] line;
             while ((line = Utils.readNextCsvLine(_inputReader)) != null) {
                 _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + 1);
-                Integer existingProcessingResult = Integer.valueOf(line[_parent.getSession().getProcessingStatusColumnIndex()]);
-                if (line.length != _numExpectedValues || PROCESSING_STATUS_SKIPPED.equals(existingProcessingResult))
+                if (line.length != _numExpectedValues)
                     return line;
+                else if (_skippedMode) {
+                    Integer existingProcessingResult = Integer.valueOf(line[_parent.getSession().getProcessingStatusColumnIndex()]);
+                    if (PROCESSING_STATUS_SKIPPED.equals(existingProcessingResult) && _skippedMode)
+                        return line;
+                    else
+                        writeCurrentLine(existingProcessingResult, line);
+                }
+                else if (_needsReviewMode) {
+                    String microMatchStatus = line[_parent.getSession().getInputCsvHeaders().indexOf("MicroMatchStatus")];
+                    boolean needsReview = !"M".equals(microMatchStatus) && !"Match".equals(microMatchStatus);
+                    if (_needsReviewMode && needsReview)
+                        return line;
+                    else
+                        writeCurrentLine(PROCESSING_STATUS_NOT_APPLICABLE, line);
+                }
                 else
-                    writeCurrentLine(existingProcessingResult, line);
+                    return line;
             }
 
             return null;
