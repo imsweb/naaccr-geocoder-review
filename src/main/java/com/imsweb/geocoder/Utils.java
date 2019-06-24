@@ -61,6 +61,7 @@ public class Utils {
     public static final Integer PROCESSING_STATUS_REJECTED = 2;
     public static final Integer PROCESSING_STATUS_NO_RESULTS = 3;
     public static final Integer PROCESSING_STATUS_SKIPPED = 4;
+    public static final Integer PROCESSING_STATUS_NOT_APPLICABLE = 5;
 
     // the CSV header for the column containing the JSON Geocode results (if you change this, think about serialization!)
     public static final String CSV_COLUMN_JSON = "OutputGeocodes";
@@ -108,6 +109,7 @@ public class Utils {
     public static final String CENSUS_YEAR_1990 = "NineteenNinety";
     public static final String CENSUS_YEAR_2000 = "TwoThousand";
     public static final String CENSUS_YEAR_2010 = "TwoThousandTen";
+    public static final String CENSUS_YEAR_2020 = "TwoThousandTwenty";
 
     public static Reader createReader(File file) throws IOException {
         InputStream is = new FileInputStream(file);
@@ -313,7 +315,7 @@ public class Utils {
                 if (headers.contains(entry.getKey()))
                     updatedLine[headers.indexOf(entry.getKey())] = status.equals(PROCESSING_STATUS_REJECTED) ? "" : entry.getValue();
             // update all "censusValue" values - input headers are repeated with year suffix so JSON keys need to be adjusted           
-            for (String censusYear : Arrays.asList(Utils.CENSUS_YEAR_2010, Utils.CENSUS_YEAR_2000, Utils.CENSUS_YEAR_1990)) {
+            for (String censusYear : Arrays.asList(Utils.CENSUS_YEAR_2020, Utils.CENSUS_YEAR_2010, Utils.CENSUS_YEAR_2000, Utils.CENSUS_YEAR_1990)) {
                 Map<String, String> censusData = selectedResult.getCensusValues().get(censusYear);
                 if (censusData != null)
                     for (Map.Entry<String, String> entry : censusData.entrySet()) {
@@ -346,10 +348,10 @@ public class Utils {
         // special case, overwrite MicroMatchStatus (#2)
         int microMatchStatusIdx = headers.indexOf("MicroMatchStatus");
         if (microMatchStatusIdx != -1) {
-            if (status.equals(PROCESSING_STATUS_REJECTED) || status.equals(PROCESSING_STATUS_NO_RESULTS))
-                updatedLine[microMatchStatusIdx] = "Non-Match";
+            if (status.equals(PROCESSING_STATUS_REJECTED))
+                updatedLine[microMatchStatusIdx] = "X";
             else if (status.equals(PROCESSING_STATUS_CONFIRMED) || status.equals(PROCESSING_STATUS_UPDATED))
-                updatedLine[microMatchStatusIdx] = "Match";
+                updatedLine[microMatchStatusIdx] = "I";
         }
 
         // add processing information (add to the end of the line, or replace if the columns already exists)
@@ -364,6 +366,8 @@ public class Utils {
 
     public static String getYearNumber(String yearName) {
         switch (yearName) {
+            case CENSUS_YEAR_2020:
+                return "2020";
             case CENSUS_YEAR_2010:
                 return "2010";
             case CENSUS_YEAR_2000:
