@@ -707,7 +707,8 @@ public class ProcessingPanel extends JPanel {
             // we close the streams when we are done or we exit, so whatever...
         }
         try {
-            _outputWriter.close();
+            if (_outputWriter != null)
+                _outputWriter.close();
         }
         catch (IOException e) {
             // we close the streams when we are done or we exit, so whatever...
