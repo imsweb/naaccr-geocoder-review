@@ -3,6 +3,7 @@
  */
 package com.imsweb.geocoder;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
@@ -10,7 +11,7 @@ import java.util.Map;
 
 import au.com.bytecode.opencsv.CSVReader;
 
-public class BufferedCsvInputStream {
+public class BufferedCsvInputStream implements Closeable {
 
     private static int DEFAULT_BUFFER_SIZE = 8192;
 
@@ -73,7 +74,6 @@ public class BufferedCsvInputStream {
     }
 
     public String[] readPreviousLine() {
-        _currentLine--;
         if (_lineBytes.containsKey(_currentLine)) {
             // line was previously read into buffer
             Integer lineStart = _lineBytes.get(_currentLine);
@@ -85,6 +85,7 @@ public class BufferedCsvInputStream {
             }
             String[] line = new String[lineLength];
             System.arraycopy(_buf, lineStart - (_totalPos - _bufPos), line, 0, lineLength);
+            _currentLine--;
             return line;
         }
         else

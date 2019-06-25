@@ -126,8 +126,8 @@ public class Utils {
     }
 
     public static void analyzeInputFile(File file, Session session) throws IOException {
-        try (CSVReader reader = new CSVReader(createReader(file))) {
-            List<String> allHeaders = Arrays.asList(reader.readNext());
+        try (BufferedCsvInputStream reader = new BufferedCsvInputStream(createReader(file))) {
+            List<String> allHeaders = Arrays.asList(reader.readNextLine());
 
             int versionColumnIdx = allHeaders.indexOf(PROCESSING_COLUMN_VERSION);
             if (versionColumnIdx != -1)
@@ -186,12 +186,27 @@ public class Utils {
         }
     }
 
-    public static String[] readNextCsvLine(CSVReader reader) throws IOException {
-        String[] line = reader.readNext();
+    public static String[] readNextCsvLine(BufferedCsvInputStream reader) throws IOException {
+        String[] line = reader.readNextLine();
         //Ignore empty lines - empty line at end of file was messing up line count
         while (line != null && (line.length == 0 || line[0].trim().isEmpty()))
-            line = reader.readNext();
+            line = reader.readNextLine();
         return line;
+    }
+
+    public static String[] readPreviousCsvLine(BufferedCsvInputStream reader) {
+        String[] line = reader.readPreviousLine();
+        //Ignore empty lines - empty line at end of file was messing up line count
+        while (line != null && (line.length == 0 || line[0].trim().isEmpty()))
+            line = reader.readPreviousLine();
+        return line;
+    }
+    
+    public static String[] readCsvLine(BufferedCsvInputStream reader, boolean forwardRead) throws IOException {
+        if (forwardRead)
+            return readNextCsvLine(reader);
+        else
+            return readPreviousCsvLine(reader);
     }
 
     public static Map<String, String> mapJsonFieldsToHeaders(List<String> jsonFields, List<String> headers) {
@@ -358,7 +373,7 @@ public class Utils {
         updatedLine[session.getVersionColumnIndex()] = session.getVersion();
         updatedLine[session.getProcessingStatusColumnIndex()] = Integer.toString(status);
         updatedLine[session.getUserSelectedResultColumnIndex()] =
-                Integer.toString(status.equals(PROCESSING_STATUS_NO_RESULTS) || status.equals(PROCESSING_STATUS_REJECTED) ? -1 : selectedResult.getIndex());
+                Integer.toString(status.equals(PROCESSING_STATUS_NO_RESULTS) || status.equals(PROCESSING_STATUS_REJECTED) || status.equals(PROCESSING_STATUS_NOT_APPLICABLE) ? -1 : selectedResult.getIndex());
         updatedLine[session.getUserCommentColumnIndex()] = comment;
 
         return updatedLine;

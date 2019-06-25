@@ -9,6 +9,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
@@ -41,6 +43,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -56,6 +59,8 @@ import javax.swing.table.TableColumnModel;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
+import com.imsweb.geocoder.BufferedCsvInputStream;
+import com.imsweb.geocoder.BufferedCsvOutputStream;
 import com.imsweb.geocoder.PenaltyCodeUtils;
 import com.imsweb.geocoder.Standalone;
 import com.imsweb.geocoder.Utils;
@@ -65,6 +70,8 @@ import com.imsweb.geocoder.entity.Session;
 import com.imsweb.seerutilsgui.SeerGuiUtils;
 import com.imsweb.seerutilsgui.SeerHelpButton;
 
+import static com.imsweb.geocoder.Utils.PROCESSING_COLUMN_COMMENT;
+import static com.imsweb.geocoder.Utils.PROCESSING_COLUMN_SELECTED_RESULT;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_CONFIRMED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_NOT_APPLICABLE;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_NO_RESULTS;
@@ -86,11 +93,11 @@ public class ProcessingPanel extends JPanel {
     private Standalone _parent;
 
     // reader/writer
-    private CSVReader _inputReader;
-    private CSVWriter _outputWriter;
+    private BufferedCsvInputStream _inputReader;
+    private BufferedCsvOutputStream _outputWriter;
 
     //GUI components
-    private JButton _nextBtn;
+    private JButton _nextBtn, _backBtn;
     private SeerHelpButton _penaltyCodeHlp, _penaltySummHelp, _penaltyCodeInfo;
     private JCheckBox _skipBox, _rejectBox, _matchSkipBox;
     private JLabel _currentResultIdxLbl, _numModifiedLbl, _numConfirmedLbl, _numRejectedLbl, _numNoResultLbl, _numSkippedLbl, _inputAddressLbl, _penaltyCodeLbl, _penaltyCodeSummLbl;
@@ -115,8 +122,8 @@ public class ProcessingPanel extends JPanel {
 
         // setup reader
         try {
-            _inputReader = new CSVReader(Utils.createReader(session.getTmpInputFile() != null ? session.getTmpInputFile() : session.getInputFile()));
-            _inputReader.readNext(); // ignore headers
+            _inputReader = new BufferedCsvInputStream(Utils.createReader(session.getTmpInputFile() != null ? session.getTmpInputFile() : session.getInputFile()));
+            _inputReader.readNextLine(); // ignore headers
 
             // if we are using an in-progress output file, skip to where we left off
             if (session.getCurrentLineNumber() > 0) {
@@ -124,7 +131,7 @@ public class ProcessingPanel extends JPanel {
                     @Override
                     protected Void doInBackground() throws Exception {
                         for (int i = 1; i < session.getCurrentLineNumber(); i++)
-                            _inputReader.readNext();
+                            _inputReader.readNextLine();
                         return null;
                     }
 
@@ -151,9 +158,9 @@ public class ProcessingPanel extends JPanel {
         // setup writer
         try {
             if (session.getCurrentLineNumber() > 0)
-                _outputWriter = new CSVWriter(Utils.createWriter(session.getOutputFile(), true));
+                _outputWriter = new BufferedCsvOutputStream(Utils.createWriter(session.getOutputFile(), true));
             else {
-                _outputWriter = new CSVWriter(Utils.createWriter(session.getOutputFile(), false));
+                _outputWriter = new BufferedCsvOutputStream(Utils.createWriter(session.getOutputFile(), false));
 
                 // using a copy of the headers since we might modify them...
                 List<String> headers = new ArrayList<>(session.getInputCsvHeaders());
@@ -162,7 +169,7 @@ public class ProcessingPanel extends JPanel {
                 headers.add(Utils.PROCESSING_COLUMN_SELECTED_RESULT);
                 headers.add(Utils.PROCESSING_COLUMN_COMMENT);
 
-                _outputWriter.writeNext(headers.toArray(new String[0]));
+                _outputWriter.writeLine(headers.toArray(new String[0]));
             }
         }
         catch (IOException e) {
@@ -236,22 +243,23 @@ public class ProcessingPanel extends JPanel {
 
         // CENTER - user selection and such
         JPanel centerPnl = new JPanel(new BorderLayout());
-        centerPnl.setBorder(new EmptyBorder(5, 5, 5, 5));
+        centerPnl.setBorder(new EmptyBorder(5, 5, 0, 5));
         pnl.add(centerPnl, BorderLayout.CENTER);
 
         // CENTER/WEST - current selection
         JPanel selectionPnl = new JPanel();
         selectionPnl.setLayout(new BoxLayout(selectionPnl, BoxLayout.Y_AXIS));
-        
-        JPanel matchStatusPnl = SeerGuiUtils.createPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
-        matchStatusPnl.add(SeerGuiUtils.createLabel("MicroMatchStatus:"));
+
+        JPanel matchStatusPnl = SeerGuiUtils.createPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        matchStatusPnl.add(SeerGuiUtils.createLabel("MicroMatchStatus:", Font.BOLD));
         _microMatchLbl = SeerGuiUtils.createLabel(null);
+        matchStatusPnl.add(Box.createHorizontalStrut(5));
         matchStatusPnl.add(_microMatchLbl);
         matchStatusPnl.add(Box.createHorizontalStrut(10));
         _matchSkipBox = new JCheckBox("Check to only show matches that require review");
         matchStatusPnl.add(_matchSkipBox);
         selectionPnl.add(matchStatusPnl);
-        
+
         JPanel currentSelectionPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         currentSelectionPnl.add(Utils.createLabel("Current selection: "));
         _selectionBox = new JComboBox<>();
@@ -301,10 +309,7 @@ public class ProcessingPanel extends JPanel {
         //CENTER/SOUTH - census year checkboxes and penalty codes
         JPanel penaltyCodesPnl = new JPanel();
         penaltyCodesPnl.setLayout(new BoxLayout(penaltyCodesPnl, BoxLayout.X_AXIS));
-        _penaltyCodeInfo = new SeerHelpButton(_parent, penaltyCodesPnl, "penalty-code-info", "Penalty Code Information", false, "");
-        _penaltyCodeInfo.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeInformation());
-        penaltyCodesPnl.add(_penaltyCodeInfo);
-        
+
         penaltyCodesPnl.add(Utils.createBoldLabel("Penalty Code:"));
         penaltyCodesPnl.add(Box.createRigidArea(new Dimension(5, 0)));
         _penaltyCodeLbl = Utils.createLabel("");
@@ -319,6 +324,13 @@ public class ProcessingPanel extends JPanel {
         penaltyCodesPnl.add(_penaltyCodeSummLbl);
         _penaltySummHelp = new SeerHelpButton(_parent, penaltyCodesPnl, "penalty-summ-help", "Penalty Code Summary", false, "");
         penaltyCodesPnl.add(_penaltySummHelp);
+
+        penaltyCodesPnl.add(Box.createRigidArea(new Dimension(15, 0)));
+        penaltyCodesPnl.add(Utils.createBoldLabel("Penalty Code Info:"));
+        penaltyCodesPnl.add(Box.createRigidArea(new Dimension(5, 0)));
+        _penaltyCodeInfo = new SeerHelpButton(_parent, penaltyCodesPnl, "penalty-code-info", "Penalty Code Information", false, "");
+        _penaltyCodeInfo.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeInformation());
+        penaltyCodesPnl.add(_penaltyCodeInfo);
         centerPnl.add(penaltyCodesPnl, BorderLayout.SOUTH);
 
         // CENTER/EAST - controls
@@ -331,6 +343,7 @@ public class ProcessingPanel extends JPanel {
         _rejectBox = new JCheckBox("<html>Flag this line as <b>rejected</b></html>");
         boxWrapperPnl.add(_rejectBox, BorderLayout.SOUTH);
         controlsPnl.add(boxWrapperPnl, BorderLayout.NORTH);
+        JPanel buttonsPnl = SeerGuiUtils.createPanel();
         _nextBtn = Utils.createButton("Next Line", "next", "Confirm this line (write it to the output file) and display the next one", e -> {
             if (_skipBox.isSelected() && _rejectBox.isSelected()) {
                 String msg = "A line can either be skipped or rejected, not both.";
@@ -339,18 +352,41 @@ public class ProcessingPanel extends JPanel {
             }
 
             if (_skipBox.isSelected())
-                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_SKIPPED);
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_SKIPPED, true);
             else if (_BLANK_GEOCODER_RESULT.equals(_selectedGeocodeResult))
-                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_NO_RESULTS);
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_NO_RESULTS, true);
             else if (_rejectBox.isSelected())
-                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_REJECTED);
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_REJECTED, true);
             else if (_selectedGeocodeResult.equals(_selectionBox.getItemAt(0)))
-                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_CONFIRMED);
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_CONFIRMED, true);
             else
-                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_UPDATED);
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_UPDATED, true);
 
+            _backBtn.setEnabled(true);
         });
-        controlsPnl.add(_nextBtn, BorderLayout.SOUTH);
+        _backBtn = Utils.createButton("Previous Line", "back", "Go back to the previous line", e -> {
+            if (_skipBox.isSelected() && _rejectBox.isSelected()) {
+                String msg = "A line can either be skipped or rejected, not both.";
+                JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (_skipBox.isSelected())
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_SKIPPED, false);
+            else if (_BLANK_GEOCODER_RESULT.equals(_selectedGeocodeResult))
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_NO_RESULTS, false);
+            else if (_rejectBox.isSelected())
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_REJECTED, false);
+            else if (_selectedGeocodeResult.equals(_selectionBox.getItemAt(0)))
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_CONFIRMED, false);
+            else
+                writeCurrentLineAndReadNextOne(PROCESSING_STATUS_UPDATED, false);
+        });
+        _backBtn.setEnabled(false);
+        SeerGuiUtils.synchronizedComponentsWidth(_backBtn, _nextBtn);
+        buttonsPnl.add(_backBtn, BorderLayout.NORTH);
+        buttonsPnl.add(_nextBtn, BorderLayout.SOUTH);
+        controlsPnl.add(buttonsPnl, BorderLayout.SOUTH);
         centerPnl.add(controlsPnl, BorderLayout.EAST);
 
         return pnl;
@@ -415,8 +451,8 @@ public class ProcessingPanel extends JPanel {
         return pnl;
     }
 
-    private String[] getNextSkippedCsvLine(int numExpectedValues, boolean skippedMode, boolean needsReviewMode) {
-        SkippingLinesSwingWorker worker = new SkippingLinesSwingWorker(numExpectedValues, skippedMode, needsReviewMode);
+    private String[] getNextSkippedCsvLine(int numExpectedValues, boolean skippedMode, boolean needsReviewMode, boolean readForward) {
+        SkippingLinesSwingWorker worker = new SkippingLinesSwingWorker(numExpectedValues, skippedMode, needsReviewMode, readForward);
         JDialog progressDlg = Utils.createProgressDialog(_parent, worker, "Getting the next skipped result. This may be slow...");
         worker.addPropertyChangeListener(evt -> {
             if (evt.getNewValue() instanceof SwingWorker.StateValue && (SwingWorker.StateValue.DONE.equals(evt.getNewValue())))
@@ -438,9 +474,9 @@ public class ProcessingPanel extends JPanel {
             // Get the next line- if we are in skip mode, get the next skipped line
             String[] csvLine;
             if (skippedMode || _matchSkipBox.isSelected())
-                csvLine = getNextSkippedCsvLine(numExpectedValues, skippedMode, _matchSkipBox.isSelected());
+                csvLine = getNextSkippedCsvLine(numExpectedValues, skippedMode, _matchSkipBox.isSelected(), true);
             else {
-                csvLine = Utils.readNextCsvLine(_inputReader);
+                csvLine = Utils.readCsvLine(_inputReader, true);
                 _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + 1);
             }
 
@@ -519,6 +555,122 @@ public class ProcessingPanel extends JPanel {
                     displayGeocodeResults(_currentGeocodeResults.getResults());
                 else
                     displayMissingGeocodeResults();
+
+                // set the focus on the next button so the user can just click Enter without doing anything else in the interface...
+                SwingUtilities.invokeLater(() -> _nextBtn.requestFocus());
+            }
+        }
+        catch (IOException e) {
+            handleBadCsvLine(e.getMessage());
+        }
+    }
+
+    private void populateTableFromPreviousLine() {
+        boolean skippedMode = Boolean.TRUE.equals(_parent.getSession().getSkippedMode());
+
+        // in skipped mode, the values will contain the processed results, but the CSV are taken from the original input file which doesn't contain them
+        int numExpectedValues = _parent.getSession().getInputCsvHeaders().size() + Utils.NUM_EXTRA_OUTPUT_COLUMNS;
+
+        try {
+            // Get the next line- if we are in skip mode, get the next skipped line
+            String[] csvLine;
+            if (skippedMode || _matchSkipBox.isSelected())
+                csvLine = getNextSkippedCsvLine(numExpectedValues, skippedMode, _matchSkipBox.isSelected(), false);
+            else {
+                Utils.readCsvLine(_inputReader, false); // ignore previous input line and get the output instead
+                csvLine = _outputWriter.previousLine();
+                _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() - 1);
+            }
+
+            if (csvLine == null)
+                handleNoPreviousLine();
+            else if (csvLine.length != numExpectedValues)
+                handleBadCsvLine("Unexpected number of columns on line " + (_parent.getSession().getCurrentLineNumber()) + ", expected " + numExpectedValues + " but got " + csvLine.length);
+            else {
+                _currentLine = csvLine;
+                _currentGeocodeResults = Utils.parseGeocodeResults(csvLine[_parent.getSession().getJsonColumnIndex()], _parent.getSession().getCurrentLineNumber());
+
+                // refresh the GUI
+                _commentArea.setText(skippedMode ? csvLine[_parent.getSession().getUserCommentColumnIndex()] : "");
+                _skipBox.setSelected(false);
+                _rejectBox.setSelected(false);
+                _currentResultIdxLbl.setText(_parent.getSession().getCurrentLineNumber().toString());
+                _numConfirmedLbl.setText(_parent.getSession().getNumConfirmedLines().toString());
+                _numModifiedLbl.setText(_parent.getSession().getNumModifiedLines().toString());
+                _numRejectedLbl.setText(_parent.getSession().getNumRejectedLines().toString());
+                _numNoResultLbl.setText(_parent.getSession().getNumNoResultLines().toString());
+                _numSkippedLbl.setText(_parent.getSession().getNumSkippedLines().toString());
+                int idx = _parent.getSession().getInputCsvHeaders().indexOf("PenaltyCode");
+                if (idx != -1) {
+                    _penaltyCodeLbl.setText(_currentLine[idx]);
+                    _penaltyCodeHlp.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeTranslations(_penaltyCodeLbl.getText()));
+                }
+                else {
+                    _penaltyCodeLbl.setText("N/A");
+                    _penaltyCodeHlp.getDialog().getEditorPane().setText("No Penalty Code available");
+                }
+                idx = _parent.getSession().getInputCsvHeaders().indexOf("PenaltyCodeSummary");
+                if (idx != -1) {
+                    _penaltyCodeSummLbl.setText(_currentLine[idx]);
+                    _penaltySummHelp.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeSummaryTranslations(_penaltyCodeSummLbl.getText()));
+                }
+                else {
+                    _penaltyCodeSummLbl.setText("N/A");
+                    _penaltySummHelp.getDialog().getEditorPane().setText("No Penalty Code Summary available");
+                }
+                idx = _parent.getSession().getInputCsvHeaders().indexOf("MicroMatchStatus");
+                if (idx != -1)
+                    _microMatchLbl.setText(_currentLine[idx]);
+
+                StringBuilder addressText = new StringBuilder();
+                addressText.append("<html><b>");
+                if (_currentGeocodeResults.getInputStreet() != null)
+                    addressText.append(_currentGeocodeResults.getInputStreet()).append(", ");
+                if (_currentGeocodeResults.getInputCity() != null)
+                    addressText.append(_currentGeocodeResults.getInputCity()).append(", ");
+                if (_currentGeocodeResults.getInputState() != null)
+                    addressText.append(_currentGeocodeResults.getInputState()).append(" ");
+                if (_currentGeocodeResults.getInputZip() != null)
+                    addressText.append(_currentGeocodeResults.getInputZip());
+                if (addressText.charAt(addressText.length() - 2) == ',')
+                    addressText.setLength(addressText.length() - 2);
+                addressText.append("</b>");
+
+                // also add the parsed address, but only the non-blank field
+                addressText.append("   (");
+                boolean firstValue = true;
+                for (Entry<String, String> entry : _currentGeocodeResults.getParsedInputFields().entrySet()) {
+                    if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                        if (!firstValue)
+                            addressText.append(", ");
+                        else
+                            firstValue = false;
+                        addressText.append(entry.getKey()).append("=").append(entry.getValue());
+                    }
+                }
+                addressText.append(")</html>");
+
+                _inputAddressLbl.setText(addressText.toString());
+                
+                // set previously chosen values
+                String prevComment = _currentLine[_parent.getSession().getInputCsvHeaders().size() + 3];
+                if (prevComment != null)
+                    _commentArea.setText(prevComment);
+
+                // update the results in the GUI
+                if (!_currentGeocodeResults.getResults().isEmpty())
+                    displayGeocodeResults(_currentGeocodeResults.getResults());
+                else
+                    displayMissingGeocodeResults();
+
+                String prevSelection = _currentLine[_parent.getSession().getInputCsvHeaders().size() + 2];
+                Integer prevIdx = Integer.valueOf(prevSelection);
+                if (prevIdx > 0) {
+                    // simulate a click on the header of the corresponding column
+                    ((RadioButtonHeaderRenderer)_resultsTbl.getColumnModel().getColumn(prevIdx).getHeaderRenderer()).doClick();
+                    SwingUtilities.invokeLater(() -> _resultsTbl.getTableHeader().repaint());
+                    //todo this doesn't change the combo box
+                }
 
                 // set the focus on the next button so the user can just click Enter without doing anything else in the interface...
                 SwingUtilities.invokeLater(() -> _nextBtn.requestFocus());
@@ -652,31 +804,36 @@ public class ProcessingPanel extends JPanel {
         return isEmpty;
     }
 
-    private void writeCurrentLineAndReadNextOne(Integer status) {
-        writeCurrentLine(status, null);
-        populateTableFromNextLine();
+    private void writeCurrentLineAndReadNextOne(Integer status, boolean writeForward) {
+        writeCurrentLine(status, null, writeForward);
+        if (writeForward)
+            populateTableFromNextLine();
+        else
+            populateTableFromPreviousLine();
     }
 
-    private void writeCurrentLine(Integer status, String[] lineToWriteAsIs) {
+    private boolean writeCurrentLine(Integer status, String[] lineToWriteAsIs, boolean writeForward) {
         // flush the new line
-        if (lineToWriteAsIs != null)
-            _outputWriter.writeNext(lineToWriteAsIs);
-        else
-            _outputWriter.writeNext(Utils.getResultCsvLine(_parent.getSession(), _currentLine, _selectedGeocodeResult, status, _commentArea.getText()));
-
+        if (writeForward) {
+            if (lineToWriteAsIs != null)
+                _outputWriter.writeLine(lineToWriteAsIs);
+            else
+                _outputWriter.writeLine(Utils.getResultCsvLine(_parent.getSession(), _currentLine, _selectedGeocodeResult, status, _commentArea.getText()));
+        }
         // update the quick access count
         if (PROCESSING_STATUS_NO_RESULTS.equals(status))
-            _parent.getSession().setNumNoResultLines(_parent.getSession().getNumNoResultLines() + 1);
+            _parent.getSession().setNumNoResultLines(_parent.getSession().getNumNoResultLines() + (writeForward ? 1 : -1));
         else if (PROCESSING_STATUS_CONFIRMED.equals(status))
-            _parent.getSession().setNumConfirmedLines(_parent.getSession().getNumConfirmedLines() + 1);
+            _parent.getSession().setNumConfirmedLines(_parent.getSession().getNumConfirmedLines() + (writeForward ? 1 : -1));
         else if (PROCESSING_STATUS_UPDATED.equals(status))
-            _parent.getSession().setNumModifiedLines(_parent.getSession().getNumModifiedLines() + 1);
+            _parent.getSession().setNumModifiedLines(_parent.getSession().getNumModifiedLines() + (writeForward ? 1 : -1));
         else if (PROCESSING_STATUS_SKIPPED.equals(status))
-            _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
+            _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + (writeForward ? 1 : -1));
         else if (PROCESSING_STATUS_REJECTED.equals(status))
-            _parent.getSession().setNumRejectedLines(_parent.getSession().getNumRejectedLines() + 1);
+            _parent.getSession().setNumRejectedLines(_parent.getSession().getNumRejectedLines() + (writeForward ? 1 : -1));
         else if (!PROCESSING_STATUS_NOT_APPLICABLE.equals(status))
             throw new RuntimeException("Unknown status: " + status);
+        return true;
     }
 
     private void handleEndOfFile() {
@@ -684,6 +841,12 @@ public class ProcessingPanel extends JPanel {
         if (!_cancelled)
             _reachedEndOfFile = true;
         _parent.showPanel(Standalone.PANEL_ID_SUMMARY);
+    }
+
+    private void handleNoPreviousLine() {
+        String msg = "Cannot get previous line. You have reached the beginning of the file or the first address for this session.";
+        JOptionPane.showMessageDialog(this, msg, "Warning", JOptionPane.WARNING_MESSAGE);
+        _backBtn.setEnabled(false);
     }
 
     private void handleBadCsvLine(String error) {
@@ -701,7 +864,8 @@ public class ProcessingPanel extends JPanel {
 
     public void closeStreams() {
         try {
-            _inputReader.close();
+            if (_inputReader != null)
+                _inputReader.close();
         }
         catch (IOException e) {
             // we close the streams when we are done or we exit, so whatever...
@@ -743,7 +907,7 @@ public class ProcessingPanel extends JPanel {
 
             columnIdx = column;
 
-            _rendererComponent.setText("  " + Objects.toString(value));
+            _rendererComponent.setText("  " + value);
 
             this.setSelected(_selectedGeocodeResult.getIndex() == _resultIdx);
 
@@ -815,21 +979,24 @@ public class ProcessingPanel extends JPanel {
         private String[] _result;
 
         private int _numExpectedValues;
-        
-        private boolean _skippedMode, _needsReviewMode;
 
-        public SkippingLinesSwingWorker(int numExpectedValues, boolean skippedMode, boolean needsReviewMode) {
+        private boolean _skippedMode, _needsReviewMode, _readForward;
+
+        public SkippingLinesSwingWorker(int numExpectedValues, boolean skippedMode, boolean needsReviewMode, boolean readForward) {
             _numExpectedValues = numExpectedValues;
             _result = null;
             _skippedMode = skippedMode;
             _needsReviewMode = needsReviewMode;
+            _readForward = readForward;
         }
 
         @Override
         protected String[] doInBackground() throws Exception {
-            String[] line;
-            while ((line = Utils.readNextCsvLine(_inputReader)) != null) {
-                _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + 1);
+            String[] line = Utils.readCsvLine(_inputReader, _readForward);
+            if (!_readForward)
+                line = _outputWriter.previousLine();
+            while (line != null) {
+                _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + (_readForward ? 1 : -1));
                 if (line.length != _numExpectedValues)
                     return line;
                 else if (_skippedMode) {
@@ -837,18 +1004,22 @@ public class ProcessingPanel extends JPanel {
                     if (PROCESSING_STATUS_SKIPPED.equals(existingProcessingResult) && _skippedMode)
                         return line;
                     else
-                        writeCurrentLine(existingProcessingResult, line);
+                        writeCurrentLine(existingProcessingResult, line, _readForward);
                 }
                 else if (_needsReviewMode) {
                     String microMatchStatus = line[_parent.getSession().getInputCsvHeaders().indexOf("MicroMatchStatus")];
                     boolean needsReview = !"M".equals(microMatchStatus) && !"Match".equals(microMatchStatus);
                     if (_needsReviewMode && needsReview)
                         return line;
-                    else
-                        writeCurrentLine(PROCESSING_STATUS_NOT_APPLICABLE, line);
+                    else if (_readForward)
+                        _outputWriter.writeLine(Utils.getResultCsvLine(_parent.getSession(), line, null, PROCESSING_STATUS_NOT_APPLICABLE, null));
                 }
                 else
                     return line;
+
+                line = Utils.readCsvLine(_inputReader, _readForward);
+                if (!_readForward)
+                    line = _outputWriter.previousLine();
             }
 
             return null;
