@@ -358,7 +358,7 @@ public class Utils {
         updatedLine[session.getVersionColumnIndex()] = session.getVersion();
         updatedLine[session.getProcessingStatusColumnIndex()] = Integer.toString(status);
         updatedLine[session.getUserSelectedResultColumnIndex()] =
-                Integer.toString(status.equals(PROCESSING_STATUS_NO_RESULTS) || status.equals(PROCESSING_STATUS_REJECTED) ? -1 : selectedResult.getIndex());
+                Integer.toString(status.equals(PROCESSING_STATUS_NO_RESULTS) || status.equals(PROCESSING_STATUS_REJECTED) || status.equals(PROCESSING_STATUS_NOT_APPLICABLE) ? -1 : selectedResult.getIndex());
         updatedLine[session.getUserCommentColumnIndex()] = comment;
 
         return updatedLine;

@@ -242,16 +242,17 @@ public class ProcessingPanel extends JPanel {
         // CENTER/WEST - current selection
         JPanel selectionPnl = new JPanel();
         selectionPnl.setLayout(new BoxLayout(selectionPnl, BoxLayout.Y_AXIS));
-        
-        JPanel matchStatusPnl = SeerGuiUtils.createPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
-        matchStatusPnl.add(SeerGuiUtils.createLabel("MicroMatchStatus:"));
+
+        JPanel matchStatusPnl = SeerGuiUtils.createPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        matchStatusPnl.add(SeerGuiUtils.createLabel("MicroMatchStatus:", Font.BOLD));
         _microMatchLbl = SeerGuiUtils.createLabel(null);
+        matchStatusPnl.add(Box.createHorizontalStrut(5));
         matchStatusPnl.add(_microMatchLbl);
         matchStatusPnl.add(Box.createHorizontalStrut(10));
         _matchSkipBox = new JCheckBox("Check to only show matches that require review");
         matchStatusPnl.add(_matchSkipBox);
         selectionPnl.add(matchStatusPnl);
-        
+
         JPanel currentSelectionPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
         currentSelectionPnl.add(Utils.createLabel("Current selection: "));
         _selectionBox = new JComboBox<>();
@@ -301,10 +302,7 @@ public class ProcessingPanel extends JPanel {
         //CENTER/SOUTH - census year checkboxes and penalty codes
         JPanel penaltyCodesPnl = new JPanel();
         penaltyCodesPnl.setLayout(new BoxLayout(penaltyCodesPnl, BoxLayout.X_AXIS));
-        _penaltyCodeInfo = new SeerHelpButton(_parent, penaltyCodesPnl, "penalty-code-info", "Penalty Code Information", false, "");
-        _penaltyCodeInfo.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeInformation());
-        penaltyCodesPnl.add(_penaltyCodeInfo);
-        
+
         penaltyCodesPnl.add(Utils.createBoldLabel("Penalty Code:"));
         penaltyCodesPnl.add(Box.createRigidArea(new Dimension(5, 0)));
         _penaltyCodeLbl = Utils.createLabel("");
@@ -319,6 +317,13 @@ public class ProcessingPanel extends JPanel {
         penaltyCodesPnl.add(_penaltyCodeSummLbl);
         _penaltySummHelp = new SeerHelpButton(_parent, penaltyCodesPnl, "penalty-summ-help", "Penalty Code Summary", false, "");
         penaltyCodesPnl.add(_penaltySummHelp);
+
+        penaltyCodesPnl.add(Box.createRigidArea(new Dimension(15, 0)));
+        penaltyCodesPnl.add(Utils.createBoldLabel("Penalty Code Info:"));
+        penaltyCodesPnl.add(Box.createRigidArea(new Dimension(5, 0)));
+        _penaltyCodeInfo = new SeerHelpButton(_parent, penaltyCodesPnl, "penalty-code-info", "Penalty Code Information", false, "");
+        _penaltyCodeInfo.getDialog().getEditorPane().setText(PenaltyCodeUtils.getPenaltyCodeInformation());
+        penaltyCodesPnl.add(_penaltyCodeInfo);
         centerPnl.add(penaltyCodesPnl, BorderLayout.SOUTH);
 
         // CENTER/EAST - controls
@@ -701,7 +706,8 @@ public class ProcessingPanel extends JPanel {
 
     public void closeStreams() {
         try {
-            _inputReader.close();
+            if (_inputReader != null)
+                _inputReader.close();
         }
         catch (IOException e) {
             // we close the streams when we are done or we exit, so whatever...
@@ -743,7 +749,7 @@ public class ProcessingPanel extends JPanel {
 
             columnIdx = column;
 
-            _rendererComponent.setText("  " + Objects.toString(value));
+            _rendererComponent.setText("  " + value);
 
             this.setSelected(_selectedGeocodeResult.getIndex() == _resultIdx);
 
@@ -845,7 +851,7 @@ public class ProcessingPanel extends JPanel {
                     if (_needsReviewMode && needsReview)
                         return line;
                     else
-                        writeCurrentLine(PROCESSING_STATUS_NOT_APPLICABLE, line);
+                        _outputWriter.writeNext(Utils.getResultCsvLine(_parent.getSession(), line, null, PROCESSING_STATUS_NOT_APPLICABLE, null));
                 }
                 else
                     return line;
