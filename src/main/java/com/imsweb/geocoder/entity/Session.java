@@ -51,6 +51,9 @@ public class Session {
     // there was no Geocoder results available
     private Integer _numNoResultLines;
 
+    // the input had a MicroMatchStatus of 'Match' and the user did not review the result
+    private Integer _numNotApplicable;
+
     private Integer _currentLineNumber;
 
     private Boolean _skippedMode;
@@ -74,6 +77,7 @@ public class Session {
     private static final String _KEY_NUM_MODIFIED_LINES = "num-modified-lines";
     private static final String _KEY_NUM_REJECTED_LINES = "num-rejected-lines";
     private static final String _KEY_NUM_NO_RESULT_LINES = "num-no-result-lines";
+    private static final String _KEY_NUM_NOT_APPLICABLE_LINES = "num-not-applicable-lines";
     private static final String _KEY_CURRENT_LINE_NUMBER = "current-line-number";
     private static final String _KEY_SKIPPED_MODE = "skipped-mode";
 
@@ -88,6 +92,7 @@ public class Session {
         _numRejectedLines = 0;
         _currentLineNumber = 0;
         _numNoResultLines = 0;
+        _numNotApplicable = 0;
         _skippedMode = false;
     }
 
@@ -243,6 +248,14 @@ public class Session {
         _numNoResultLines = numNoResultLines;
     }
 
+    public Integer getNumNotApplicable() {
+        return _numNotApplicable;
+    }
+
+    public void setNumNotApplicable(Integer numNotApplicable) {
+        _numNotApplicable = numNotApplicable;
+    }
+
     public Boolean getSkippedMode() {
         return _skippedMode;
     }
@@ -274,6 +287,7 @@ public class Session {
         setNumModifiedLines((Integer)map.get(_KEY_NUM_MODIFIED_LINES));
         setNumRejectedLines((Integer)map.get(_KEY_NUM_REJECTED_LINES));
         setNumNoResultLines((Integer)map.get(_KEY_NUM_NO_RESULT_LINES));
+        setNumNotApplicable((Integer)map.get(_KEY_NUM_NOT_APPLICABLE_LINES));
         setCurrentLineNumber((Integer)map.get(_KEY_CURRENT_LINE_NUMBER));
         setSkippedMode((Boolean)map.get(_KEY_SKIPPED_MODE));
     }
@@ -298,6 +312,7 @@ public class Session {
         map.put(_KEY_NUM_MODIFIED_LINES, getNumModifiedLines());
         map.put(_KEY_NUM_REJECTED_LINES, getNumRejectedLines());
         map.put(_KEY_NUM_NO_RESULT_LINES, getNumNoResultLines());
+        map.put(_KEY_NUM_NOT_APPLICABLE_LINES, getNumNotApplicable());
         map.put(_KEY_CURRENT_LINE_NUMBER, getCurrentLineNumber());
         map.put(_KEY_SKIPPED_MODE, getSkippedMode());
         return map;

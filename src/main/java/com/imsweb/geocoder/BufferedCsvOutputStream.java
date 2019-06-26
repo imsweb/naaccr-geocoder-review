@@ -20,13 +20,13 @@ public class BufferedCsvOutputStream implements Closeable {
 
     // current end position in the buffer
     private int _bufPos;
-    
+
     // current total end position
     private int _totalPos;
 
     // current line number
     private int _currentLine;
-    
+
     // last written line number
     private int _writtenLine;
 
@@ -50,7 +50,14 @@ public class BufferedCsvOutputStream implements Closeable {
     public String[] writeLine(String[] lineToWrite) {
         return writeLine(lineToWrite, true);
     }
-    
+
+    // write a line without putting it in the buffer (used to write the header line)
+    public void writeLineNoBuffer(String[] lineToWrite) {
+        _writtenLine++;
+        _currentLine++;
+        _writer.writeNext(lineToWrite);
+    }
+
     public String[] writeLine(String[] lineToWrite, boolean overwriteLine) {
         _currentLine++;
         if (_lineBytes.containsKey(_currentLine)) {
@@ -107,22 +114,46 @@ public class BufferedCsvOutputStream implements Closeable {
         }
     }
 
-    public String[] previousLine() {
+    public String[] goToPreviousLine() {
         String[] lineToReturn = null;
         if (!reachedBeginningOfBuffer()) {
             Integer lineStart = _lineBytes.get(_currentLine);
-            //if (lineStart != null && lineStart - (_totalPos - _bufPos) >= 0) {
-                Integer lineEnd = _lineBytes.getOrDefault(_currentLine + 1, _totalPos);
-                Integer lineLength = lineEnd - lineStart;
-                lineToReturn = new String[lineLength];
-                System.arraycopy(_buf, lineStart - (_totalPos - _bufPos), lineToReturn, 0, lineLength);
-                _currentLine--;
-            //}
+            Integer lineEnd = _lineBytes.getOrDefault(_currentLine + 1, _totalPos);
+            Integer lineLength = lineEnd - lineStart;
+            lineToReturn = new String[lineLength];
+            System.arraycopy(_buf, lineStart - (_totalPos - _bufPos), lineToReturn, 0, lineLength);
+            _currentLine--;
         }
         return lineToReturn;
     }
 
-    // returns true if you cannot go back further because you have reached the beginning of the buffer
+    public String[] getCurrentLineFromBuffer() {
+        if (reachedBeginningOfBuffer())
+            return null;
+
+        Integer lineStart = _lineBytes.get(_currentLine);
+        Integer lineEnd = _lineBytes.getOrDefault(_currentLine + 1, _totalPos);
+        Integer lineLength = lineEnd - lineStart;
+        String[] lineToReturn = new String[lineLength];
+        System.arraycopy(_buf, lineStart - (_totalPos - _bufPos), lineToReturn, 0, lineLength);
+
+        return lineToReturn;
+    }
+
+    public String[] getNextLineFromBuffer() {
+        if (reachedEndOfBuffer())
+            return null;
+
+        Integer lineStart = _lineBytes.get(_currentLine + 1);
+        Integer lineEnd = _lineBytes.getOrDefault(_currentLine + 2, _totalPos);
+        Integer lineLength = lineEnd - lineStart;
+        String[] lineToReturn = new String[lineLength];
+        System.arraycopy(_buf, lineStart - (_totalPos - _bufPos), lineToReturn, 0, lineLength);
+
+        return lineToReturn;
+    }
+
+    // returns true if you cannot go back further because you reached the beginning (earliest part) of the buffer
     public boolean reachedBeginningOfBuffer() {
         Integer lineStart = _lineBytes.getOrDefault(_currentLine, -1);
         if (_totalPos - _bufPos > lineStart)
@@ -130,21 +161,18 @@ public class BufferedCsvOutputStream implements Closeable {
         return false;
     }
 
-    // returns true if you cannot go back further because you have reached the beginning of the buffer
+    // returns true if you cannot further forward because you reached the end (latest part) of the buffer
     public boolean reachedEndOfBuffer() {
-        Integer lineStart = _lineBytes.getOrDefault(_currentLine, -1);
-        if (_totalPos - _bufPos > lineStart)
-            return true;
-        return false;
+        return _currentLine < 0 || !_lineBytes.containsKey(_currentLine + 1);
     }
 
     public void close() throws IOException {
-        // write the rest of the lines
+        // write the rest of the lines in the buffer
         if (_bufPos > 0) {
-            // at end of buffer and there is NO room to add the new line
             int writePos = 0;
             while (writePos < _bufPos) {
                 _writtenLine++;
+                _currentLine++;
                 Integer lineStart = _lineBytes.get(_writtenLine);
                 Integer lineEnd = _lineBytes.getOrDefault(_writtenLine + 1, _totalPos);
                 Integer lineLength = lineEnd - lineStart;
@@ -154,7 +182,12 @@ public class BufferedCsvOutputStream implements Closeable {
                 writePos = lineEnd - (_totalPos - _bufPos);
             }
         }
-        if (_writer != null)
+
+        // actually close the writer & rest the buffer
+        if (_writer != null) {
             _writer.close();
+            _bufPos = 0;
+            _totalPos = 0;
+        }
     }
 }

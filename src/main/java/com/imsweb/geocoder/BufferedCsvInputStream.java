@@ -91,17 +91,25 @@ public class BufferedCsvInputStream implements Closeable {
         else
             return null;
     }
-    
-    // returns true if you cannot go back further because you have reached the beginning of the buffer
+
+    // returns true if you cannot go back further because you have reached the beginning (earliest part) of the buffer
     public boolean reachedBeginningOfBuffer() {
         Integer lineStart = _lineBytes.getOrDefault(_currentLine - 1, -1);
         if (_totalPos - _bufPos > lineStart)
             return true;
         return false;
     }
-    
+
+    // returns true if you cannot further forward because you reached the end (latest part) of the buffer
+    public boolean reachedEndOfBuffer() {
+        return _currentLine < 0 || !_lineBytes.containsKey(_currentLine + 1);
+    }
+
     public void close() throws IOException {
-        if (_reader != null)
+        if (_reader != null) {
             _reader.close();
+            _bufPos = 0;
+            _totalPos = 0;
+        }
     }
 }
