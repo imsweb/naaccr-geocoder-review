@@ -79,6 +79,9 @@ import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_REJECTED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_SKIPPED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_UPDATED;
 
+//todo
+// 2. fix going forward after going back resetting fields
+
 public class ProcessingPanel extends JPanel {
 
     // special label when no Geocoder result is available
@@ -552,7 +555,7 @@ public class ProcessingPanel extends JPanel {
 
                 // update the results in the GUI
                 if (!_currentGeocodeResults.getResults().isEmpty())
-                    displayGeocodeResults(_currentGeocodeResults.getResults());
+                    displayGeocodeResults(_currentGeocodeResults.getResults(), 0);
                 else
                     displayMissingGeocodeResults();
 
@@ -577,8 +580,10 @@ public class ProcessingPanel extends JPanel {
             if (skippedMode || _matchSkipBox.isSelected())
                 csvLine = getNextSkippedCsvLine(numExpectedValues, skippedMode, _matchSkipBox.isSelected(), false);
             else {
-                Utils.readCsvLine(_inputReader, false); // ignore previous input line and get the output instead
                 csvLine = _outputWriter.previousLine();
+                // read previous input line but ignore it and use the output instead
+                if (csvLine != null)
+                    Utils.readCsvLine(_inputReader, false);
                 _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() - 1);
             }
 
@@ -658,27 +663,23 @@ public class ProcessingPanel extends JPanel {
                     _commentArea.setText(prevComment);
 
                 // update the results in the GUI
-                if (!_currentGeocodeResults.getResults().isEmpty())
-                    displayGeocodeResults(_currentGeocodeResults.getResults());
+                if (!_currentGeocodeResults.getResults().isEmpty()) {
+                    String prevSelection = _currentLine[_parent.getSession().getInputCsvHeaders().size() + 2];
+                    Integer prevSelectIdx = Integer.valueOf(prevSelection) - 1;
+                    displayGeocodeResults(_currentGeocodeResults.getResults(), prevSelectIdx);
+                }
                 else
                     displayMissingGeocodeResults();
 
-                String prevSelection = _currentLine[_parent.getSession().getInputCsvHeaders().size() + 2];
-                Integer prevSelectIdx = Integer.valueOf(prevSelection);
-                if (prevSelectIdx > 0) {
-                    // simulate a click on the header of the corresponding column
-                    ((RadioButtonHeaderRenderer)_resultsTbl.getColumnModel().getColumn(prevSelectIdx).getHeaderRenderer()).doClick();
-                    SwingUtilities.invokeLater(() -> _resultsTbl.getTableHeader().repaint());
-                    //todo this doesn't change the combo box
-                }
+                if (_outputWriter.reachedBeginningOfBuffer())
+                    _backBtn.setEnabled(false);
                 
                 String prevStatus = _currentLine[_parent.getSession().getInputCsvHeaders().size() + 1];
                 Integer prevStatusIdx = Integer.valueOf(prevStatus);
-                if (prevStatusIdx == PROCESSING_STATUS_SKIPPED)
+                if (PROCESSING_STATUS_SKIPPED.equals(prevStatusIdx))
                     _skipBox.setSelected(true);
-                else if (prevStatusIdx == PROCESSING_STATUS_REJECTED)
+                else if (PROCESSING_STATUS_REJECTED.equals(prevStatusIdx))
                     _rejectBox.setSelected(true);
-                // todo also set the checkboxes on the right
 
                 // set the focus on the next button so the user can just click Enter without doing anything else in the interface...
                 SwingUtilities.invokeLater(() -> _nextBtn.requestFocus());
@@ -690,7 +691,7 @@ public class ProcessingPanel extends JPanel {
     }
 
     @SuppressWarnings("unchecked")
-    private void displayGeocodeResults(List<GeocodeResult> results) {
+    private void displayGeocodeResults(List<GeocodeResult> results, int idxToSelect) {
         _rejectBox.setEnabled(true);
 
         // create headers
@@ -773,10 +774,10 @@ public class ProcessingPanel extends JPanel {
         results.forEach(((DefaultComboBoxModel)_selectionBox.getModel())::addElement);
 
         // by default we select the first result (the best one from the geocoder)
-        _selectedGeocodeResult = results.get(0);
+        _selectedGeocodeResult = results.get(idxToSelect);
         SwingUtilities.invokeLater(() -> {
             if (!results.isEmpty())
-                _selectionBox.setSelectedIndex(0);
+                _selectionBox.setSelectedIndex(idxToSelect);
             _resultsTbl.repaint();
         });
     }

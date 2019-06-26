@@ -109,17 +109,33 @@ public class BufferedCsvOutputStream implements Closeable {
 
     public String[] previousLine() {
         String[] lineToReturn = null;
-        if (_currentLine > _writtenLine) {
+        if (!reachedBeginningOfBuffer()) {
             Integer lineStart = _lineBytes.get(_currentLine);
-            if (lineStart != null && lineStart - (_totalPos - _bufPos) >= 0) {
+            //if (lineStart != null && lineStart - (_totalPos - _bufPos) >= 0) {
                 Integer lineEnd = _lineBytes.getOrDefault(_currentLine + 1, _totalPos);
                 Integer lineLength = lineEnd - lineStart;
                 lineToReturn = new String[lineLength];
                 System.arraycopy(_buf, lineStart - (_totalPos - _bufPos), lineToReturn, 0, lineLength);
                 _currentLine--;
-            }
+            //}
         }
         return lineToReturn;
+    }
+
+    // returns true if you cannot go back further because you have reached the beginning of the buffer
+    public boolean reachedBeginningOfBuffer() {
+        Integer lineStart = _lineBytes.getOrDefault(_currentLine, -1);
+        if (_totalPos - _bufPos > lineStart)
+            return true;
+        return false;
+    }
+
+    // returns true if you cannot go back further because you have reached the beginning of the buffer
+    public boolean reachedEndOfBuffer() {
+        Integer lineStart = _lineBytes.getOrDefault(_currentLine, -1);
+        if (_totalPos - _bufPos > lineStart)
+            return true;
+        return false;
     }
 
     public void close() throws IOException {

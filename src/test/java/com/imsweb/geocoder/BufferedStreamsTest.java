@@ -26,12 +26,12 @@ public class BufferedStreamsTest {
         Assert.assertArrayEquals(new String[]{"no", "p"}, is.readNextLine());
         Assert.assertArrayEquals(new String[]{"qrst", "uvw"}, is.readNextLine());
         Assert.assertNull(is.readNextLine()); // end of the file
-        Assert.assertNull(is.readPreviousLine());
+     //   Assert.assertNull(is.readPreviousLine());
         Assert.assertArrayEquals(new String[]{"qrst", "uvw"}, is.readPreviousLine());
         Assert.assertArrayEquals(new String[]{"no", "p"}, is.readPreviousLine());
         Assert.assertArrayEquals(new String[]{"j", "k", "l", "m"}, is.readPreviousLine());
         Assert.assertNull(is.readPreviousLine()); // first line is out of the buffer so it cannot be read
-        Assert.assertArrayEquals(new String[]{"j", "k", "l", "m"}, is.readNextLine());
+        Assert.assertArrayEquals(new String[]{"no", "p"}, is.readNextLine());
         is.close();
     }
 
@@ -95,5 +95,29 @@ public class BufferedStreamsTest {
         is.close();
         os.close(); // close to write the rest
         testFile.deleteOnExit();
+    }
+    
+    @Test
+    public void testInputReachedBeginningOfBuffer() throws Exception {
+        URL url = Thread.currentThread().getContextClassLoader().getResource("test.csv");
+        BufferedCsvInputStream is = new BufferedCsvInputStream(new FileReader(new File(url.getFile())), 10);
+        Assert.assertTrue(is.reachedBeginningOfBuffer());
+        is.readNextLine();
+        Assert.assertTrue(is.reachedBeginningOfBuffer());
+        Assert.assertNull(is.readPreviousLine());
+        is.readNextLine();
+        is.readNextLine();
+        Assert.assertFalse(is.reachedBeginningOfBuffer());
+    }
+
+    @Test
+    public void testOutputReachedBeginningOfBuffer() throws Exception {
+        File testFile = new File("test-review.csv");
+        BufferedCsvOutputStream os = new BufferedCsvOutputStream(new FileWriter(testFile));
+        Assert.assertTrue(os.reachedBeginningOfBuffer());
+        os.writeLine(new String[]{"a", "b", "c"});
+        Assert.assertFalse(os.reachedBeginningOfBuffer());
+        os.previousLine();
+        Assert.assertTrue(os.reachedBeginningOfBuffer());
     }
 }

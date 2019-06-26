@@ -74,7 +74,7 @@ public class BufferedCsvInputStream implements Closeable {
     }
 
     public String[] readPreviousLine() {
-        if (_lineBytes.containsKey(_currentLine)) {
+        if (!reachedBeginningOfBuffer()) {
             _currentLine--;
             // line was previously read into buffer
             Integer lineStart = _lineBytes.get(_currentLine);
@@ -90,6 +90,14 @@ public class BufferedCsvInputStream implements Closeable {
         }
         else
             return null;
+    }
+    
+    // returns true if you cannot go back further because you have reached the beginning of the buffer
+    public boolean reachedBeginningOfBuffer() {
+        Integer lineStart = _lineBytes.getOrDefault(_currentLine - 1, -1);
+        if (_totalPos - _bufPos > lineStart)
+            return true;
+        return false;
     }
     
     public void close() throws IOException {
