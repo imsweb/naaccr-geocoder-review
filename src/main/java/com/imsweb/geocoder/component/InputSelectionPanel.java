@@ -200,7 +200,7 @@ public class InputSelectionPanel extends JPanel {
         disc13aPnl.add(Box.createHorizontalStrut(15));
         disc13aPnl.add(Utils.createBoldLabel("To re-process skipped results, "));
         disc13aPnl.add(Utils.createLabel(
-                "start the application and re-select both your original input and output files; you will see a prompt asking if you want to re-process the skipped results. Click the 'Yes' button."));
+                "start the application and re-select your original input file; you will see a prompt asking if you want to re-process the skipped results. Click the 'Yes' button."));
         northPnl.add(disc13aPnl);
         northPnl.add(Box.createVerticalStrut(3));
         JPanel disc13bPnl = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));

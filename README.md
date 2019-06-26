@@ -4,7 +4,7 @@ A simple interface to review [NAACCR Geocoder](https://www.naaccr.org/gis-resour
 
 Download the latest version from the [Release page](https://github.com/imsweb/naaccr-geocoder-review/releases).
 
-The software is released as an executable JAR file; there is no installation required. Download the latest "-all" JAR file available and double-click it to start the application.
+The software is released as a zip file; there is no installation required. Download the latest "-all" zip file available, unzip it, and double-click the contained executable file to start the application.
 
 The application only supports input CSV files that have been processed by the NAACCR Geocoder. It expects the Geocoder results to be available in JSON in a column "OutputGeocodes".
 
@@ -18,9 +18,9 @@ Some fields are hard-coded depending on the action that the user takes in the in
      - naaccrQualType is set to "Ungeocodable"
      - naaccrCertCode is set to 9
      - naaccrCertType is set to "Ungeocodable"
-     - MicroMatchStatus is set to "Non-Match"
+     - MicroMatchStatus is set to "X"
 2. If the user confirms the best Geocoder results or select a different one:
-     - MicroMatchStatus is set to "Match"
+     - MicroMatchStatus is set to "I"
 
 Regardless of the action the users takes in the interface, the application always adds the following columns at the end of the line:
 1. Review App Version (the version of the software that created the output file)
@@ -30,6 +30,7 @@ Regardless of the action the users takes in the interface, the application alway
     - 2: user rejected all the results
     - 3: no results were returned by the Geocoder
     - 4: user skipped the line
+    - 5: the input had a MicroMatchStatus of 'Match' and the user did not review the result
 3. Selected Result Index (the result index selected by the user, -1 if not applicable)
 4. Processing Comment (a comment provided by the user)
 
