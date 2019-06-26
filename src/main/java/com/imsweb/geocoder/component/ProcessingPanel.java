@@ -71,10 +71,6 @@ import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_REJECTED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_SKIPPED;
 import static com.imsweb.geocoder.Utils.PROCESSING_STATUS_UPDATED;
 
-//todo
-// 2. fix going forward after going back resetting fields
-// 3. fix keeping track of current line number and current counts when going back
-
 public class ProcessingPanel extends JPanel {
 
     // special label when no Geocoder result is available
