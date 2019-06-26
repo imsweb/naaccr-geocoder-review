@@ -569,7 +569,7 @@ public class ProcessingPanel extends JPanel {
                 if (_parent.getSession().getProcessingStatusColumnIndex() < _currentLine.length) {
                     String prevStatus = _currentLine[_parent.getSession().getProcessingStatusColumnIndex()];
                     Integer prevStatusIdx = Integer.valueOf(prevStatus);
-                    if (PROCESSING_STATUS_SKIPPED.equals(prevStatusIdx))
+                    if (PROCESSING_STATUS_SKIPPED.equals(prevStatusIdx) && !(skippedMode && readingForward))
                         _skipBox.setSelected(true);
                     else if (PROCESSING_STATUS_REJECTED.equals(prevStatusIdx))
                         _rejectBox.setSelected(true);
@@ -730,7 +730,7 @@ public class ProcessingPanel extends JPanel {
         populateTableFromLine(writeForward);
     }
 
-    private boolean writeCurrentLine(Integer status, String[] lineToWriteAsIs, boolean writeForward) {
+    private void writeCurrentLine(Integer status, String[] lineToWriteAsIs, boolean writeForward) {
         // flush the new line
         if (writeForward) {
             if (lineToWriteAsIs != null)
@@ -741,6 +741,11 @@ public class ProcessingPanel extends JPanel {
         else {
             // if we are reading/writing backwards, we want to decrement the status from the 'current' line instead of the next line
             String[] line = _outputWriter.getCurrentLineFromBuffer();
+            
+            // todo this part doesn't work in skip mode!
+            if (line == null)
+                return;
+            
             String statusStr = line[_parent.getSession().getProcessingStatusColumnIndex()];
             status = Integer.valueOf(statusStr);
         }
@@ -757,7 +762,6 @@ public class ProcessingPanel extends JPanel {
             _parent.getSession().setNumRejectedLines(_parent.getSession().getNumRejectedLines() + (writeForward ? 1 : -1));
         else if (!PROCESSING_STATUS_NOT_APPLICABLE.equals(status))
             throw new RuntimeException("Unknown status: " + status);
-        return true;
     }
 
     private void handleNullLine(boolean readingForward) {
@@ -947,7 +951,7 @@ public class ProcessingPanel extends JPanel {
         protected String[] doInBackground() throws Exception {
             String[] line = Utils.readCsvLine(_inputReader, _readForward);
             if (!_readForward)
-                line = _outputWriter.goToPreviousLine();
+                line = _outputWriter.goToPreviousLine(); // todo going back doesn't work in skip mode
             while (line != null) {
                 _parent.getSession().setCurrentLineNumber(_parent.getSession().getCurrentLineNumber() + (_readForward ? 1 : -1));
                 if (line.length != _numExpectedValues)
