@@ -664,13 +664,21 @@ public class ProcessingPanel extends JPanel {
                     displayMissingGeocodeResults();
 
                 String prevSelection = _currentLine[_parent.getSession().getInputCsvHeaders().size() + 2];
-                Integer prevIdx = Integer.valueOf(prevSelection);
-                if (prevIdx > 0) {
+                Integer prevSelectIdx = Integer.valueOf(prevSelection);
+                if (prevSelectIdx > 0) {
                     // simulate a click on the header of the corresponding column
-                    ((RadioButtonHeaderRenderer)_resultsTbl.getColumnModel().getColumn(prevIdx).getHeaderRenderer()).doClick();
+                    ((RadioButtonHeaderRenderer)_resultsTbl.getColumnModel().getColumn(prevSelectIdx).getHeaderRenderer()).doClick();
                     SwingUtilities.invokeLater(() -> _resultsTbl.getTableHeader().repaint());
                     //todo this doesn't change the combo box
                 }
+                
+                String prevStatus = _currentLine[_parent.getSession().getInputCsvHeaders().size() + 1];
+                Integer prevStatusIdx = Integer.valueOf(prevStatus);
+                if (prevStatusIdx == PROCESSING_STATUS_SKIPPED)
+                    _skipBox.setSelected(true);
+                else if (prevStatusIdx == PROCESSING_STATUS_REJECTED)
+                    _rejectBox.setSelected(true);
+                // todo also set the checkboxes on the right
 
                 // set the focus on the next button so the user can just click Enter without doing anything else in the interface...
                 SwingUtilities.invokeLater(() -> _nextBtn.requestFocus());

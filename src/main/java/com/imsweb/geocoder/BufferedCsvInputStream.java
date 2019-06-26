@@ -75,6 +75,7 @@ public class BufferedCsvInputStream implements Closeable {
 
     public String[] readPreviousLine() {
         if (_lineBytes.containsKey(_currentLine)) {
+            _currentLine--;
             // line was previously read into buffer
             Integer lineStart = _lineBytes.get(_currentLine);
             Integer lineEnd = _lineBytes.getOrDefault(_currentLine + 1, _totalPos);
@@ -85,7 +86,6 @@ public class BufferedCsvInputStream implements Closeable {
             }
             String[] line = new String[lineLength];
             System.arraycopy(_buf, lineStart - (_totalPos - _bufPos), line, 0, lineLength);
-            _currentLine--;
             return line;
         }
         else

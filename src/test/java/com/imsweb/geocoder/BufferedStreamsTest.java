@@ -26,6 +26,7 @@ public class BufferedStreamsTest {
         Assert.assertArrayEquals(new String[]{"no", "p"}, is.readNextLine());
         Assert.assertArrayEquals(new String[]{"qrst", "uvw"}, is.readNextLine());
         Assert.assertNull(is.readNextLine()); // end of the file
+        Assert.assertNull(is.readPreviousLine());
         Assert.assertArrayEquals(new String[]{"qrst", "uvw"}, is.readPreviousLine());
         Assert.assertArrayEquals(new String[]{"no", "p"}, is.readPreviousLine());
         Assert.assertArrayEquals(new String[]{"j", "k", "l", "m"}, is.readPreviousLine());
@@ -50,7 +51,7 @@ public class BufferedStreamsTest {
         Assert.assertArrayEquals(new String[]{"no", "p"}, os.previousLine());
         Assert.assertArrayEquals(new String[]{"j", "k", "l", "x"}, os.previousLine());
         Assert.assertNull(os.previousLine()); // first line is out of the buffer so cannot go back
-        Assert.assertArrayEquals(new String[]{"j", "k", "l", "m"}, os.writeLine(new String[]{"j", "k", "l", "m"}));
+        Assert.assertArrayEquals(new String[]{"j", "k", "l", "m"}, os.writeLine(new String[]{"j", "k", "l", "m"}, true));
         os.close(); // close to write the rest
 
         // read file in to check what was written
@@ -61,6 +62,38 @@ public class BufferedStreamsTest {
         Assert.assertArrayEquals(new String[]{"qrst", "uvw"}, is.readNextLine());
         Assert.assertNull(is.readNextLine()); // end of the file
         
+        testFile.deleteOnExit();
+    }
+
+    @Test
+    public void testBothStreams() throws Exception {
+        URL url = Thread.currentThread().getContextClassLoader().getResource("test.csv");
+        BufferedCsvInputStream is = new BufferedCsvInputStream(new FileReader(new File(url.getFile())));
+        File testFile = new File("test-review.csv");
+        BufferedCsvOutputStream os = new BufferedCsvOutputStream(new FileWriter(testFile));
+
+        // first line shown
+        String[] line = is.readNextLine();
+        // 'next line' click
+        Assert.assertArrayEquals(new String[]{"abc", "def", "ghi"}, os.writeLine(line));  // write first line
+        line = is.readNextLine(); // get second line
+        Assert.assertArrayEquals(new String[]{"j", "k", "l", "m"}, line);
+        // 'previous line' click
+        String[] prevLine = os.previousLine(); // get first line again
+        Assert.assertArrayEquals(new String[]{"abc", "def", "ghi"}, prevLine);
+        line = is.readPreviousLine();
+        Assert.assertArrayEquals(new String[]{"abc", "def", "ghi"}, line);
+        // 'next line' click
+        Assert.assertArrayEquals(new String[]{"abc", "def", "ghi"}, os.writeLine(line));  // write first again
+        line = is.readNextLine(); // get second line
+        Assert.assertArrayEquals(new String[]{"j", "k", "l", "m"}, line);
+        // 'next line' click
+        Assert.assertArrayEquals(new String[]{"j", "k", "l", "m"}, os.writeLine(line));  // write second line
+        line = is.readNextLine(); // get third line
+        Assert.assertArrayEquals(new String[]{"no", "p"}, line);
+        
+        is.close();
+        os.close(); // close to write the rest
         testFile.deleteOnExit();
     }
 }
