@@ -680,7 +680,9 @@ public class ProcessingPanel extends JPanel {
             _parent.getSession().setNumSkippedLines(_parent.getSession().getNumSkippedLines() + 1);
         else if (PROCESSING_STATUS_REJECTED.equals(status))
             _parent.getSession().setNumRejectedLines(_parent.getSession().getNumRejectedLines() + 1);
-        else if (!PROCESSING_STATUS_NOT_APPLICABLE.equals(status))
+        else if (PROCESSING_STATUS_NOT_APPLICABLE.equals(status))
+            _parent.getSession().setNumNotApplicable(_parent.getSession().getNumNotApplicable() + 1);
+        else
             throw new RuntimeException("Unknown status: " + status);
     }
 
@@ -850,10 +852,8 @@ public class ProcessingPanel extends JPanel {
                     boolean needsReview = !"M".equals(microMatchStatus) && !"Match".equals(microMatchStatus);
                     if (_needsReviewMode && needsReview)
                         return line;
-                    else {
-                        _parent.getSession().setNumNotApplicable(_parent.getSession().getNumNotApplicable() + 1);
-                        _outputWriter.writeNext(Utils.getResultCsvLine(_parent.getSession(), line, null, PROCESSING_STATUS_NOT_APPLICABLE, null));
-                    }
+                    else
+                        writeCurrentLine(PROCESSING_STATUS_NOT_APPLICABLE, Utils.getResultCsvLine(_parent.getSession(), line, null, PROCESSING_STATUS_NOT_APPLICABLE, null));
                 }
                 else
                     return line;
