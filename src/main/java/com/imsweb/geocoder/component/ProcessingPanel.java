@@ -850,8 +850,10 @@ public class ProcessingPanel extends JPanel {
                     boolean needsReview = !"M".equals(microMatchStatus) && !"Match".equals(microMatchStatus);
                     if (_needsReviewMode && needsReview)
                         return line;
-                    else
+                    else {
+                        _parent.getSession().setNumNotApplicable(_parent.getSession().getNumNotApplicable() + 1);
                         _outputWriter.writeNext(Utils.getResultCsvLine(_parent.getSession(), line, null, PROCESSING_STATUS_NOT_APPLICABLE, null));
+                    }
                 }
                 else
                     return line;

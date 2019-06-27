@@ -128,6 +128,15 @@ public class SummaryPanel extends JPanel {
         percentage = (float)_parent.getSession().getNumSkippedLines() / numResultLines * 100;
         summaryPnl.add(new JLabel(session.getNumSkippedLines() + " (" + String.format("%.1f", percentage) + "%)"), constraints);
 
+        constraints.gridy++;
+        constraints.gridx = 0;
+        constraints.anchor = GridBagConstraints.EAST;
+        summaryPnl.add(Utils.createLabel("number not-applicable: "), constraints);
+        constraints.gridx = 1;
+        constraints.anchor = GridBagConstraints.WEST;
+        percentage = (float)_parent.getSession().getNumNotApplicable() / numResultLines * 100;
+        summaryPnl.add(new JLabel(session.getNumNotApplicable() + " (" + String.format("%.1f", percentage) + "%)"), constraints);
+
         JPanel wrapperPnl = new JPanel(new BorderLayout());
         wrapperPnl.setBorder(new EmptyBorder(5, 25, 5, 0));
         wrapperPnl.add(summaryPnl, BorderLayout.WEST);

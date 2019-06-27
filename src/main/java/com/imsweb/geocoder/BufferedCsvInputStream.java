@@ -3,6 +3,7 @@
  */
 package com.imsweb.geocoder;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
@@ -10,7 +11,7 @@ import java.util.Map;
 
 import au.com.bytecode.opencsv.CSVReader;
 
-public class BufferedCsvInputStream {
+public class BufferedCsvInputStream implements Closeable {
 
     private static int DEFAULT_BUFFER_SIZE = 8192;
 
@@ -73,8 +74,8 @@ public class BufferedCsvInputStream {
     }
 
     public String[] readPreviousLine() {
-        _currentLine--;
-        if (_lineBytes.containsKey(_currentLine)) {
+        if (!reachedBeginningOfBuffer()) {
+            _currentLine--;
             // line was previously read into buffer
             Integer lineStart = _lineBytes.get(_currentLine);
             Integer lineEnd = _lineBytes.getOrDefault(_currentLine + 1, _totalPos);
@@ -90,9 +91,25 @@ public class BufferedCsvInputStream {
         else
             return null;
     }
-    
+
+    // returns true if you cannot go back further because you have reached the beginning (earliest part) of the buffer
+    public boolean reachedBeginningOfBuffer() {
+        Integer lineStart = _lineBytes.getOrDefault(_currentLine - 1, -1);
+        if (_totalPos - _bufPos > lineStart)
+            return true;
+        return false;
+    }
+
+    // returns true if you cannot further forward because you reached the end (latest part) of the buffer
+    public boolean reachedEndOfBuffer() {
+        return _currentLine < 0 || !_lineBytes.containsKey(_currentLine + 1);
+    }
+
     public void close() throws IOException {
-        if (_reader != null)
+        if (_reader != null) {
             _reader.close();
+            _bufPos = 0;
+            _totalPos = 0;
+        }
     }
 }
