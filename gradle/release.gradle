@@ -6,7 +6,7 @@ task createLauncherJar(type: Jar) {
     destinationDir = file('build/dist/lib')
     manifest {
         attributes('Implementation-Title': project.name,
-                'Implementation-Version': version,
+                'Implementation-Version': project.version,
                 'Implementation-Vendor': 'Information Management Services Inc.',
                 'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')',
                 'Built-By': System.getProperty('user.name'),
