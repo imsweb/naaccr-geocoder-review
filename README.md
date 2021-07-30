@@ -2,7 +2,8 @@
 
 A simple interface to review [NAACCR Geocoder](https://www.naaccr.org/gis-resources/#Geocoder) results.
 
-Download the latest version from the [Release page](https://github.com/imsweb/naaccr-geocoder-review/releases).
+``This project has been discontinued.``
+
 
 The software is released as a zip file; there is no installation required. Download the latest "-all" zip file available, unzip it, and double-click the contained executable file to start the application.
 
